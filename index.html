@@ -1647,64 +1647,19 @@ function loadStaticPlaces() {
 const GOOGLE_SCRIPTS_KEY = 'AIzaSyDiU-kFZkJxaPDKkyar5YY73EoCuYYotOg';
 
 function loadGoogleForSearch() {
-  var s = document.createElement('script');
-  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_SCRIPTS_KEY + '&libraries=places&callback=onGoogleReady';
-  s.async = true; s.defer = true;
-  document.head.appendChild(s);
-}
-window.onGoogleReady = function() {
-  console.log('Google Places pret');
-  // Initialiser les Autocomplete sur les deux champs de recherche
-  initPlaceAutocomplete('place-search-input', onLieuSelected);
-  initPlaceAutocomplete('event-place-input', onEventPlaceSelected);
-};
-
-function initPlaceAutocomplete(inputId, callback) {
-  const input = document.getElementById(inputId);
-  if (!input || !window.google) return;
-  const ac = new google.maps.places.Autocomplete(input, {
-    componentRestrictions: { country: 'fr' },
-    fields: ['name', 'formatted_address', 'geometry', 'place_id'],
-    bounds: new google.maps.LatLngBounds(
-      new google.maps.LatLng(44.5, -1.5),
-      new google.maps.LatLng(45.3, 0.0)
-    ),
-  });
-  ac.addListener('place_changed', () => {
-    const place = ac.getPlace();
-    if (!place.geometry) return;
-    callback(place);
-  });
+  // Pas besoin de charger le SDK Google Maps — on utilise fetch direct
+  console.log('Places search pret (fetch)');
 }
 
-function onLieuSelected(place) {
-  addSelectedPlace = {
-    name: place.name,
-    addr: place.formatted_address || '',
-    lat: place.geometry.location.lat(),
-    lng: place.geometry.location.lng(),
-    placeId: place.place_id,
-  };
-  document.getElementById('place-search-input').value = place.name;
-  document.getElementById('place-suggestions').style.display = 'none';
-  document.getElementById('sel-name').textContent = place.name;
-  document.getElementById('sel-addr').textContent = (place.formatted_address || '').split(',').slice(0,2).join(',');
-  document.getElementById('place-selected').style.display = 'block';
-  document.getElementById('add-step2').style.display = 'block';
-}
-
-function onEventPlaceSelected(place) {
-  eventSelectedPlace = {
-    name: place.name,
-    addr: place.formatted_address || '',
-    lat: place.geometry.location.lat(),
-    lng: place.geometry.location.lng(),
-  };
-  document.getElementById('event-place-input').value = place.name;
-  document.getElementById('event-place-suggestions').style.display = 'none';
-  document.getElementById('event-sel-name').textContent = place.name;
-  document.getElementById('event-sel-addr').textContent = (place.formatted_address || '').split(',').slice(0,2).join(',');
-  document.getElementById('event-place-selected').style.display = 'block';
+async function searchGooglePlaces(query) {
+  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' Bordeaux')}&location=44.8378,-0.5792&radius=15000&language=fr&key=${GOOGLE_SCRIPTS_KEY}`;
+  // Utiliser un proxy CORS car l'API Places ne supporte pas les appels directs navigateur
+  // On passe par allorigins
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const res = await fetch(proxy);
+  const data = await res.json();
+  const parsed = JSON.parse(data.contents);
+  return parsed.results || [];
 }
 
 // ── ÉVÉNEMENTS ──
@@ -2588,13 +2543,7 @@ function closeModalById(id) {
 function openAddModal(type) {
   resetPlaceSearch();
   const isEvent = type === 'evenement';
-  // Réinitialiser l'autocomplete après ouverture de la modal
-  setTimeout(() => {
-    if (window.google) {
-      if (!isEvent) initPlaceAutocomplete('place-search-input', onLieuSelected);
-      else initPlaceAutocomplete('event-place-input', onEventPlaceSelected);
-    }
-  }, 200);
+
   document.getElementById('add-modal-title').textContent = isEvent ? 'Proposer un événement' : 'Proposer un lieu';
   document.getElementById('add-modal-sub').textContent = isEvent
     ? 'Partage un événement kids-friendly à Bordeaux 🎉'
@@ -2610,13 +2559,40 @@ let eventSelectedPlace = null;
 let eventSearchDebounce = null;
 
 function searchEventPlace(val) {
-  // Géré par Google Autocomplete — rien à faire ici
+  clearTimeout(eventSearchDebounce);
+  const box = document.getElementById('event-place-suggestions');
+  if (!val || val.length < 2) { box.style.display='none'; box.innerHTML=''; return; }
+  box.innerHTML = '<div class="place-suggestion-loading">Recherche…</div>';
+  box.style.display = 'block';
+  eventSearchDebounce = setTimeout(async () => {
+    try {
+      const results = await searchGooglePlaces(val);
+      if (!results.length) {
+        box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>'; return;
+      }
+      window._eventSearchResults = results;
+      box.innerHTML = results.slice(0, 5).map((p, i) => `
+        <div class="place-suggestion-item" onclick="selectEventPlace(${i})">
+          <div class="place-suggestion-icon">📍</div>
+          <div>
+            <div class="place-suggestion-name">${p.name}</div>
+            <div class="place-suggestion-addr">${(p.formatted_address||'').split(',').slice(0,2).join(',')}</div>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      box.innerHTML = '<div class="place-suggestion-loading">Erreur de recherche</div>';
+    }
+  }, 400);
 }
 
 function selectEventPlace(idx) {
   const p = window._eventSearchResults?.[idx];
   if (!p) return;
-  eventSelectedPlace = { name: p.name, addr: p.formatted_address || p.vicinity || '' };
+  let lat = p.geometry?.location?.lat;
+  let lng = p.geometry?.location?.lng;
+  if (typeof lat === 'function') lat = lat();
+  if (typeof lng === 'function') lng = lng();
+  eventSelectedPlace = { name: p.name, addr: p.formatted_address || p.vicinity || '', lat, lng };
   document.getElementById('event-place-input').value = '';
   document.getElementById('event-place-suggestions').style.display = 'none';
   document.getElementById('event-sel-name').textContent = p.name;
@@ -2701,7 +2677,31 @@ function resetPlaceSearch() {
 }
 
 function searchPlacesAutocomplete(val) {
-  // Géré par Google Autocomplete — rien à faire ici
+  clearTimeout(searchDebounce);
+  const box = document.getElementById('place-suggestions');
+  if (!val || val.length < 2) { box.style.display='none'; box.innerHTML=''; return; }
+  box.innerHTML = '<div class="place-suggestion-loading">Recherche…</div>';
+  box.style.display = 'block';
+  searchDebounce = setTimeout(async () => {
+    try {
+      const results = await searchGooglePlaces(val);
+      if (!results.length) {
+        box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
+        return;
+      }
+      window._searchResults = results;
+      box.innerHTML = results.slice(0, 6).map((p, i) => `
+        <div class="place-suggestion-item" onclick="selectPlace(${i})">
+          <div class="place-suggestion-icon">📍</div>
+          <div>
+            <div class="place-suggestion-name">${p.name}</div>
+            <div class="place-suggestion-addr">${(p.formatted_address||'').split(',').slice(0,2).join(',')}</div>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      box.innerHTML = '<div class="place-suggestion-loading">Erreur de recherche</div>';
+    }
+  }, 400);
 }
 
 function selectPlace(idx) {
@@ -2710,9 +2710,12 @@ function selectPlace(idx) {
   addSelectedPlace = {
     name: p.name,
     addr: p.formatted_address || p.vicinity || '',
-    lat: p.geometry?.location?.lat(),
-    lng: p.geometry?.location?.lng(),
+    lat: p.geometry?.location?.lat || p.geometry?.location?.lat?.(),
+    lng: p.geometry?.location?.lng || p.geometry?.location?.lng?.(),
   };
+  // fetch retourne des nombres, pas des fonctions
+  if (typeof addSelectedPlace.lat === 'function') addSelectedPlace.lat = addSelectedPlace.lat();
+  if (typeof addSelectedPlace.lng === 'function') addSelectedPlace.lng = addSelectedPlace.lng();
   document.getElementById('place-search-input').value = '';
   document.getElementById('place-suggestions').style.display = 'none';
   document.getElementById('sel-name').textContent = p.name;
