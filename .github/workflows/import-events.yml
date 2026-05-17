@@ -9,17 +9,27 @@ on:
 jobs:
   import:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Install dependencies
+        run: npm install puppeteer
+
       - name: Nettoyage evenements passes
         run: node scripts/cleanup-events.js
+
       - name: Import OpenAgenda
         run: node scripts/import-events-v2.js
+
       - name: Scraping BilletReduc
         run: node scripts/scrape-billetreduc.js --insert
+
+      - name: Scraping Izibaby
+        run: node scripts/scrape-izibaby.js --insert
