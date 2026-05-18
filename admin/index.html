@@ -511,7 +511,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
         <div class="section-title">📝 Description & médias</div>
         <div class="field">
           <label>Description</label>
-          <textarea id="ef-desc" oninput="debounceSaveEvent()" rows="10" placeholder="Description de l'évènement…"></textarea>
+          <textarea id="ef-desc" oninput="debounceSaveEvent()" rows="4" placeholder="Description de l'évènement…"></textarea>
         </div>
         <div class="field">
           <label>Image (URL)</label>
@@ -712,6 +712,7 @@ function onCoordsInput() {
     map.setView([lat,lng], map.getZoom());
     setMarker(lat, lng);
   }
+  debounceSavePlace();
 }
 
 // ── SUPABASE ──
@@ -847,6 +848,7 @@ function toggleCat(btn) {
     currentCats.push(cat);
     btn.classList.add('sel');
   }
+  debounceSavePlace(); // auto-save comme les autres champs
 }
 
 // ── VALID ──
