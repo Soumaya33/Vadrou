@@ -1647,20 +1647,12 @@ function loadStaticPlaces() {
 const GOOGLE_SCRIPTS_KEY = 'AIzaSyDiU-kFZkJxaPDKkyar5YY73EoCuYYotOg';
 
 function loadGoogleForSearch() {
-  // Pas besoin de charger le SDK Google Maps — on utilise fetch direct
-  console.log('Places search pret (fetch)');
+  var s = document.createElement('script');
+  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_SCRIPTS_KEY + '&libraries=places&callback=onGoogleReady';
+  s.async = true; s.defer = true;
+  document.head.appendChild(s);
 }
-
-async function searchGooglePlaces(query) {
-  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' Bordeaux')}&location=44.8378,-0.5792&radius=15000&language=fr&key=${GOOGLE_SCRIPTS_KEY}`;
-  // Utiliser un proxy CORS car l'API Places ne supporte pas les appels directs navigateur
-  // On passe par allorigins
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-  const res = await fetch(proxy);
-  const data = await res.json();
-  const parsed = JSON.parse(data.contents);
-  return parsed.results || [];
-}
+window.onGoogleReady = function() { console.log('Google Places pret'); };
 
 // ── ÉVÉNEMENTS ──
 let allEvents = [];
@@ -1675,21 +1667,13 @@ async function loadEventsFromSupabase() {
     // Le filtrage fin est fait côté JS pour gérer date_fin correctement
     const data = await supaFetch(`evenements?valide=eq.true&order=date_debut.asc&select=*&limit=200`);
     if (data && data.length > 0) {
-      // Filtre : garder uniquement les événements pas encore terminés
+      // Filtre : garder uniquement les événements non terminés
+      // Comparaison en chaîne de caractères ISO (YYYY-MM-DD) — fiable sur toutes les timezones
+      const todayStr = new Date().toLocaleDateString('fr-CA'); // format YYYY-MM-DD en heure locale
       const actifs = data.filter(evt => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (evt.date_fin) {
-          // Événement multi-jours : disparaît après le dernier jour
-          const fin = new Date(evt.date_fin + 'T23:59:59');
-          return fin >= today;
-        } else if (evt.date_debut) {
-          // Sans date_fin : disparaît le lendemain de date_debut
-          const debut = new Date(evt.date_debut + 'T23:59:59');
-          return debut >= today;
-        }
-        return true; // Pas de date → on garde
+        const refDate = evt.date_fin || evt.date_debut; // date_fin en priorité
+        if (!refDate) return true; // Pas de date → on garde
+        return refDate >= todayStr; // disparaît dès minuit du jour suivant
       });
 
       allEvents = actifs;
@@ -2543,7 +2527,6 @@ function closeModalById(id) {
 function openAddModal(type) {
   resetPlaceSearch();
   const isEvent = type === 'evenement';
-
   document.getElementById('add-modal-title').textContent = isEvent ? 'Proposer un événement' : 'Proposer un lieu';
   document.getElementById('add-modal-sub').textContent = isEvent
     ? 'Partage un événement kids-friendly à Bordeaux 🎉'
@@ -2566,12 +2549,14 @@ function searchEventPlace(val) {
   box.style.display = 'block';
   eventSearchDebounce = setTimeout(async () => {
     try {
-      const results = await searchGooglePlaces(val);
-      if (!results.length) {
+      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(val + ' Bordeaux')}&location=44.8378,-0.5792&radius=15000&key=${GOOGLE_SCRIPTS_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.results || !data.results.length) {
         box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>'; return;
       }
-      window._eventSearchResults = results;
-      box.innerHTML = results.slice(0, 5).map((p, i) => `
+      window._eventSearchResults = data.results;
+      box.innerHTML = data.results.slice(0, 5).map((p, i) => `
         <div class="place-suggestion-item" onclick="selectEventPlace(${i})">
           <div class="place-suggestion-icon">📍</div>
           <div>
@@ -2580,19 +2565,21 @@ function searchEventPlace(val) {
           </div>
         </div>`).join('');
     } catch(e) {
-      box.innerHTML = '<div class="place-suggestion-loading">Erreur de recherche</div>';
+      box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
     }
-  }, 400);
+  }, 350);
 }
 
 function selectEventPlace(idx) {
   const p = window._eventSearchResults?.[idx];
   if (!p) return;
-  let lat = p.geometry?.location?.lat;
-  let lng = p.geometry?.location?.lng;
-  if (typeof lat === 'function') lat = lat();
-  if (typeof lng === 'function') lng = lng();
-  eventSelectedPlace = { name: p.name, addr: p.formatted_address || p.vicinity || '', lat, lng };
+  const loc = p.geometry?.location;
+  eventSelectedPlace = {
+    name: p.name,
+    addr: p.formatted_address || p.vicinity || '',
+    lat: typeof loc?.lat === 'function' ? loc.lat() : loc?.lat,
+    lng: typeof loc?.lng === 'function' ? loc.lng() : loc?.lng,
+  };
   document.getElementById('event-place-input').value = '';
   document.getElementById('event-place-suggestions').style.display = 'none';
   document.getElementById('event-sel-name').textContent = p.name;
@@ -2684,38 +2671,40 @@ function searchPlacesAutocomplete(val) {
   box.style.display = 'block';
   searchDebounce = setTimeout(async () => {
     try {
-      const results = await searchGooglePlaces(val);
-      if (!results.length) {
+      // API Places Text Search HTTP — fonctionne dans WebView Android (pas de DOM Google requis)
+      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(val + ' Bordeaux')}&location=44.8378,-0.5792&radius=15000&key=${GOOGLE_SCRIPTS_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.results || !data.results.length) {
         box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
         return;
       }
-      window._searchResults = results;
-      box.innerHTML = results.slice(0, 6).map((p, i) => `
+      window._searchResults = data.results;
+      box.innerHTML = data.results.slice(0, 6).map((p, i) => `
         <div class="place-suggestion-item" onclick="selectPlace(${i})">
           <div class="place-suggestion-icon">📍</div>
           <div>
             <div class="place-suggestion-name">${p.name}</div>
-            <div class="place-suggestion-addr">${(p.formatted_address||'').split(',').slice(0,2).join(',')}</div>
+            <div class="place-suggestion-addr">${(p.formatted_address || '').split(',').slice(0,2).join(',')}</div>
           </div>
         </div>`).join('');
     } catch(e) {
-      box.innerHTML = '<div class="place-suggestion-loading">Erreur de recherche</div>';
+      box.innerHTML = '<div class="place-suggestion-loading">Service non disponible</div>';
     }
-  }, 400);
+  }, 350);
 }
 
 function selectPlace(idx) {
   const p = window._searchResults?.[idx];
   if (!p) return;
+  // API HTTP : geometry.location est {lat, lng} (nombres), pas des fonctions
+  const loc = p.geometry?.location;
   addSelectedPlace = {
     name: p.name,
     addr: p.formatted_address || p.vicinity || '',
-    lat: p.geometry?.location?.lat || p.geometry?.location?.lat?.(),
-    lng: p.geometry?.location?.lng || p.geometry?.location?.lng?.(),
+    lat: typeof loc?.lat === 'function' ? loc.lat() : loc?.lat,
+    lng: typeof loc?.lng === 'function' ? loc.lng() : loc?.lng,
   };
-  // fetch retourne des nombres, pas des fonctions
-  if (typeof addSelectedPlace.lat === 'function') addSelectedPlace.lat = addSelectedPlace.lat();
-  if (typeof addSelectedPlace.lng === 'function') addSelectedPlace.lng = addSelectedPlace.lng();
   document.getElementById('place-search-input').value = '';
   document.getElementById('place-suggestions').style.display = 'none';
   document.getElementById('sel-name').textContent = p.name;
