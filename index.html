@@ -1646,6 +1646,7 @@ function loadStaticPlaces() {
 
 const GOOGLE_SCRIPTS_KEY = 'AIzaSyDiU-kFZkJxaPDKkyar5YY73EoCuYYotOg';
 
+// Chargement SDK Maps JS (utilisé pour la carte, pas pour la recherche)
 function loadGoogleForSearch() {
   var s = document.createElement('script');
   s.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_SCRIPTS_KEY + '&libraries=places&callback=onGoogleReady';
@@ -1653,6 +1654,22 @@ function loadGoogleForSearch() {
   document.head.appendChild(s);
 }
 window.onGoogleReady = function() { console.log('Google Places pret'); };
+
+// ── Recherche de lieu via /api/places (proxy Vercel) ──
+// La clé Google reste côté serveur, fonctionne web + WebView Android sans CORS
+async function fetchPlacePredictions(query) {
+  const url = `/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.predictions || [];
+}
+
+async function fetchPlaceDetails(placeId) {
+  const url = `/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.result || null;
+}
 
 // ── ÉVÉNEMENTS ──
 let allEvents = [];
@@ -2547,26 +2564,10 @@ function searchEventPlace(val) {
   if (!val || val.length < 2) { box.style.display='none'; box.innerHTML=''; return; }
   box.innerHTML = '<div class="place-suggestion-loading">Recherche…</div>';
   box.style.display = 'block';
-  eventSearchDebounce = setTimeout(() => {
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
-      setTimeout(() => searchEventPlace(document.getElementById('event-place-input').value), 600);
-      return;
-    }
-    const svc = new google.maps.places.AutocompleteService();
-    const bordeaux = new google.maps.LatLng(44.8378, -0.5792);
-    svc.getPlacePredictions({
-      input: val,
-      location: bordeaux,
-      radius: 20000,
-      componentRestrictions: { country: 'fr' },
-      language: 'fr',
-    }, (predictions, status) => {
-      const S = google.maps.places.PlacesServiceStatus;
-      if (status !== S.OK && status !== S.ZERO_RESULTS) {
-        runTextSearchFallback(val, box, 'event');
-        return;
-      }
-      if (!predictions || !predictions.length) {
+  eventSearchDebounce = setTimeout(async () => {
+    try {
+      const predictions = await fetchPlacePredictions(val);
+      if (!predictions.length) {
         box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>'; return;
       }
       window._eventSearchPredictions = predictions;
@@ -2575,37 +2576,37 @@ function searchEventPlace(val) {
           <div class="place-suggestion-icon">📍</div>
           <div>
             <div class="place-suggestion-name">${p.structured_formatting?.main_text || p.description.split(',')[0]}</div>
-            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || p.description.split(',').slice(1).join(',').trim()}</div>
+            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || p.description.split(',').slice(1,3).join(',').trim()}</div>
           </div>
         </div>`).join('');
-    });
-  }, 350);
+    } catch(e) {
+      box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
+    }
+  }, 400);
 }
 
-function selectEventPlaceFromPrediction(idx) {
+async function selectEventPlaceFromPrediction(idx) {
   const pred = window._eventSearchPredictions?.[idx];
   if (!pred) return;
   const box = document.getElementById('event-place-suggestions');
   box.innerHTML = '<div class="place-suggestion-loading">Chargement…</div>';
-  const dummy = document.createElement('div');
-  document.body.appendChild(dummy);
-  const svc = new google.maps.places.PlacesService(dummy);
-  svc.getDetails({ placeId: pred.place_id, fields: ['name','formatted_address','geometry'] }, (place, status) => {
-    document.body.removeChild(dummy);
+  try {
+    const place = await fetchPlaceDetails(pred.place_id);
     box.style.display = 'none';
-    if (status !== google.maps.places.PlacesServiceStatus.OK || !place) return;
-    const loc = place.geometry.location;
+    if (!place) return;
     eventSelectedPlace = {
       name: place.name,
       addr: place.formatted_address || '',
-      lat: loc.lat(),
-      lng: loc.lng(),
+      lat: place.geometry?.location?.lat,
+      lng: place.geometry?.location?.lng,
     };
     document.getElementById('event-place-input').value = '';
     document.getElementById('event-sel-name').textContent = place.name;
     document.getElementById('event-sel-addr').textContent = (place.formatted_address||'').split(',').slice(0,2).join(',');
     document.getElementById('event-place-selected').style.display = 'block';
-  });
+  } catch(e) {
+    box.style.display = 'none';
+  }
 }
 
 // selectEventPlace remplacée par selectEventPlaceFromPrediction (voir ci-dessus)
@@ -2692,29 +2693,10 @@ function searchPlacesAutocomplete(val) {
   if (!val || val.length < 2) { box.style.display='none'; box.innerHTML=''; return; }
   box.innerHTML = '<div class="place-suggestion-loading">Recherche…</div>';
   box.style.display = 'block';
-  searchDebounce = setTimeout(() => {
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
-      // SDK pas encore prêt — réessayer
-      setTimeout(() => searchPlacesAutocomplete(document.getElementById('place-search-input').value), 600);
-      return;
-    }
-    const svc = new google.maps.places.AutocompleteService();
-    // location + radius (format compatible toutes versions Maps JS)
-    const bordeaux = new google.maps.LatLng(44.8378, -0.5792);
-    svc.getPlacePredictions({
-      input: val,
-      location: bordeaux,
-      radius: 20000,
-      componentRestrictions: { country: 'fr' },
-      language: 'fr',
-    }, (predictions, status) => {
-      const S = google.maps.places.PlacesServiceStatus;
-      if ((status !== S.OK && status !== S.ZERO_RESULTS) ) {
-        // Erreur réseau ou quota — fallback textSearch via PlacesService
-        runTextSearchFallback(val, box, 'place');
-        return;
-      }
-      if (!predictions || !predictions.length) {
+  searchDebounce = setTimeout(async () => {
+    try {
+      const predictions = await fetchPlacePredictions(val);
+      if (!predictions.length) {
         box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
         return;
       }
@@ -2724,11 +2706,13 @@ function searchPlacesAutocomplete(val) {
           <div class="place-suggestion-icon">📍</div>
           <div>
             <div class="place-suggestion-name">${p.structured_formatting?.main_text || p.description.split(',')[0]}</div>
-            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || p.description.split(',').slice(1).join(',').trim()}</div>
+            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || p.description.split(',').slice(1,3).join(',').trim()}</div>
           </div>
         </div>`).join('');
-    });
-  }, 350);
+    } catch(e) {
+      box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
+    }
+  }, 400);
 }
 
 // Fallback : TextSearch avec DOM (utilisé si AutocompleteService échoue)
@@ -2804,24 +2788,20 @@ function selectEventPlaceFromTextSearch(idx) {
   document.getElementById('event-place-selected').style.display = 'block';
 }
 
-function selectPlaceFromPrediction(idx) {
+async function selectPlaceFromPrediction(idx) {
   const pred = window._searchPredictions?.[idx];
   if (!pred) return;
   const box = document.getElementById('place-suggestions');
   box.innerHTML = '<div class="place-suggestion-loading">Chargement…</div>';
-  // Récupérer les détails (coordonnées) via PlacesService
-  const dummy = document.createElement('div');
-  document.body.appendChild(dummy);
-  const svc = new google.maps.places.PlacesService(dummy);
-  svc.getDetails({ placeId: pred.place_id, fields: ['name','formatted_address','geometry'] }, (place, status) => {
-    document.body.removeChild(dummy);
+  try {
+    const place = await fetchPlaceDetails(pred.place_id);
     box.style.display = 'none';
-    if (status !== google.maps.places.PlacesServiceStatus.OK || !place) return;
+    if (!place) return;
     addSelectedPlace = {
       name: place.name,
       addr: place.formatted_address || '',
-      lat: place.geometry.location.lat(),
-      lng: place.geometry.location.lng(),
+      lat: place.geometry?.location?.lat,
+      lng: place.geometry?.location?.lng,
       placeId: pred.place_id,
     };
     document.getElementById('place-search-input').value = '';
@@ -2829,7 +2809,9 @@ function selectPlaceFromPrediction(idx) {
     document.getElementById('sel-addr').textContent = (place.formatted_address||'').split(',').slice(0,2).join(',');
     document.getElementById('place-selected').style.display = 'block';
     document.getElementById('add-step2').style.display = 'block';
-  });
+  } catch(e) {
+    box.style.display = 'none';
+  }
 }
 
 // selectPlace remplacée par selectPlaceFromPrediction (voir ci-dessus)
