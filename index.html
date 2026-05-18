@@ -2549,17 +2549,24 @@ function searchEventPlace(val) {
   box.style.display = 'block';
   eventSearchDebounce = setTimeout(() => {
     if (!window.google || !window.google.maps || !window.google.maps.places) {
-      setTimeout(() => searchEventPlace(val), 800);
+      setTimeout(() => searchEventPlace(document.getElementById('event-place-input').value), 600);
       return;
     }
     const svc = new google.maps.places.AutocompleteService();
+    const bordeaux = new google.maps.LatLng(44.8378, -0.5792);
     svc.getPlacePredictions({
-      input: val + ' Bordeaux',
-      locationBias: { center: { lat: 44.8378, lng: -0.5792 }, radius: 15000 },
-      types: ['establishment', 'geocode'],
+      input: val,
+      location: bordeaux,
+      radius: 20000,
+      componentRestrictions: { country: 'fr' },
       language: 'fr',
     }, (predictions, status) => {
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions?.length) {
+      const S = google.maps.places.PlacesServiceStatus;
+      if (status !== S.OK && status !== S.ZERO_RESULTS) {
+        runTextSearchFallback(val, box, 'event');
+        return;
+      }
+      if (!predictions || !predictions.length) {
         box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>'; return;
       }
       window._eventSearchPredictions = predictions;
@@ -2567,8 +2574,8 @@ function searchEventPlace(val) {
         <div class="place-suggestion-item" onclick="selectEventPlaceFromPrediction(${i})">
           <div class="place-suggestion-icon">📍</div>
           <div>
-            <div class="place-suggestion-name">${p.structured_formatting?.main_text || p.description}</div>
-            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || ''}</div>
+            <div class="place-suggestion-name">${p.structured_formatting?.main_text || p.description.split(',')[0]}</div>
+            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || p.description.split(',').slice(1).join(',').trim()}</div>
           </div>
         </div>`).join('');
     });
@@ -2687,20 +2694,27 @@ function searchPlacesAutocomplete(val) {
   box.style.display = 'block';
   searchDebounce = setTimeout(() => {
     if (!window.google || !window.google.maps || !window.google.maps.places) {
-      box.innerHTML = '<div class="place-suggestion-loading">Chargement…</div>';
-      // Réessayer dans 800ms si le SDK n'est pas encore prêt
-      setTimeout(() => searchPlacesAutocomplete(val), 800);
+      // SDK pas encore prêt — réessayer
+      setTimeout(() => searchPlacesAutocomplete(document.getElementById('place-search-input').value), 600);
       return;
     }
-    // AutocompleteService — ne nécessite pas de DOM visible, fonctionne dans WebView Android
     const svc = new google.maps.places.AutocompleteService();
+    // location + radius (format compatible toutes versions Maps JS)
+    const bordeaux = new google.maps.LatLng(44.8378, -0.5792);
     svc.getPlacePredictions({
-      input: val + ' Bordeaux',
-      locationBias: { center: { lat: 44.8378, lng: -0.5792 }, radius: 15000 },
-      types: ['establishment', 'geocode'],
+      input: val,
+      location: bordeaux,
+      radius: 20000,
+      componentRestrictions: { country: 'fr' },
       language: 'fr',
     }, (predictions, status) => {
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions?.length) {
+      const S = google.maps.places.PlacesServiceStatus;
+      if ((status !== S.OK && status !== S.ZERO_RESULTS) ) {
+        // Erreur réseau ou quota — fallback textSearch via PlacesService
+        runTextSearchFallback(val, box, 'place');
+        return;
+      }
+      if (!predictions || !predictions.length) {
         box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
         return;
       }
@@ -2709,12 +2723,85 @@ function searchPlacesAutocomplete(val) {
         <div class="place-suggestion-item" onclick="selectPlaceFromPrediction(${i})">
           <div class="place-suggestion-icon">📍</div>
           <div>
-            <div class="place-suggestion-name">${p.structured_formatting?.main_text || p.description}</div>
-            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || ''}</div>
+            <div class="place-suggestion-name">${p.structured_formatting?.main_text || p.description.split(',')[0]}</div>
+            <div class="place-suggestion-addr">${p.structured_formatting?.secondary_text || p.description.split(',').slice(1).join(',').trim()}</div>
           </div>
         </div>`).join('');
     });
   }, 350);
+}
+
+// Fallback : TextSearch avec DOM (utilisé si AutocompleteService échoue)
+function runTextSearchFallback(val, box, context) {
+  const container = document.createElement('div');
+  container.style.cssText = 'position:absolute;visibility:hidden;width:1px;height:1px';
+  document.body.appendChild(container);
+  const svc = new google.maps.places.PlacesService(container);
+  svc.textSearch({
+    query: val + ' Bordeaux',
+    location: new google.maps.LatLng(44.8378, -0.5792),
+    radius: 20000,
+  }, (results, status) => {
+    document.body.removeChild(container);
+    if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.length) {
+      box.innerHTML = '<div class="place-suggestion-loading">Aucun résultat</div>';
+      return;
+    }
+    if (context === 'place') {
+      window._searchResults = results;
+      box.innerHTML = results.slice(0, 6).map((p, i) => `
+        <div class="place-suggestion-item" onclick="selectPlaceFromTextSearch(${i})">
+          <div class="place-suggestion-icon">📍</div>
+          <div>
+            <div class="place-suggestion-name">${p.name}</div>
+            <div class="place-suggestion-addr">${(p.formatted_address||'').split(',').slice(0,2).join(',')}</div>
+          </div>
+        </div>`).join('');
+    } else {
+      window._eventSearchResults = results;
+      box.innerHTML = results.slice(0, 5).map((p, i) => `
+        <div class="place-suggestion-item" onclick="selectEventPlaceFromTextSearch(${i})">
+          <div class="place-suggestion-icon">📍</div>
+          <div>
+            <div class="place-suggestion-name">${p.name}</div>
+            <div class="place-suggestion-addr">${(p.formatted_address||'').split(',').slice(0,2).join(',')}</div>
+          </div>
+        </div>`).join('');
+    }
+  });
+}
+
+function selectPlaceFromTextSearch(idx) {
+  const p = window._searchResults?.[idx];
+  if (!p) return;
+  addSelectedPlace = {
+    name: p.name,
+    addr: p.formatted_address || '',
+    lat: p.geometry?.location?.lat(),
+    lng: p.geometry?.location?.lng(),
+  };
+  document.getElementById('place-search-input').value = '';
+  document.getElementById('place-suggestions').style.display = 'none';
+  document.getElementById('sel-name').textContent = p.name;
+  document.getElementById('sel-addr').textContent = (p.formatted_address||'').split(',').slice(0,2).join(',');
+  document.getElementById('place-selected').style.display = 'block';
+  document.getElementById('add-step2').style.display = 'block';
+}
+
+function selectEventPlaceFromTextSearch(idx) {
+  const p = window._eventSearchResults?.[idx];
+  if (!p) return;
+  eventSelectedPlace = {
+    name: p.name,
+    addr: p.formatted_address || '',
+    lat: p.geometry?.location?.lat(),
+    lng: p.geometry?.location?.lng(),
+  };
+  document.getElementById('event-place-input').value = '';
+  document.getElementById('event-place-suggestions').style.display = 'none';
+  document.getElementById('event-sel-name').textContent = p.name;
+  document.getElementById('event-sel-addr').textContent = (p.formatted_address||'').split(',').slice(0,2).join(',');
+  document.getElementById('event-place-selected').style.display = 'block';
 }
 
 function selectPlaceFromPrediction(idx) {
