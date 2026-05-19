@@ -1,0 +1,60 @@
+workflows:
+  ios-release:
+    name: Vadrou iOS — App Store
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.vadrou.app
+      vars:
+        BUNDLE_ID: com.vadrou.app
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+      node: 18
+
+    scripts:
+      - name: Install dependencies
+        script: npm install
+
+      - name: Install Capacitor iOS
+        script: npm install @capacitor/ios
+
+      - name: Sync Capacitor
+        script: npx cap sync ios
+
+      - name: Set bundle identifier
+        script: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" ios/App/App/Info.plist
+
+      - name: Build iOS
+        script: |
+          xcode-project use-profiles
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/App.xcarchive \
+            archive \
+            OTHER_CODE_SIGN_FLAGS="--keychain login" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=$CM_TEAM_ID
+
+      - name: Export IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
