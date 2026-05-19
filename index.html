@@ -1656,16 +1656,20 @@ function loadGoogleForSearch() {
 window.onGoogleReady = function() { console.log('Google Places pret'); };
 
 // ── Recherche de lieu via /api/places (proxy Vercel) ──
-// La clé Google reste côté serveur, fonctionne web + WebView Android sans CORS
+// URL absolue pour fonctionner aussi bien sur web (vadrou.com) que dans la WebView Capacitor
+const API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'capacitor:'
+  ? 'https://vadrou.com'
+  : '';
+
 async function fetchPlacePredictions(query) {
-  const url = `/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
+  const url = `${API_BASE}/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
   const res = await fetch(url);
   const data = await res.json();
   return data.predictions || [];
 }
 
 async function fetchPlaceDetails(placeId) {
-  const url = `/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
+  const url = `${API_BASE}/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
   const res = await fetch(url);
   const data = await res.json();
   return data.result || null;
