@@ -1657,22 +1657,44 @@ window.onGoogleReady = function() { console.log('Google Places pret'); };
 
 // ── Recherche de lieu via /api/places (proxy Vercel) ──
 // URL absolue pour fonctionner aussi bien sur web (vadrou.com) que dans la WebView Capacitor
-const API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'capacitor:'
-  ? 'https://vadrou.com'
-  : '';
+function getApiBase() {
+  const proto = window.location.protocol;   // 'https:', 'http:', 'capacitor:', 'file:'
+  const host  = window.location.hostname;   // 'vadrou.com', 'localhost', '127.0.0.1', ''
+  const isNative = proto === 'capacitor:' || proto === 'file:';
+  const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '';
+  if (isNative || isLocalhost) return 'https://vadrou.com';
+  return ''; // relatif sur vadrou.com web
+}
+const API_BASE = getApiBase();
+console.log('[Vadrou] API_BASE=', API_BASE, '| proto=', window.location.protocol, '| host=', window.location.hostname);
 
 async function fetchPlacePredictions(query) {
   const url = `${API_BASE}/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.predictions || [];
+  console.log('[Vadrou] fetchPlacePredictions ->', url);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) { console.warn('[Vadrou] autocomplete HTTP', res.status); return []; }
+    const data = await res.json();
+    console.log('[Vadrou] autocomplete status=', data.status, 'nb=', (data.predictions||[]).length);
+    return data.predictions || [];
+  } catch(e) {
+    console.error('[Vadrou] fetchPlacePredictions ERREUR:', e.message);
+    return [];
+  }
 }
 
 async function fetchPlaceDetails(placeId) {
   const url = `${API_BASE}/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.result || null;
+  console.log('[Vadrou] fetchPlaceDetails ->', url);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) { console.warn('[Vadrou] details HTTP', res.status); return null; }
+    const data = await res.json();
+    return data.result || null;
+  } catch(e) {
+    console.error('[Vadrou] fetchPlaceDetails ERREUR:', e.message);
+    return null;
+  }
 }
 
 // ── ÉVÉNEMENTS ──
