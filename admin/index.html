@@ -533,6 +533,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           <button class="vtbtn" id="evbtn-true" onclick="setEvValid(true)">✅ Publié (visible dans l'app)</button>
           <button class="vtbtn" id="evbtn-false" onclick="setEvValid(false)">⏳ Non publié (en attente)</button>
         </div>
+        <div style="margin-top:8px">
+          <button class="vtbtn" id="evbtn-rejeter" onclick="rejectEvent()"
+            style="width:100%;background:#F5E6FA;border-color:#9B59B6;color:#7B2D9E;font-weight:500">
+            🚫 Rejeter cet évènement
+          </button>
+        </div>
+        <div id="ev-rejete-badge" style="display:none;margin-top:6px;padding:5px 10px;background:#F5E6FA;border-radius:8px;font-size:11px;color:#7B2D9E;font-weight:500">
+          🚫 Évènement rejeté — non visible dans l'app
+        </div>
       </div>
 
       <!-- COUP DE CŒUR ÉVÉNEMENT -->
@@ -712,7 +721,6 @@ function onCoordsInput() {
     map.setView([lat,lng], map.getZoom());
     setMarker(lat, lng);
   }
-  debounceSavePlace();
 }
 
 // ── SUPABASE ──
@@ -848,7 +856,6 @@ function toggleCat(btn) {
     currentCats.push(cat);
     btn.classList.add('sel');
   }
-  debounceSavePlace(); // auto-save comme les autres champs
 }
 
 // ── VALID ──
@@ -1072,11 +1079,13 @@ async function loadStats() {
 
     // ── ALERTES CONTENU ──
     try {
-      const [lieuxSansCat, eventsSansCat, lieuxSansDesc, lieuxSansCoords] = await Promise.all([
-        supa('lieux?select=id,nom&or=(categorie.is.null,categorie.eq.{})&valide=eq.true&limit=50'),
-        supa('evenements?select=id,nom&categorie=is.null&valide=eq.true&limit=50'),
+      const [lieuxSansCat, eventsSansCat, lieuxSansDesc, lieuxSansCoords, lieuxNonPublies, evtSansDate] = await Promise.all([
+        supa('lieux?select=id,nom&or=(categorie.is.null,categorie.eq.{})&limit=50'),
+        supa('evenements?select=id,nom&categorie=is.null&limit=50'),
         supa('lieux?select=id,nom&description=is.null&valide=eq.true&limit=50'),
         supa('lieux?select=id,nom&or=(latitude.is.null,longitude.is.null)&valide=eq.true&limit=50'),
+        supa('lieux?select=id,nom&valide=eq.false&limit=50'),
+        supa('evenements?select=id,nom&date_debut=is.null&rejete=is.false&limit=50'),
       ]);
 
       function alertSection(icon, label, color, tc, items, type) {
@@ -1086,7 +1095,7 @@ async function loadStats() {
             <span style="font-size:12px;color:var(--charcoal)">${item.nom}</span>
             <button onclick="${type==='lieu' ? `selectPlace('${item.id}');switchTab('lieux')` : `selectEvent('${item.id}');switchTab('events')`}"
               style="font-size:10px;padding:2px 8px;border:1px solid ${tc};border-radius:6px;background:transparent;color:${tc};cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px">
-              Corriger →
+              Voir →
             </button>
           </div>`).join('');
         return `
@@ -1100,10 +1109,12 @@ async function loadStats() {
       }
 
       const html =
-        alertSection('🏷️', 'Lieux sans catégorie',          '#FBE9E7', 'var(--terracotta)', lieuxSansCat,   'lieu') +
-        alertSection('🏷️', 'Évènements sans catégorie',     '#FBE9E7', 'var(--terracotta)', eventsSansCat,  'event') +
-        alertSection('📝', 'Lieux sans description',         '#FDF3E7', '#854F0B',           lieuxSansDesc,  'lieu') +
-        alertSection('📍', 'Lieux sans coordonnées GPS',     '#FDF3E7', '#854F0B',           lieuxSansCoords,'lieu');
+        alertSection('⏳', 'Lieux non publiés (en attente)',   '#FBE9E7', 'var(--terracotta)', lieuxNonPublies, 'lieu') +
+        alertSection('📅', 'Évènements sans date',             '#FBE9E7', 'var(--terracotta)', evtSansDate,    'event') +
+        alertSection('🏷️', 'Lieux sans catégorie',            '#FDF3E7', '#854F0B',           lieuxSansCat,   'lieu') +
+        alertSection('🏷️', 'Évènements sans catégorie',       '#FDF3E7', '#854F0B',           eventsSansCat,  'event') +
+        alertSection('📝', 'Lieux sans description',           '#FEF9E7', '#7A5F00',           lieuxSansDesc,  'lieu') +
+        alertSection('📍', 'Lieux sans coordonnées GPS',       '#FEF9E7', '#7A5F00',           lieuxSansCoords,'lieu');
 
       document.getElementById('alerts-list').innerHTML = html ||
         '<div style="color:var(--ok);font-size:12px">✅ Tout est en ordre !</div>';
@@ -1569,7 +1580,40 @@ function selectEvent(id) {
   document.getElementById('evbtn-crush-true').className = 'vtbtn'+(currentEvCrush?' sel-valid':'');
   document.getElementById('evbtn-crush-false').className = 'vtbtn'+(!currentEvCrush?' sel-invalid':'');
 
+  // État rejeté
+  const rejete = e.rejete === true;
+  document.getElementById('evbtn-rejeter').style.display = rejete ? 'none' : 'block';
+  document.getElementById('ev-rejete-badge').style.display = rejete ? 'block' : 'none';
+  // Griser les boutons pub/non-pub si rejeté
+  document.getElementById('evbtn-true').disabled = rejete;
+  document.getElementById('evbtn-false').disabled = rejete;
+
   renderEventList();
+}
+
+async function rejectEvent() {
+  if (!currentEvId) return;
+  const e = allEvents.find(x => x.id === currentEvId);
+  if (!confirm(`Rejeter définitivement "${e?.nom}" ? L'évènement sera masqué et marqué comme rejeté.`)) return;
+  try {
+    await supa(`evenements?id=eq.${currentEvId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rejete: true, valide: false }),
+      headers: { 'Prefer': 'return=minimal' }
+    });
+    const idx = allEvents.findIndex(x => x.id === currentEvId);
+    if (idx >= 0) { allEvents[idx].rejete = true; allEvents[idx].valide = false; }
+    // Mettre à jour l'UI
+    document.getElementById('evbtn-rejeter').style.display = 'none';
+    document.getElementById('ev-rejete-badge').style.display = 'block';
+    document.getElementById('evbtn-true').disabled = true;
+    document.getElementById('evbtn-false').disabled = true;
+    document.getElementById('evbtn-true').className = 'vtbtn';
+    document.getElementById('evbtn-false').className = 'vtbtn sel-invalid';
+    applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
+    updateEventStats();
+    showToast('🚫 Évènement rejeté');
+  } catch(err) { showToast('❌ Erreur : ' + err.message); }
 }
 
 function setEvValid(v) {
