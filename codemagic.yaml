@@ -23,10 +23,19 @@ workflows:
       - name: Install Capacitor CLI and iOS
         script: |
           npm install @capacitor/cli @capacitor/core @capacitor/ios
-          npm install -g @capacitor/cli
+
+      - name: Prepare web assets
+        script: |
+          # Créer le dossier www et y copier index.html
+          mkdir -p www
+          cp index.html www/index.html
+          # Copier aussi admin.html si présent
+          [ -f admin.html ] && cp admin.html www/admin.html || true
+          # Copier api/ si présent
+          [ -d api ] && cp -r api www/api || true
 
       - name: Sync Capacitor
-        script: npx cap sync ios --inline
+        script: ./node_modules/.bin/cap sync ios
 
       - name: Set bundle identifier
         script: |
