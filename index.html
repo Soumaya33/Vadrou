@@ -1573,7 +1573,7 @@ function addLeafletMarkers(places) {
     });
     const marker = L.marker([p.lat, p.lng], { icon })
       .addTo(leafletMap)
-      .on('click', function() { openPlaceById(p.id||'', p.name, primaryCat, p.addr, p.rating||''); });
+      .on('click', function() { p.id ? openPlaceById(p.id) : null; });
     leafletMarkers.push(marker);
   });
 }
@@ -2021,16 +2021,18 @@ function renderPlaceCards(places) {
     return;
   }
 
-  container.innerHTML = filtered.slice(0, 12).map((p, i) => {
-    const primaryCat = Array.isArray(p.cat) ? p.cat[0] : p.cat;
-    const cat = CATEGORIES[primaryCat] || CATEGORIES.jeux_ext;
-    // Badge multi-catégorie
-    const extraCats = Array.isArray(p.cat) && p.cat.length > 1
-      ? p.cat.slice(1).map(c => CATEGORIES[c]?.emoji || '').join(' ')
-      : '';
+  _lastFilteredPlaces = filtered.slice(0, 12);
+  container.innerHTML = _lastFilteredPlaces.map((p, i) => {
+    const allCats = Array.isArray(p.cat) ? p.cat : [p.cat];
+    // Prioriser la catégorie du filtre actif pour l'affichage du logo
+    const displayCat = (currentCat !== 'all' && allCats.includes(currentCat)) ? currentCat : allCats[0];
+    const cat = CATEGORIES[displayCat] || CATEGORIES.jeux_ext;
+    const extraCats = allCats.filter(c => c !== displayCat).map(c => CATEGORIES[c]?.emoji || '').filter(Boolean).join(' ');
+    // onclick : UNIQUEMENT l'id UUID — jamais de texte avec apostrophes
+    const onclickAttr = p.id ? `openPlaceById('${p.id}')` : `openPlaceByName(${i})`;
     return `
     <div class="place-card fade-in" style="animation-delay:${i*.05}s"
-      onclick="openPlaceById('${p.id||''}','${escStr(p.name)}','${primaryCat}','${escStr(p.addr||'')}','${p.rating||''}')">
+      onclick="${onclickAttr}">
       <div class="place-card-img" style="background:${cat.color}">${cat.emoji}${extraCats ? '<span style="font-size:12px;position:absolute;bottom:6px;right:6px">'+extraCats+'</span>' : ''}</div>
       <div class="place-card-body">
         <div class="place-card-cat" style="color:${cat.textColor}">${cat.label}</div>
@@ -2220,8 +2222,8 @@ function renderCrushGrid(places) {
     const tarif = p.tarif ? `<span class="crush-tag">${p.tarif}</span>` : '';
     const ages = Array.isArray(p.ages) && p.ages.length ? `<span class="crush-tag">${p.ages[0]}</span>` : '';
     // Utiliser l'id pour éviter les bugs d'apostrophes dans l'onclick
-    const placeId = p.id || '';
-    return `<div class="crush-card" onclick="openPlaceById('${placeId}','','${primaryCat}','','')">
+    const clickAttrCrush = p.id ? `openPlaceById('${p.id}')` : '';
+    return `<div class="crush-card" onclick="${clickAttrCrush}">
       <div class="crush-img" style="background:linear-gradient(135deg,${cat.textColor}99,${cat.textColor}cc)">
         <span>${cat.emoji}</span>
         <div class="crush-badge">${cat.label}</div>
@@ -2381,15 +2383,22 @@ function filterCat(btn, cat) {
 }
 
 // ── DETAIL ──
-// ── Ouvre une fiche lieu par id Supabase (évite les bugs d'apostrophes) ──
-function openPlaceById(id, name, cat, addr, rating) {
-  // Chercher d'abord dans le cache par id, puis par nom
-  const found = (id && placesById[id]) || allPlaces.find(p => p.id === id) || allPlaces.find(p => p.name === name);
+// ── Ouvre une fiche lieu par id UUID Supabase uniquement ──
+// L'id UUID ne contient jamais d'apostrophes -> safe dans les attributs onclick HTML
+function openPlaceById(id) {
+  const found = placesById[id] || allPlaces.find(p => p.id === id);
   if (found) {
-    showPlaceDetail(found.name, found.cat, found.addr, found.rating || rating || '', found.id);
+    showPlaceDetail(found.name, found.cat, found.addr, found.rating || '', found.id);
   } else {
-    showPlaceDetail(name, cat, addr, rating || '', null);
+    console.warn('[Vadrou] openPlaceById: lieu introuvable pour id =', id);
   }
+}
+
+// Fallback pour lieux sans id (secours, rare)
+let _lastFilteredPlaces = [];
+function openPlaceByName(idx) {
+  const p = _lastFilteredPlaces[idx];
+  if (p) showPlaceDetail(p.name, p.cat, p.addr, p.rating || '', p.id || null);
 }
 
 function showPlaceDetail(name, cat, addr, rating, placeId) {
@@ -3113,7 +3122,7 @@ function renderFavs() {
     html += favorites.map(p => {
       const primaryCat = Array.isArray(p.cat) ? p.cat[0] : p.cat;
       const cat = CATEGORIES[primaryCat] || CATEGORIES.jeux_ext;
-      return `<div class="event" style="cursor:pointer" onclick="openPlaceById('${p.id||''}','${escStr(p.name)}','${primaryCat}','${escStr(p.addr||'')}','${p.rating||''}')">
+      return `<div class="event" style="cursor:pointer" onclick="${p.id ? `openPlaceById('${p.id}')` : ''}">
         <div style="width:46px;height:52px;background:${cat.color};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${cat.emoji}</div>
         <div class="event-info">
           <div class="event-name">${p.name}</div>
@@ -3264,7 +3273,7 @@ function updateFsMarkers() {
     });
     const marker = L.marker([p.lat, p.lng], { icon })
       .addTo(fullscreenMap)
-      .on('click', () => openPlaceById(p.id||'', p.name, p.cat, p.addr||'', p.rating||''));
+      .on('click', () => { if(p.id) openPlaceById(p.id); });
     fsMarkers.push(marker);
   });
 }
