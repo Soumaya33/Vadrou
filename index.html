@@ -1504,6 +1504,8 @@ const CATEGORIES = {
 };
 
 let leafletMap = null, leafletMarkers = [], allPlaces = [];
+// Cache global : id → place normalisé (peuplé par loadPlacesFromSupabase + loadCrushPlaces)
+const placesById = {};
 let currentCat = 'all', currentMoment = 'all', currentAge = 'all';
 
 function startApp() {
@@ -1571,7 +1573,7 @@ function addLeafletMarkers(places) {
     });
     const marker = L.marker([p.lat, p.lng], { icon })
       .addTo(leafletMap)
-      .on('click', function() { showPlaceDetail(p.name, primaryCat, p.addr, p.rating); });
+      .on('click', function() { openPlaceById(p.id||'', p.name, primaryCat, p.addr, p.rating||''); });
     leafletMarkers.push(marker);
   });
 }
@@ -1591,7 +1593,7 @@ async function loadPlacesFromSupabase() {
     const data = await supaFetch('lieux?valide=eq.true&select=*');
     if (data && data.length > 0) {
       allPlaces = data.map(function(p) {
-        return {
+        const place = {
           id: p.id, name: p.nom,
           cat: Array.isArray(p.categorie) ? p.categorie : [p.categorie],
           lat: p.latitude, lng: p.longitude,
@@ -1599,6 +1601,8 @@ async function loadPlacesFromSupabase() {
           description: p.description, label: p.label_redac,
           ages: p.ages, tarif: p.tarif,
         };
+        if (p.id) placesById[p.id] = place;
+        return place;
       });
       sortPlaces();
       renderPlaceCards(allPlaces);
@@ -2018,18 +2022,15 @@ function renderPlaceCards(places) {
   }
 
   container.innerHTML = filtered.slice(0, 12).map((p, i) => {
-    const allCats = Array.isArray(p.cat) ? p.cat : [p.cat];
-    // Prioriser la catégorie du filtre actif pour l'affichage du logo
-    const displayCat = (currentCat !== 'all' && allCats.includes(currentCat))
-      ? currentCat
-      : allCats[0];
-    const cat = CATEGORIES[displayCat] || CATEGORIES.jeux_ext;
-    // Badges des autres catégories
-    const extraCats = allCats.filter(c => c !== displayCat).map(c => CATEGORIES[c]?.emoji || '').filter(Boolean).join(' ');
-    const placeId = p.id || '';
+    const primaryCat = Array.isArray(p.cat) ? p.cat[0] : p.cat;
+    const cat = CATEGORIES[primaryCat] || CATEGORIES.jeux_ext;
+    // Badge multi-catégorie
+    const extraCats = Array.isArray(p.cat) && p.cat.length > 1
+      ? p.cat.slice(1).map(c => CATEGORIES[c]?.emoji || '').join(' ')
+      : '';
     return `
     <div class="place-card fade-in" style="animation-delay:${i*.05}s"
-      onclick="openPlaceById('${placeId}','${escStr(p.name)}','${displayCat}','${escStr(p.addr||'')}','${p.rating||''}')">
+      onclick="openPlaceById('${p.id||''}','${escStr(p.name)}','${primaryCat}','${escStr(p.addr||'')}','${p.rating||''}')">
       <div class="place-card-img" style="background:${cat.color}">${cat.emoji}${extraCats ? '<span style="font-size:12px;position:absolute;bottom:6px;right:6px">'+extraCats+'</span>' : ''}</div>
       <div class="place-card-body">
         <div class="place-card-cat" style="color:${cat.textColor}">${cat.label}</div>
@@ -2195,6 +2196,22 @@ async function loadCrushPlaces() {
 function renderCrushGrid(places) {
   const container = document.getElementById('crush-grid');
   if (!container) return;
+  // Normaliser et mettre en cache les coups de cœur
+  places.forEach(p => {
+    if (p.id) {
+      const normalized = {
+        id: p.id, name: p.nom,
+        cat: Array.isArray(p.categorie) ? p.categorie : [p.categorie],
+        lat: p.latitude, lng: p.longitude,
+        addr: p.adresse || 'Bordeaux', rating: '',
+        description: p.description, label: p.label_redac,
+        ages: p.ages, tarif: p.tarif,
+      };
+      placesById[p.id] = normalized;
+      // Aussi dans allPlaces si absent
+      if (!allPlaces.find(x => x.id === p.id)) allPlaces.push(normalized);
+    }
+  });
   container.innerHTML = places.map(p => {
     const primaryCat = Array.isArray(p.categorie) ? p.categorie[0] : p.categorie;
     const cat = CATEGORIES[primaryCat] || CATEGORIES.jeux_ext;
@@ -2202,7 +2219,9 @@ function renderCrushGrid(places) {
     const desc = p.description || '';
     const tarif = p.tarif ? `<span class="crush-tag">${p.tarif}</span>` : '';
     const ages = Array.isArray(p.ages) && p.ages.length ? `<span class="crush-tag">${p.ages[0]}</span>` : '';
-    return `<div class="crush-card" onclick="showPlaceDetail('${escStr(p.nom)}','${primaryCat}','${escStr(p.adresse||'')}','')">
+    // Utiliser l'id pour éviter les bugs d'apostrophes dans l'onclick
+    const placeId = p.id || '';
+    return `<div class="crush-card" onclick="openPlaceById('${placeId}','','${primaryCat}','','')">
       <div class="crush-img" style="background:linear-gradient(135deg,${cat.textColor}99,${cat.textColor}cc)">
         <span>${cat.emoji}</span>
         <div class="crush-badge">${cat.label}</div>
@@ -2362,28 +2381,32 @@ function filterCat(btn, cat) {
 }
 
 // ── DETAIL ──
-// Ouvre la fiche lieu par id Supabase (évite les bugs d'apostrophes dans onclick)
+// ── Ouvre une fiche lieu par id Supabase (évite les bugs d'apostrophes) ──
 function openPlaceById(id, name, cat, addr, rating) {
-  const found = id
-    ? allPlaces.find(p => p.id === id)
-    : allPlaces.find(p => p.name === name);
+  // Chercher d'abord dans le cache par id, puis par nom
+  const found = (id && placesById[id]) || allPlaces.find(p => p.id === id) || allPlaces.find(p => p.name === name);
   if (found) {
-    showPlaceDetail(found.name, found.cat, found.addr, found.rating || rating);
+    showPlaceDetail(found.name, found.cat, found.addr, found.rating || rating || '', found.id);
   } else {
-    showPlaceDetail(name, cat, addr, rating);
+    showPlaceDetail(name, cat, addr, rating || '', null);
   }
 }
 
-function showPlaceDetail(name, cat, addr, rating) {
-  logAction('view_place', name, null, Array.isArray(cat) ? cat[0] : cat);
-  currentPlaceId = name.toLowerCase().replace(/\s+/g,'-');
+function showPlaceDetail(name, cat, addr, rating, placeId) {
+  logAction('view_place', name, placeId || null, Array.isArray(cat) ? cat[0] : cat);
   currentStars = 0;
   document.querySelectorAll('.star').forEach(s => { s.classList.remove('active'); s.textContent = '☆'; });
   document.getElementById('review-name').value = '';
   document.getElementById('review-text').value = '';
 
-  // Récupérer les coords du lieu
-  const place = allPlaces.find(p => p.name === name);
+  // Récupérer le lieu depuis le cache (par id puis par nom)
+  const place = (placeId && placesById[placeId])
+    || allPlaces.find(p => p.id === placeId)
+    || allPlaces.find(p => p.name === name);
+
+  // currentPlaceId pour les avis (utilise l'id Supabase si dispo, sinon slug du nom)
+  currentPlaceId = place?.id || name.toLowerCase().replace(/\s+/g,'-');
+
   const lat = place?.lat || null;
   const lng = place?.lng || null;
 
@@ -2409,11 +2432,13 @@ function showPlaceDetail(name, cat, addr, rating) {
     </div>` : '',
     rating ? `<div class="detail-meta-item">${rating}</div>` : '',
   ].join('');
-  const override = placeOverrides[currentPlaceId] || {};
-  document.getElementById('detail-desc').textContent =
-    override.desc || 'Lieu sélectionné par la communauté Vadrou. Parfait pour une sortie en famille à Bordeaux !';
 
-  renderReviews(currentPlaceId);
+  // Description : priorité 1) override admin, 2) Supabase, 3) texte par défaut
+  const override = placeOverrides[place?.id || currentPlaceId] || {};
+  document.getElementById('detail-desc').textContent =
+    override.desc || place?.description || 'Lieu sélectionné par la communauté Vadrou. Parfait pour une sortie en famille à Bordeaux !';
+
+  renderReviews(place?.id || currentPlaceId);
   updateFavBtn(name);
   document.getElementById('detail-modal').classList.add('open');
 }
@@ -2467,8 +2492,10 @@ async function renderReviews(placeId) {
         });
       }
 
-      if (place && place.id) {
-        const data = await supaFetch(`avis?lieu_id=eq.${place.id}&order=created_at.desc&select=*`);
+      // placeId peut déjà être l'UUID Supabase directement
+      const resolvedId = place?.id || (placeId && placeId.includes('-') ? placeId : null);
+      if (resolvedId) {
+        const data = await supaFetch(`avis?lieu_id=eq.${resolvedId}&order=created_at.desc&select=*`);
         reviews[placeId] = (data || []).map(r => ({
           author: r.auteur,
           stars: r.note,
@@ -3086,7 +3113,7 @@ function renderFavs() {
     html += favorites.map(p => {
       const primaryCat = Array.isArray(p.cat) ? p.cat[0] : p.cat;
       const cat = CATEGORIES[primaryCat] || CATEGORIES.jeux_ext;
-      return `<div class="event" style="cursor:pointer" onclick="showPlaceDetail('${escStr(p.name)}','${primaryCat}','${escStr(p.addr||'')}','${p.rating||''}')">
+      return `<div class="event" style="cursor:pointer" onclick="openPlaceById('${p.id||''}','${escStr(p.name)}','${primaryCat}','${escStr(p.addr||'')}','${p.rating||''}')">
         <div style="width:46px;height:52px;background:${cat.color};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${cat.emoji}</div>
         <div class="event-info">
           <div class="event-name">${p.name}</div>
@@ -3237,7 +3264,7 @@ function updateFsMarkers() {
     });
     const marker = L.marker([p.lat, p.lng], { icon })
       .addTo(fullscreenMap)
-      .on('click', () => showPlaceDetail(p.name, p.cat, p.addr, p.rating));
+      .on('click', () => openPlaceById(p.id||'', p.name, p.cat, p.addr||'', p.rating||''));
     fsMarkers.push(marker);
   });
 }
