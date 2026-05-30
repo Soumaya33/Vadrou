@@ -1046,7 +1046,7 @@ body {
 
 <!-- PAGE CARTE PLEIN ÉCRAN -->
 <div id="map-fullscreen-page">
-  <div id="map-fs-filters" style="position:absolute;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.97);padding:10px 12px 0;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <div id="map-fs-filters" style="position:absolute;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.97);padding:max(44px, calc(10px + env(safe-area-inset-top))) 12px 0;box-shadow:0 2px 8px rgba(0,0,0,.08)">
     <!-- Barre de recherche -->
     <div style="position:relative;margin-bottom:8px">
       <input id="fs-search-input" type="text" placeholder="🔍 Rechercher un lieu…"
@@ -1571,7 +1571,7 @@ function addLeafletMarkers(places) {
     });
     const marker = L.marker([p.lat, p.lng], { icon })
       .addTo(leafletMap)
-      .on('click', function() { showPlaceDetail(p.name, primaryCat, p.addr, p.rating); });
+      .on('click', function() { openPlaceById(p.id || null, p.name, primaryCat, p.addr, p.rating); });
     leafletMarkers.push(marker);
   });
 }
@@ -2359,6 +2359,18 @@ function filterCat(btn, cat) {
 }
 
 // ── DETAIL ──
+// Ouvre la fiche d'un lieu en cherchant d'abord par id (plus fiable que le nom)
+function openPlaceById(id, name, cat, addr, rating) {
+  const found = id
+    ? allPlaces.find(p => p.id === id)
+    : allPlaces.find(p => p.name === name);
+  if (found) {
+    showPlaceDetail(found.name, found.cat, found.addr, found.rating || rating);
+  } else {
+    showPlaceDetail(name, cat, addr, rating);
+  }
+}
+
 function showPlaceDetail(name, cat, addr, rating) {
   logAction('view_place', name, null, Array.isArray(cat) ? cat[0] : cat);
   currentPlaceId = name.toLowerCase().replace(/\s+/g,'-');
@@ -2395,8 +2407,10 @@ function showPlaceDetail(name, cat, addr, rating) {
     rating ? `<div class="detail-meta-item">${rating}</div>` : '',
   ].join('');
   const override = placeOverrides[currentPlaceId] || {};
+  // Priorité : 1) override admin local, 2) description Supabase, 3) texte par défaut
+  const supaDesc = place?.description || '';
   document.getElementById('detail-desc').textContent =
-    override.desc || 'Lieu sélectionné par la communauté Vadrou. Parfait pour une sortie en famille à Bordeaux !';
+    override.desc || supaDesc || 'Lieu sélectionné par la communauté Vadrou. Parfait pour une sortie en famille à Bordeaux !';
 
   renderReviews(currentPlaceId);
   updateFavBtn(name);
@@ -3222,7 +3236,7 @@ function updateFsMarkers() {
     });
     const marker = L.marker([p.lat, p.lng], { icon })
       .addTo(fullscreenMap)
-      .on('click', () => showPlaceDetail(p.name, p.cat, p.addr, p.rating));
+      .on('click', () => openPlaceById(p.id || null, p.name, p.cat, p.addr, p.rating));
     fsMarkers.push(marker);
   });
 }
