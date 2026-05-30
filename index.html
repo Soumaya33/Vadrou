@@ -1977,7 +1977,7 @@ function openEventDetail(evtJson) {
       <div class="detail-info-icon">${r.icon}</div>
       <div style="flex:1">
         <div class="detail-info-label">${r.label}</div>
-        <div class="detail-info-val" ${r.maps ? `onclick="openInMaps('${escStr(r.val)}',${r.lat||null},${r.lng||null})" style="cursor:pointer"` : ''}>
+        <div class="detail-info-val" ${r.maps ? `onclick="openEventPlaceInMaps(${JSON.stringify(r.val)},${r.lat||null},${r.lng||null})" style="cursor:pointer"` : ''}>
           ${r.maps ? `<strong style="color:var(--charcoal)">${r.val}</strong> <span style="font-size:11px;color:var(--terracotta);font-weight:500;margin-left:4px">Itinéraire →</span>` : r.val}
         </div>
       </div>
@@ -2241,6 +2241,23 @@ function renderCrushGrid(places) {
 // ── GOOGLE MAPS BOTTOM SHEET ──
 let _mapsLat = null, _mapsLng = null, _mapsAddr = null;
 
+// Variables globales pour le lieu actuellement affiché (évite apostrophes dans onclick)
+let _currentPlaceAddr = '';
+let _currentPlaceLat = null;
+let _currentPlaceLng = null;
+
+// Appelé par le bouton Itinéraire de la fiche lieu
+function openCurrentPlaceInMaps() {
+  openInMaps(_currentPlaceAddr, _currentPlaceLat, _currentPlaceLng);
+}
+
+// Pour les fiches événements — addr passée via JSON.stringify (safe)
+function openEventPlaceInMaps(addr, lat, lng) {
+  openInMaps(addr, lat, lng);
+}
+  openInMaps(_currentPlaceAddr, _currentPlaceLat, _currentPlaceLng);
+}
+
 function openInMaps(addr, lat, lng) {
   _mapsAddr = addr;
   _mapsLat = lat && lat !== 'null' ? parseFloat(lat) : null;
@@ -2434,8 +2451,13 @@ function showPlaceDetail(name, cat, addr, rating, placeId) {
   document.getElementById('detail-cat').innerHTML = catLabels;
 
   document.getElementById('detail-name').textContent = name;
+  // Stocker addr/lat/lng dans des variables globales pour openInMaps (évite apostrophes dans onclick)
+  _currentPlaceAddr = addr || '';
+  _currentPlaceLat = lat;
+  _currentPlaceLng = lng;
+
   document.getElementById('detail-meta').innerHTML = [
-    addr ? `<div class="detail-meta-item" onclick="openInMaps('${escStr(addr)}',${lat},${lng})" style="cursor:pointer;border:1.5px solid var(--sand);background:var(--cream)">
+    addr ? `<div class="detail-meta-item" onclick="openCurrentPlaceInMaps()" style="cursor:pointer;border:1.5px solid var(--sand);background:var(--cream)">
       📍 <strong style="color:var(--charcoal)">${addr}</strong>
       <span style="margin-left:6px;font-size:11px;color:var(--terracotta);font-weight:500">Itinéraire →</span>
     </div>` : '',
