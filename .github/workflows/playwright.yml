@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch: # Permet de lancer manuellement depuis GitHub
+  workflow_dispatch:
 
 jobs:
   test:
@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 18
 
-      - name: Installer Playwright
+      - name: Installer Playwright (Chromium uniquement)
         run: |
           npm init -y
           npm install --save-dev @playwright/test
@@ -38,7 +38,7 @@ jobs:
 
       - name: Upload rapport HTML
         uses: actions/upload-artifact@v4
-        if: always() # Toujours uploader, même en cas d'échec
+        if: always()
         with:
           name: rapport-tests-${{ github.run_number }}
           path: playwright-report/
