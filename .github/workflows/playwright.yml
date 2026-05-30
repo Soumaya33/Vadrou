@@ -32,16 +32,104 @@ jobs:
         run: sleep 30
 
       - name: Lancer les tests
-        run: npx playwright test tests/vadrou.spec.js --reporter=html || true
+        run: npx playwright test tests/vadrou.spec.js --reporter=json,html || true
         env:
           BASE_URL: https://vadrou.com
-        # || true : les échecs de tests ne font pas échouer le workflow
-        # Le rapport HTML contient le détail de tous les résultats
+          PLAYWRIGHT_JSON_OUTPUT_NAME: results.json
 
-      - name: Upload rapport HTML
+      - name: Générer le résumé email
+        if: always()
+        run: |
+          python3 << 'PYEOF'
+          import json, os, datetime
+
+          # Lire les résultats JSON
+          try:
+              with open('results.json', 'r') as f:
+                  data = json.load(f)
+          except:
+              data = {'suites': [], 'stats': {}}
+
+          stats = data.get('stats', {})
+          total    = stats.get('expected', 0) + stats.get('unexpected', 0) + stats.get('skipped', 0)
+          passed   = stats.get('expected', 0)
+          failed   = stats.get('unexpected', 0)
+          skipped  = stats.get('skipped', 0)
+          duration = round(stats.get('duration', 0) / 1000)
+
+          status_emoji = "✅" if failed == 0 else "❌"
+          status_text  = "SUCCÈS" if failed == 0 else f"ÉCHEC — {failed} test(s) en erreur"
+
+          # Collecter les détails par test
+          tests_lines = []
+          def walk(suites):
+              for suite in suites:
+                  for spec in suite.get('specs', []):
+                      for test in spec.get('tests', []):
+                          status = test.get('status', '')
+                          title  = spec.get('title', '')
+                          if status == 'expected':
+                              tests_lines.append(f"✅ {title}")
+                          elif status == 'unexpected':
+                              tests_lines.append(f"❌ {title}")
+                          elif status == 'skipped':
+                              tests_lines.append(f"⏭️  {title} (skippé)")
+                  walk(suite.get('suites', []))
+          walk(data.get('suites', []))
+
+          now = datetime.datetime.now().strftime('%d/%m/%Y à %Hh%M')
+          commit = os.environ.get('GITHUB_SHA', 'inconnu')[:7]
+          run_url = f"https://github.com/{os.environ.get('GITHUB_REPOSITORY','')}/actions/runs/{os.environ.get('GITHUB_RUN_ID','')}"
+
+          subject = f"Vadrou Tests {status_emoji} {status_text} — {now}"
+
+          body = f"""Rapport de tests automatiques Vadrou
+          ======================================
+          Date    : {now}
+          Commit  : {commit}
+          Durée   : {duration}s
+          
+          Résultat global : {status_emoji} {status_text}
+          ✅ Passés  : {passed}/{total}
+          ❌ Échoués : {failed}/{total}
+          ⏭️  Skippés : {skipped}/{total}
+          
+          Détail des tests :
+          ------------------
+          """ + "\n          ".join(tests_lines) + f"""
+          
+          Voir le run complet : {run_url}
+          """
+
+          # Nettoyer l'indentation
+          body = "\n".join(line.strip() for line in body.split("\n"))
+
+          with open('email_subject.txt', 'w') as f:
+              f.write(subject)
+          with open('email_body.txt', 'w') as f:
+              f.write(body)
+
+          print(f"Email généré : {subject}")
+          print(f"Tests : {passed} ✅ / {failed} ❌ / {skipped} ⏭️")
+          PYEOF
+
+      - name: Envoyer le rapport par email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: bahrisoumaya@gmail.com
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject_filepath: email_subject.txt
+          body_filepath: email_body.txt
+          to: bahrisoumaya@gmail.com
+          from: Vadrou Tests <bahrisoumaya@gmail.com>
+
+      - name: Upload rapport HTML (archive)
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: rapport-tests-${{ github.run_number }}
           path: playwright-report/
-          retention-days: 30
+          retention-days: 7
