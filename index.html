@@ -1443,6 +1443,21 @@ body {
   </div>
 </div>
 
+<!-- UPDATE MODAL -->
+<div id="update-modal-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(26,26,24,.75);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="width:calc(100% - 48px);max-width:340px;background:var(--white);border-radius:24px;padding:28px 24px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-size:40px;margin-bottom:14px">🚀</div>
+    <div style="font-family:'Fraunces',serif;font-size:21px;font-weight:600;color:var(--charcoal);margin-bottom:8px">Nouvelle version disponible</div>
+    <div style="font-size:14px;font-weight:300;color:var(--muted);line-height:1.6;margin-bottom:22px">Une nouvelle version de Vadrou est disponible avec des améliorations et des corrections. Mets à jour pour profiter de la meilleure expérience !</div>
+    <button onclick="openPlayStore()" style="width:100%;background:var(--terracotta);color:white;border:none;border-radius:13px;padding:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:10px">
+      Mettre à jour maintenant →
+    </button>
+    <button onclick="dismissUpdate()" style="width:100%;background:var(--cream2);color:var(--muted);border:none;border-radius:13px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">
+      Plus tard
+    </button>
+  </div>
+</div>
+
 <!-- MAPS BOTTOM SHEET -->
 <div class="maps-sheet-overlay" id="maps-sheet" onclick="closeMapsSheet(event)">
   <div class="maps-sheet">
@@ -1464,6 +1479,10 @@ const API_KEY = 'AIzaSyCl3MADoNXEoJKKNaGZT07l_2EPmSvvBU4';
 
 // SUPABASE
 const SUPABASE_URL = 'https://xwykpuytwjiwuxhpeqrt.supabase.co';
+
+// ── VERSION DE L'APP ──
+// À incrémenter à chaque build Android (doit correspondre à versionCode dans build.gradle)
+const APP_VERSION = 17;
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3eWtwdXl0d2ppd3V4aHBlcXJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NDc2OTUsImV4cCI6MjA5MzQyMzY5NX0.eOwSEwEuKChEV-oygJkpimKPO7vT4aiHm7oPiKYveGE';
 
 async function supaFetch(path, opts) {
@@ -1523,6 +1542,7 @@ function startApp() {
     loadEventsFromSupabase();
     loadCrushPlaces();
     logAction('app_open');
+    checkForUpdate(); // Vérifier si une mise à jour est disponible
   }, 1800);
 }
 
@@ -3366,6 +3386,42 @@ function selectFsPlace(name, cat, addr, rating, lat, lng) {
   document.getElementById('fs-search-results').style.display = 'none';
   if (fullscreenMap && lat && lng) fullscreenMap.setView([lat, lng], 16);
   showPlaceDetail(name, cat, addr, rating);
+}
+
+// ── MISE À JOUR ANDROID ──
+async function checkForUpdate() {
+  // Ne vérifier que sur Android (WebView Capacitor)
+  // Sur web ou iOS, pas de popup Play Store
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (!isAndroid) return;
+
+  try {
+    const data = await supaFetch('config?select=min_version&limit=1');
+    if (!data || !data.length) return;
+
+    const minVersion = parseInt(data[0].min_version, 10);
+    if (!minVersion || isNaN(minVersion)) return;
+
+    if (APP_VERSION < minVersion) {
+      showUpdateModal();
+    }
+  } catch(e) {
+    console.warn('[Vadrou] Vérification de version échouée', e);
+  }
+}
+
+function showUpdateModal() {
+  const overlay = document.getElementById('update-modal-overlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function dismissUpdate() {
+  const overlay = document.getElementById('update-modal-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function openPlayStore() {
+  window.open('https://play.google.com/store/apps/details?id=com.vadrou.app', '_system');
 }
 
 // ── TOAST ──
