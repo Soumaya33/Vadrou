@@ -6,6 +6,7 @@ module.exports = defineConfig({
   timeout: 30000,
   retries: 1,
   workers: 1,
+  forbidOnly: false,
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list'],
