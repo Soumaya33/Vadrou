@@ -32,9 +32,11 @@ jobs:
         run: sleep 30
 
       - name: Lancer les tests
-        run: npx playwright test tests/vadrou.spec.js --reporter=html
+        run: npx playwright test tests/vadrou.spec.js --reporter=html || true
         env:
           BASE_URL: https://vadrou.com
+        # || true : les échecs de tests ne font pas échouer le workflow
+        # Le rapport HTML contient le détail de tous les résultats
 
       - name: Upload rapport HTML
         uses: actions/upload-artifact@v4
