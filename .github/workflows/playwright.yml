@@ -113,6 +113,15 @@ jobs:
           print(f"Tests : {passed} ✅ / {failed} ❌ / {skipped} ⏭️")
           PYEOF
 
+      - name: Lire le contenu de l'email
+        if: always()
+        id: email_content
+        run: |
+          echo "subject=$(cat email_subject.txt)" >> $GITHUB_OUTPUT
+          echo "body<<EOF_BODY" >> $GITHUB_OUTPUT
+          cat email_body.txt >> $GITHUB_OUTPUT
+          echo "EOF_BODY" >> $GITHUB_OUTPUT
+
       - name: Envoyer le rapport par email
         if: always()
         uses: dawidd6/action-send-mail@v3
@@ -121,8 +130,8 @@ jobs:
           server_port: 587
           username: bahrisoumaya@gmail.com
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject_filepath: email_subject.txt
-          body_filepath: email_body.txt
+          subject: ${{ steps.email_content.outputs.subject }}
+          body: ${{ steps.email_content.outputs.body }}
           to: bahrisoumaya@gmail.com
           from: Vadrou Tests <bahrisoumaya@gmail.com>
 
