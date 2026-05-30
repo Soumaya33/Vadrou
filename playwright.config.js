@@ -3,33 +3,28 @@ const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  timeout: 30000,           // 30s max par test
-  retries: 1,               // 1 retry automatique en cas d'échec réseau
-  workers: 1,               // Tests séquentiels (évite surcharge Supabase)
+  timeout: 30000,
+  retries: 1,
+  workers: 1,
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['list'],               // Affiche les résultats dans la console GitHub Actions
+    ['list'],
   ],
   use: {
     baseURL: process.env.BASE_URL || 'https://vadrou.com',
     headless: true,
-    viewport: { width: 390, height: 844 }, // iPhone 14 Pro
+    viewport: { width: 390, height: 844 },
     locale: 'fr-FR',
     timezoneId: 'Europe/Paris',
-    screenshot: 'only-on-failure', // Screenshot auto si test échoue
+    screenshot: 'only-on-failure',
     video: 'off',
   },
+  // Chromium uniquement — WebKit non disponible sur ubuntu-latest sans install complète
   projects: [
     {
       name: 'Mobile Chrome (Android)',
       use: {
         ...require('@playwright/test').devices['Pixel 7'],
-      },
-    },
-    {
-      name: 'Mobile Safari (iPhone)',
-      use: {
-        ...require('@playwright/test').devices['iPhone 14 Pro'],
       },
     },
   ],
