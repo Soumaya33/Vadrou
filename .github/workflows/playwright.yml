@@ -1,0 +1,45 @@
+name: Tests Non-Régression Vadrou
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # Permet de lancer manuellement depuis GitHub
+
+jobs:
+  test:
+    name: Tests Playwright sur vadrou.com
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Installer Playwright
+        run: |
+          npm init -y
+          npm install --save-dev @playwright/test
+          npx playwright install chromium --with-deps
+
+      - name: Attendre que Vercel ait déployé (30s)
+        run: sleep 30
+
+      - name: Lancer les tests
+        run: npx playwright test tests/vadrou.spec.js --reporter=html
+        env:
+          BASE_URL: https://vadrou.com
+
+      - name: Upload rapport HTML
+        uses: actions/upload-artifact@v4
+        if: always() # Toujours uploader, même en cas d'échec
+        with:
+          name: rapport-tests-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 30
