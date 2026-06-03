@@ -1679,52 +1679,63 @@ function loadGoogleForSearch() {
 }
 window.onGoogleReady = function() { console.log('Google Places pret'); };
 
-// ── Recherche de lieu via /api/places (proxy Vercel) ou API Google directe (Android natif) ──
-// Sur web (vadrou.com) : proxy Vercel /api/places pour masquer la clé
-// Sur Android natif (capacitor:) : appel direct à l'API REST Google Places (pas de CORS depuis WebView)
-const PLACES_API_KEY = 'AIzaSyDiU-kFZkJxaPDKkyar5YY73EoCuYYotOg'; // clé unrestricted
-const IS_NATIVE = window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
-console.log('[Vadrou] IS_NATIVE=', IS_NATIVE, '| proto=', window.location.protocol, '| host=', window.location.hostname);
+// ── Recherche de lieu via le proxy Vercel /api/places ──
+// Web (vadrou.com)      : URL relative, requête same-origin → OK
+// App native (And./iOS) : URL absolue vers vadrou.com.
+//   La requête est cross-origin (origine = localhost dans la WebView). Pour qu'elle
+//   aboutisse, fetch() doit passer par le plugin CapacitorHttp (voir capacitor.config.json :
+//   plugins.CapacitorHttp.enabled = true), qui route via la couche HTTP NATIVE et
+//   contourne le CORS de la WebView. Sans ce plugin → "Aucun résultat" dans l'app.
+const IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
+               || window.location.protocol === 'capacitor:'
+               || window.location.protocol === 'file:'
+               || window.location.hostname === 'localhost'
+               || window.location.hostname === '127.0.0.1';
+const API_BASE = IS_NATIVE ? 'https://vadrou.com' : '';
+
+// Mettre à false avant la mise en production : affiche un toast en cas d'erreur réseau Places.
+const PLACES_DEBUG = true;
+console.log('[Vadrou] IS_NATIVE=', IS_NATIVE, '| API_BASE=', API_BASE || '(relatif)',
+            '| proto=', window.location.protocol, '| host=', window.location.hostname);
 
 async function fetchPlacePredictions(query) {
-  let url;
-  if (IS_NATIVE) {
-    // Appel direct Google Places Autocomplete — pas de CORS depuis une WebView Capacitor
-    url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&location=44.8378,-0.5792&radius=30000&language=fr&key=${PLACES_API_KEY}`;
-  } else {
-    // Proxy Vercel sur web pour masquer la clé
-    url = `/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
-  }
-  console.log('[Vadrou] fetchPlacePredictions ->', IS_NATIVE ? 'DIRECT' : 'PROXY', url);
+  const url = `${API_BASE}/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
+  console.log('[Vadrou] fetchPlacePredictions ->', url);
   try {
     const res = await fetch(url);
-    if (!res.ok) { console.warn('[Vadrou] autocomplete HTTP', res.status); return []; }
+    if (!res.ok) {
+      console.warn('[Vadrou] autocomplete HTTP', res.status);
+      if (PLACES_DEBUG) showToast('Places HTTP ' + res.status);
+      return [];
+    }
     const data = await res.json();
     console.log('[Vadrou] autocomplete status=', data.status, 'nb=', (data.predictions||[]).length);
+    if (PLACES_DEBUG && data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      showToast('Places: ' + data.status + (data.error_message ? ' — ' + data.error_message : ''));
+    }
     return data.predictions || [];
   } catch(e) {
     console.error('[Vadrou] fetchPlacePredictions ERREUR:', e.message);
+    if (PLACES_DEBUG) showToast('Places erreur réseau: ' + e.message);
     return [];
   }
 }
 
 async function fetchPlaceDetails(placeId) {
-  let url;
-  if (IS_NATIVE) {
-    // Appel direct Google Places Details — pas de CORS depuis une WebView Capacitor
-    url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=name,formatted_address,geometry&language=fr&key=${PLACES_API_KEY}`;
-  } else {
-    // Proxy Vercel sur web
-    url = `/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
-  }
-  console.log('[Vadrou] fetchPlaceDetails ->', IS_NATIVE ? 'DIRECT' : 'PROXY', url);
+  const url = `${API_BASE}/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
+  console.log('[Vadrou] fetchPlaceDetails ->', url);
   try {
     const res = await fetch(url);
-    if (!res.ok) { console.warn('[Vadrou] details HTTP', res.status); return null; }
+    if (!res.ok) {
+      console.warn('[Vadrou] details HTTP', res.status);
+      if (PLACES_DEBUG) showToast('Détails HTTP ' + res.status);
+      return null;
+    }
     const data = await res.json();
     return data.result || null;
   } catch(e) {
     console.error('[Vadrou] fetchPlaceDetails ERREUR:', e.message);
+    if (PLACES_DEBUG) showToast('Détails erreur réseau: ' + e.message);
     return null;
   }
 }
@@ -3397,24 +3408,41 @@ function selectFsPlace(name, cat, addr, rating, lat, lng) {
 }
 
 // ── MISE À JOUR ANDROID ──
+// Mettre à false avant la production. Quand true : affiche le diagnostic à l'écran
+// ET force la vérification même hors Android (pour tester depuis le web).
+const UPDATE_DEBUG = true;
+
 async function checkForUpdate() {
   // Ne vérifier que sur Android (WebView Capacitor)
   // Sur web ou iOS, pas de popup Play Store
   const isAndroid = /Android/i.test(navigator.userAgent);
-  if (!isAndroid) return;
+  if (!isAndroid && !UPDATE_DEBUG) return;
 
   try {
     const data = await supaFetch('config?select=min_version&limit=1');
-    if (!data || !data.length) return;
+    if (!data || !data.length) {
+      // Tableau vide = table inaccessible (RLS sans politique anon) ou aucune ligne
+      if (UPDATE_DEBUG) showToast('⚠️ config vide/inaccessible — vérifier RLS');
+      return;
+    }
 
     const minVersion = parseInt(data[0].min_version, 10);
-    if (!minVersion || isNaN(minVersion)) return;
+    if (!minVersion || isNaN(minVersion)) {
+      if (UPDATE_DEBUG) showToast('⚠️ min_version invalide: ' + data[0].min_version);
+      return;
+    }
+
+    if (UPDATE_DEBUG) {
+      showToast('config OK — app=' + APP_VERSION + ' / min=' + minVersion +
+                ' → ' + (APP_VERSION < minVersion ? 'MAJ requise' : 'déjà à jour'));
+    }
 
     if (APP_VERSION < minVersion) {
       showUpdateModal();
     }
   } catch(e) {
     console.warn('[Vadrou] Vérification de version échouée', e);
+    if (UPDATE_DEBUG) showToast('❌ Erreur config: ' + e.message);
   }
 }
 
