@@ -1694,7 +1694,7 @@ const IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && wi
 const API_BASE = IS_NATIVE ? 'https://vadrou.com' : '';
 
 // Mettre à false avant la mise en production : affiche un toast en cas d'erreur réseau Places.
-const PLACES_DEBUG = true;
+const PLACES_DEBUG = false;
 console.log('[Vadrou] IS_NATIVE=', IS_NATIVE, '| API_BASE=', API_BASE || '(relatif)',
             '| proto=', window.location.protocol, '| host=', window.location.hostname);
 
@@ -3410,7 +3410,7 @@ function selectFsPlace(name, cat, addr, rating, lat, lng) {
 // ── MISE À JOUR ANDROID ──
 // Mettre à false avant la production. Quand true : affiche le diagnostic à l'écran
 // ET force la vérification même hors Android (pour tester depuis le web).
-const UPDATE_DEBUG = true;
+const UPDATE_DEBUG = false;
 
 async function checkForUpdate() {
   // Ne vérifier que sur Android (WebView Capacitor)
