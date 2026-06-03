@@ -1679,22 +1679,23 @@ function loadGoogleForSearch() {
 }
 window.onGoogleReady = function() { console.log('Google Places pret'); };
 
-// ── Recherche de lieu via /api/places (proxy Vercel) ──
-// URL absolue pour fonctionner aussi bien sur web (vadrou.com) que dans la WebView Capacitor
-function getApiBase() {
-  const proto = window.location.protocol;   // 'https:', 'http:', 'capacitor:', 'file:'
-  const host  = window.location.hostname;   // 'vadrou.com', 'localhost', '127.0.0.1', ''
-  const isNative = proto === 'capacitor:' || proto === 'file:';
-  const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '';
-  if (isNative || isLocalhost) return 'https://vadrou.com';
-  return ''; // relatif sur vadrou.com web
-}
-const API_BASE = getApiBase();
-console.log('[Vadrou] API_BASE=', API_BASE, '| proto=', window.location.protocol, '| host=', window.location.hostname);
+// ── Recherche de lieu via /api/places (proxy Vercel) ou API Google directe (Android natif) ──
+// Sur web (vadrou.com) : proxy Vercel /api/places pour masquer la clé
+// Sur Android natif (capacitor:) : appel direct à l'API REST Google Places (pas de CORS depuis WebView)
+const PLACES_API_KEY = 'AIzaSyDiU-kFZkJxaPDKkyar5YY73EoCuYYotOg'; // clé unrestricted
+const IS_NATIVE = window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
+console.log('[Vadrou] IS_NATIVE=', IS_NATIVE, '| proto=', window.location.protocol, '| host=', window.location.hostname);
 
 async function fetchPlacePredictions(query) {
-  const url = `${API_BASE}/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
-  console.log('[Vadrou] fetchPlacePredictions ->', url);
+  let url;
+  if (IS_NATIVE) {
+    // Appel direct Google Places Autocomplete — pas de CORS depuis une WebView Capacitor
+    url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&location=44.8378,-0.5792&radius=30000&language=fr&key=${PLACES_API_KEY}`;
+  } else {
+    // Proxy Vercel sur web pour masquer la clé
+    url = `/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
+  }
+  console.log('[Vadrou] fetchPlacePredictions ->', IS_NATIVE ? 'DIRECT' : 'PROXY', url);
   try {
     const res = await fetch(url);
     if (!res.ok) { console.warn('[Vadrou] autocomplete HTTP', res.status); return []; }
@@ -1708,8 +1709,15 @@ async function fetchPlacePredictions(query) {
 }
 
 async function fetchPlaceDetails(placeId) {
-  const url = `${API_BASE}/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
-  console.log('[Vadrou] fetchPlaceDetails ->', url);
+  let url;
+  if (IS_NATIVE) {
+    // Appel direct Google Places Details — pas de CORS depuis une WebView Capacitor
+    url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=name,formatted_address,geometry&language=fr&key=${PLACES_API_KEY}`;
+  } else {
+    // Proxy Vercel sur web
+    url = `/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
+  }
+  console.log('[Vadrou] fetchPlaceDetails ->', IS_NATIVE ? 'DIRECT' : 'PROXY', url);
   try {
     const res = await fetch(url);
     if (!res.ok) { console.warn('[Vadrou] details HTTP', res.status); return null; }
