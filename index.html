@@ -3408,9 +3408,27 @@ function selectFsPlace(name, cat, addr, rating, lat, lng) {
 }
 
 // ── MISE À JOUR ANDROID ──
-// Mettre à false avant la production. Quand true : affiche le diagnostic à l'écran
-// ET force la vérification même hors Android (pour tester depuis le web).
-const UPDATE_DEBUG = false;
+// Mettre à false avant la promotion en production. Quand true : affiche le diagnostic
+// à l'écran ET force la vérification même hors Android (pour tester depuis le web).
+const UPDATE_DEBUG = true;
+
+// Récupère le VRAI versionCode du build installé, lu directement depuis l'APK/le bundle
+// natif via @capacitor/app. Cette valeur ne peut pas dériver de la réalité.
+// Si le plugin @capacitor/app n'est pas installé, on retombe sur la constante APP_VERSION
+// (que build-vadrou.ps1 maintient synchronisée avec le versionCode).
+async function getInstalledVersionCode() {
+  try {
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
+        && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+      const info = await window.Capacitor.Plugins.App.getInfo();
+      const code = parseInt(info.build, 10); // Android: versionCode | iOS: CFBundleVersion
+      if (!isNaN(code)) return code;
+    }
+  } catch (e) {
+    console.warn('[Vadrou] App.getInfo() indisponible, fallback sur APP_VERSION', e);
+  }
+  return APP_VERSION;
+}
 
 async function checkForUpdate() {
   // Ne vérifier que sur Android (WebView Capacitor)
@@ -3419,6 +3437,7 @@ async function checkForUpdate() {
   if (!isAndroid && !UPDATE_DEBUG) return;
 
   try {
+    const installedCode = await getInstalledVersionCode();
     const data = await supaFetch('config?select=min_version&limit=1');
     if (!data || !data.length) {
       // Tableau vide = table inaccessible (RLS sans politique anon) ou aucune ligne
@@ -3433,11 +3452,11 @@ async function checkForUpdate() {
     }
 
     if (UPDATE_DEBUG) {
-      showToast('config OK — app=' + APP_VERSION + ' / min=' + minVersion +
-                ' → ' + (APP_VERSION < minVersion ? 'MAJ requise' : 'déjà à jour'));
+      showToast('installé=' + installedCode + ' / min=' + minVersion +
+                ' → ' + (installedCode < minVersion ? 'MAJ requise' : 'déjà à jour'));
     }
 
-    if (APP_VERSION < minVersion) {
+    if (installedCode < minVersion) {
       showUpdateModal();
     }
   } catch(e) {
