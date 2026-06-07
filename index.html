@@ -2131,7 +2131,9 @@ async function getOrCreateDeviceId() {
   return uid;
 }
 
-// Récupère le type et le détail de l'appareil via @capacitor/device.
+// Récupère le type et le détail de l'appareil.
+// 1) Détail complet (modèle exact) via @capacitor/device si présent.
+// 2) Repli : déduit au moins la plateforme (et le modèle Android si possible) du user-agent.
 async function getDeviceInfo() {
   try {
     if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
@@ -2145,7 +2147,17 @@ async function getDeviceInfo() {
       };
     }
   } catch(e) {}
-  return { platform: 'web', model: null, manufacturer: null, os_version: null };
+
+  // Repli sans plugin : plateforme via user-agent
+  const ua = navigator.userAgent || '';
+  let platform = 'web';
+  if (/Android/i.test(ua)) platform = 'android';
+  else if (/iPhone|iPad|iPod/i.test(ua)) platform = 'ios';
+  // Modèle Android parfois present dans l'UA (ex: "; Pixel 7 Build/")
+  let model = null;
+  const m = ua.match(/;\s*([^;)]+?)\s+Build\//);
+  if (m) model = m[1].trim();
+  return { platform: platform, model: model, manufacturer: null, os_version: null };
 }
 
 // Enregistre (ou met à jour) l'appareil dans la table `devices` : 1 ligne par appareil.
