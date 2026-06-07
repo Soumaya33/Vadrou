@@ -1532,6 +1532,7 @@ function startApp() {
   getOrCreateDeviceId().then(id => {
     ANALYTICS_USER_ID = id;
     loadFavoritesFromSupabase(); // Charger les favoris après avoir le device ID
+    registerDevice();            // Enregistrer l'appareil (type + modèle) dans `devices`
   });
   setTimeout(function() {
     document.getElementById('splash').classList.add('out');
@@ -2097,10 +2098,22 @@ function truncate(s, n) { return s && s.length > n ? s.slice(0,n)+'…' : (s||''
 let ANALYTICS_USER_ID = null;
 
 async function getOrCreateDeviceId() {
+  // 1) Méthode robuste : identifiant stable fourni par l'OS via @capacitor/device.
+  //    Identique à chaque lancement, indépendant de localStorage/Preferences.
   try {
-    // Essai avec Capacitor Preferences (persistant sur Android)
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-      const { Preferences } = await import('@capacitor/preferences');
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
+        && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
+      const res = await window.Capacitor.Plugins.Device.getId();
+      const stableId = res && (res.identifier || res.uuid); // identifier (Cap 5+) ou uuid (ancien)
+      if (stableId) return 'dev_' + stableId;
+    }
+  } catch(e) {}
+
+  // 2) Repli natif : Capacitor Preferences (persistant)
+  try {
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
+        && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+      const Preferences = window.Capacitor.Plugins.Preferences;
       const { value } = await Preferences.get({ key: 'vadrou_device_id' });
       if (value) return value;
       const newId = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
@@ -2108,13 +2121,61 @@ async function getOrCreateDeviceId() {
       return newId;
     }
   } catch(e) {}
-  // Fallback web : localStorage
+
+  // 3) Repli web : localStorage
   let uid = localStorage.getItem('vadrou_device_id');
   if (!uid) {
     uid = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
     localStorage.setItem('vadrou_device_id', uid);
   }
   return uid;
+}
+
+// Récupère le type et le détail de l'appareil via @capacitor/device.
+async function getDeviceInfo() {
+  try {
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
+        && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
+      const info = await window.Capacitor.Plugins.Device.getInfo();
+      return {
+        platform:     info.platform     || null, // 'ios' | 'android'
+        model:        info.model        || null, // ex: 'Pixel 10', 'iPhone15,3'
+        manufacturer: info.manufacturer || null, // ex: 'Google', 'Apple'
+        os_version:   info.osVersion    || null,
+      };
+    }
+  } catch(e) {}
+  return { platform: 'web', model: null, manufacturer: null, os_version: null };
+}
+
+// Enregistre (ou met à jour) l'appareil dans la table `devices` : 1 ligne par appareil.
+async function registerDevice() {
+  try {
+    const info = await getDeviceInfo();
+    let appVer = null;
+    try { appVer = await getInstalledVersionCode(); } catch(e) {}
+    await fetch(SUPABASE_URL + '/rest/v1/devices', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        // Upsert : si l'appareil existe déjà (même id), on met à jour les colonnes envoyées.
+        'Prefer': 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify({
+        id:           ANALYTICS_USER_ID,
+        platform:     info.platform,
+        model:        info.model,
+        manufacturer: info.manufacturer,
+        os_version:   info.os_version,
+        app_version:  appVer,
+        last_seen:    new Date().toISOString(),
+      }),
+    });
+  } catch(e) {
+    // Silencieux — le tracking ne doit jamais bloquer l'app
+  }
 }
 
 async function logAction(action, itemName, itemId, itemCat) {
