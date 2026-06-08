@@ -39,6 +39,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
 .stats-period{display:flex;gap:8px;margin-bottom:18px;}
 .period-btn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--sand);background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;color:var(--muted);transition:all .15s;}
 .period-btn.active{background:var(--forest);border-color:var(--forest);color:var(--cream);}
+.date-input{padding:4px 10px;border-radius:20px;border:1.5px solid var(--sand);background:var(--cream);font-family:'DM Sans',sans-serif;font-size:11px;color:var(--charcoal);outline:none;cursor:pointer;}
+.date-input:focus{border-color:var(--forest);}
+.date-input.set{border-color:var(--forest);background:var(--ok-bg);color:var(--forest);font-weight:500;}
 .top-list{display:flex;flex-direction:column;gap:0;}
 .top-item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--cream2);}
 .top-item:last-child{border-bottom:none;}
@@ -533,15 +536,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           <button class="vtbtn" id="evbtn-true" onclick="setEvValid(true)">✅ Publié (visible dans l'app)</button>
           <button class="vtbtn" id="evbtn-false" onclick="setEvValid(false)">⏳ Non publié (en attente)</button>
         </div>
-        <div style="margin-top:8px">
-          <button class="vtbtn" id="evbtn-rejeter" onclick="rejectEvent()"
-            style="width:100%;background:#F5E6FA;border-color:#9B59B6;color:#7B2D9E;font-weight:500">
-            🚫 Rejeter cet évènement
-          </button>
-        </div>
-        <div id="ev-rejete-badge" style="display:none;margin-top:6px;padding:5px 10px;background:#F5E6FA;border-radius:8px;font-size:11px;color:#7B2D9E;font-weight:500">
-          🚫 Évènement rejeté — non visible dans l'app
-        </div>
       </div>
 
       <!-- COUP DE CŒUR ÉVÉNEMENT -->
@@ -573,19 +567,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
 
   <!-- Période -->
   <div class="stats-period">
-    <button class="period-btn" onclick="setPeriod(this,1)">Aujourd'hui</button>
+    <button class="period-btn active" onclick="setPeriod(this,1)">Aujourd'hui</button>
     <button class="period-btn" onclick="setPeriod(this,2)">Hier</button>
-    <button class="period-btn active" onclick="setPeriod(this,7)">7 jours</button>
+    <button class="period-btn" onclick="setPeriod(this,7)">7 jours</button>
     <button class="period-btn" onclick="setPeriod(this,30)">30 jours</button>
     <button class="period-btn" onclick="setPeriod(this,90)">3 mois</button>
     <button class="period-btn" onclick="setPeriod(this,0)">Tout</button>
     <button class="refresh-btn" onclick="loadStats()" style="margin-left:auto">↻ Actualiser</button>
   </div>
 
+  <!-- Plage de dates personnalisée -->
+  <div class="stats-period" style="margin-top:-10px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--muted)">📅 Plage personnalisée :</span>
+    <input type="date" id="range-start" class="date-input" onchange="applyCustomRange()">
+    <span style="font-size:11px;color:var(--muted)">→</span>
+    <input type="date" id="range-end" class="date-input" onchange="applyCustomRange()">
+    <button class="period-btn" id="range-clear" onclick="clearCustomRange()" style="display:none">✕ Effacer</button>
+    <span id="range-summary" style="font-size:11px;color:var(--forest);font-weight:500;margin-left:4px"></span>
+  </div>
+
   <!-- KPIs -->
   <div class="stats-grid" id="stats-kpis">
     <div class="stat-card"><div class="stat-card-label">Ouvertures app</div><div class="stat-card-value" id="kpi-opens">—</div></div>
     <div class="stat-card"><div class="stat-card-label">Utilisateurs uniques</div><div class="stat-card-value" id="kpi-users">—</div></div>
+    <div class="stat-card"><div class="stat-card-label">Nouveaux utilisateurs</div><div class="stat-card-value" id="kpi-new">—</div><div class="stat-card-sub" id="kpi-new-sub"></div></div>
     <div class="stat-card"><div class="stat-card-label">Fiches consultées</div><div class="stat-card-value" id="kpi-views">—</div></div>
     <div class="stat-card"><div class="stat-card-label">Favoris ajoutés</div><div class="stat-card-value" id="kpi-favs">—</div></div>
     <div class="stat-card"><div class="stat-card-label">Avis déposés</div><div class="stat-card-value" id="kpi-reviews">—</div></div>
@@ -635,6 +640,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       <div id="filters-chart"></div>
     </div>
 
+  </div>
+
+  <!-- Utilisateurs par plateforme -->
+  <div class="stats-section">
+    <div class="stats-section-title">📱 Utilisateurs totaux par device <span style="font-size:11px;font-weight:300;color:var(--muted)">tous depuis le début</span></div>
+    <div id="devices-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
   </div>
 
   <!-- Utilisateurs actifs -->
@@ -1017,31 +1028,133 @@ function switchTab(tab) {
 }
 
 // ── STATISTIQUES ──
-let statsPeriodDays = 7;
+let statsPeriodDays = 1; // defaut : aujourd'hui (J)
+let customStart = null, customEnd = null; // YYYY-MM-DD si plage personnalisee
 
 function setPeriod(btn, days) {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   statsPeriodDays = days;
+  // Annuler la plage personnalisee
+  customStart = customEnd = null;
+  document.getElementById('range-start').value = '';
+  document.getElementById('range-end').value = '';
+  document.getElementById('range-start').classList.remove('set');
+  document.getElementById('range-end').classList.remove('set');
+  document.getElementById('range-clear').style.display = 'none';
+  document.getElementById('range-summary').textContent = '';
   loadStats();
 }
 
-function periodFilter() {
-  if (statsPeriodDays === 0) return '';
-  const d = new Date();
+function applyCustomRange() {
+  customStart = document.getElementById('range-start').value || null;
+  customEnd   = document.getElementById('range-end').value || null;
+  if (!customStart && !customEnd) { clearCustomRange(); return; }
+  // Desactiver les boutons preset
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('range-start').classList.toggle('set', !!customStart);
+  document.getElementById('range-end').classList.toggle('set', !!customEnd);
+  document.getElementById('range-clear').style.display = 'inline-block';
+  const fmt = s => s ? new Date(s+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '…';
+  document.getElementById('range-summary').textContent = `${fmt(customStart)} → ${fmt(customEnd)}`;
+  loadStats();
+}
+
+function clearCustomRange() {
+  customStart = customEnd = null;
+  document.getElementById('range-start').value = '';
+  document.getElementById('range-end').value = '';
+  document.getElementById('range-start').classList.remove('set');
+  document.getElementById('range-end').classList.remove('set');
+  document.getElementById('range-clear').style.display = 'none';
+  document.getElementById('range-summary').textContent = '';
+  // Revenir a "Aujourd'hui"
+  const btns = document.querySelectorAll('.period-btn');
+  btns.forEach(b => b.classList.remove('active'));
+  if (btns[0]) btns[0].classList.add('active');
+  statsPeriodDays = 1;
+  loadStats();
+}
+
+// Retourne {start: Date|null, end: Date|null} pour la fenetre courante
+function getDateRange() {
+  if (customStart || customEnd) {
+    return {
+      start: customStart ? new Date(customStart+'T00:00:00') : null,
+      end:   customEnd   ? new Date(customEnd+'T23:59:59')   : null,
+    };
+  }
+  if (statsPeriodDays === 0) return { start:null, end:null };
   if (statsPeriodDays === 1) {
-    // Aujourd'hui seulement
-    const today = d.toISOString().split('T')[0];
-    return `&created_at=gte.${today}T00:00:00&created_at=lte.${today}T23:59:59`;
+    const s = new Date(); s.setHours(0,0,0,0);
+    const e = new Date(); e.setHours(23,59,59,999);
+    return { start:s, end:e };
   }
   if (statsPeriodDays === 2) {
-    // Hier seulement
-    const yest = new Date(d); yest.setDate(yest.getDate() - 1);
-    const y = yest.toISOString().split('T')[0];
-    return `&created_at=gte.${y}T00:00:00&created_at=lte.${y}T23:59:59`;
+    const s = new Date(); s.setDate(s.getDate()-1); s.setHours(0,0,0,0);
+    const e = new Date(); e.setDate(e.getDate()-1); e.setHours(23,59,59,999);
+    return { start:s, end:e };
   }
-  d.setDate(d.getDate() - statsPeriodDays);
-  return `&created_at=gte.${d.toISOString()}`;
+  const s = new Date(); s.setDate(s.getDate()-statsPeriodDays);
+  return { start:s, end:null };
+}
+
+// Construit un filtre PostgREST sur la colonne demandee selon la fenetre courante
+function rangeFilter(col) {
+  const { start, end } = getDateRange();
+  let f = '';
+  if (start) f += `&${col}=gte.${start.toISOString()}`;
+  if (end)   f += `&${col}=lte.${end.toISOString()}`;
+  return f;
+}
+
+function periodFilter() {
+  return rangeFilter('created_at');
+}
+
+// Libelles des plateformes
+const PLATFORM_LABELS = { android:'🤖 Android', ios:'🍎 iOS', web:'🌐 Web' };
+function platformLabel(p) { return PLATFORM_LABELS[(p||'').toLowerCase()] || ('📱 ' + (p || 'Inconnu')); }
+
+// Affiche le KPI "nouveaux utilisateurs" (sur la periode) + la repartition totale par plateforme
+function renderDeviceStats(devices) {
+  // ── Nouveaux utilisateurs sur la fenetre courante (par first_seen) ──
+  const { start, end } = getDateRange();
+  const newCount = devices.filter(d => {
+    if (!d.first_seen) return false;
+    const fs = new Date(d.first_seen);
+    if (start && fs < start) return false;
+    if (end && fs > end) return false;
+    return true;
+  }).length;
+  document.getElementById('kpi-new').textContent = newCount;
+  document.getElementById('kpi-new-sub').textContent =
+    (!start && !end) ? 'sur toute la période' : 'sur la période choisie';
+
+  // ── Repartition totale par plateforme (tous les devices) ──
+  const el = document.getElementById('devices-chart');
+  if (!devices.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun device enregistré (vérifie la politique RLS de la table devices)</div>';
+    return;
+  }
+  const counts = {};
+  devices.forEach(d => {
+    const p = (d.platform || 'inconnu').toLowerCase();
+    counts[p] = (counts[p] || 0) + 1;
+  });
+  const total = devices.length;
+  const max = Math.max(...Object.values(counts), 1);
+  const rows = Object.entries(counts).sort((a,b) => b[1]-a[1]).map(([p, cnt]) => `
+    <div class="bar-row">
+      <div class="bar-label">${platformLabel(p)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/max*100)}%"></div></div>
+      <div class="bar-count">${cnt}</div>
+    </div>`).join('');
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+      <span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--charcoal)">${total}</span> utilisateurs au total
+    </div>
+    ${rows}`;
 }
 
 async function loadStats() {
@@ -1052,6 +1165,17 @@ async function loadStats() {
     const logs = await supa(`events_log?select=action,item_name,item_cat,user_id,created_at&order=created_at.desc&limit=2000${pf}`);
     window._lastLogs = logs; // Stocker pour showUserJourney
 
+    // ── DEVICES (nouveaux utilisateurs + repartition par plateforme + parcours) ──
+    let devices = [];
+    try {
+      devices = await supa('devices?select=*&limit=5000');
+    } catch(e) {
+      console.warn('Table devices non accessible :', e.message);
+    }
+    window._devicesById = {};
+    devices.forEach(d => { window._devicesById[d.id] = d; });
+    renderDeviceStats(devices);
+
     if (!logs.length) {
       document.getElementById('kpi-opens').textContent = '0';
       document.getElementById('kpi-users').textContent = '0';
@@ -1061,6 +1185,7 @@ async function loadStats() {
       document.getElementById('kpi-proposals').textContent = '0';
       document.getElementById('kpi-geo').textContent = '0';
       document.getElementById('kpi-maps').textContent = '0';
+      document.getElementById('users-table').innerHTML = '<div style="color:var(--muted);font-size:12px">Aucune activité sur cette période</div>';
       return;
     }
 
@@ -1079,13 +1204,11 @@ async function loadStats() {
 
     // ── ALERTES CONTENU ──
     try {
-      const [lieuxSansCat, eventsSansCat, lieuxSansDesc, lieuxSansCoords, lieuxNonPublies, evtSansDate] = await Promise.all([
-        supa('lieux?select=id,nom&or=(categorie.is.null,categorie.eq.{})&limit=50'),
-        supa('evenements?select=id,nom&categorie=is.null&limit=50'),
+      const [lieuxSansCat, eventsSansCat, lieuxSansDesc, lieuxSansCoords] = await Promise.all([
+        supa('lieux?select=id,nom&or=(categorie.is.null,categorie.eq.{})&valide=eq.true&limit=50'),
+        supa('evenements?select=id,nom&categorie=is.null&valide=eq.true&limit=50'),
         supa('lieux?select=id,nom&description=is.null&valide=eq.true&limit=50'),
         supa('lieux?select=id,nom&or=(latitude.is.null,longitude.is.null)&valide=eq.true&limit=50'),
-        supa('lieux?select=id,nom&valide=eq.false&limit=50'),
-        supa('evenements?select=id,nom&date_debut=is.null&rejete=is.false&limit=50'),
       ]);
 
       function alertSection(icon, label, color, tc, items, type) {
@@ -1095,7 +1218,7 @@ async function loadStats() {
             <span style="font-size:12px;color:var(--charcoal)">${item.nom}</span>
             <button onclick="${type==='lieu' ? `selectPlace('${item.id}');switchTab('lieux')` : `selectEvent('${item.id}');switchTab('events')`}"
               style="font-size:10px;padding:2px 8px;border:1px solid ${tc};border-radius:6px;background:transparent;color:${tc};cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px">
-              Voir →
+              Corriger →
             </button>
           </div>`).join('');
         return `
@@ -1109,12 +1232,10 @@ async function loadStats() {
       }
 
       const html =
-        alertSection('⏳', 'Lieux non publiés (en attente)',   '#FBE9E7', 'var(--terracotta)', lieuxNonPublies, 'lieu') +
-        alertSection('📅', 'Évènements sans date',             '#FBE9E7', 'var(--terracotta)', evtSansDate,    'event') +
-        alertSection('🏷️', 'Lieux sans catégorie',            '#FDF3E7', '#854F0B',           lieuxSansCat,   'lieu') +
-        alertSection('🏷️', 'Évènements sans catégorie',       '#FDF3E7', '#854F0B',           eventsSansCat,  'event') +
-        alertSection('📝', 'Lieux sans description',           '#FEF9E7', '#7A5F00',           lieuxSansDesc,  'lieu') +
-        alertSection('📍', 'Lieux sans coordonnées GPS',       '#FEF9E7', '#7A5F00',           lieuxSansCoords,'lieu');
+        alertSection('🏷️', 'Lieux sans catégorie',          '#FBE9E7', 'var(--terracotta)', lieuxSansCat,   'lieu') +
+        alertSection('🏷️', 'Évènements sans catégorie',     '#FBE9E7', 'var(--terracotta)', eventsSansCat,  'event') +
+        alertSection('📝', 'Lieux sans description',         '#FDF3E7', '#854F0B',           lieuxSansDesc,  'lieu') +
+        alertSection('📍', 'Lieux sans coordonnées GPS',     '#FDF3E7', '#854F0B',           lieuxSansCoords,'lieu');
 
       document.getElementById('alerts-list').innerHTML = html ||
         '<div style="color:var(--ok);font-size:12px">✅ Tout est en ordre !</div>';
@@ -1260,19 +1381,24 @@ async function loadStats() {
         </div>
       </div>
       <div style="font-size:11px;color:var(--muted);border-top:1px solid var(--cream2);padding-top:12px">
-        <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;font-weight:500;margin-bottom:6px;color:var(--charcoal)">
-          <span>Utilisateur</span><span>Actions</span><span>Dernière visite</span><span></span>
+        <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;font-weight:500;margin-bottom:6px;color:var(--charcoal)">
+          <span>Utilisateur</span><span>Device</span><span>Actions</span><span>Dernière visite</span><span></span>
         </div>
-        ${users.slice(0,15).map(([uid, u]) => `
-          <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream2);align-items:center">
+        ${users.slice(0,15).map(([uid, u]) => {
+          const dev = (window._devicesById || {})[uid];
+          const devLabel = dev ? platformLabel(dev.platform) : '—';
+          return `
+          <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream2);align-items:center">
             <span style="font-family:monospace;font-size:10px;color:var(--muted)">${uid.slice(0,20)}…</span>
+            <span style="font-size:10px;color:var(--charcoal);white-space:nowrap">${devLabel}</span>
             <span style="font-weight:500;color:var(--forest)">${u.actions}</span>
             <span style="font-size:10px">${new Date(u.last).toLocaleDateString('fr-FR')}</span>
             <button onclick='showUserJourney(${JSON.stringify(uid)})' 
               style="font-size:10px;padding:2px 8px;border:1px solid var(--sand);border-radius:6px;background:var(--cream);cursor:pointer;color:var(--forest);font-family:inherit">
               Parcours
             </button>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>`;
 
   } catch(e) {
@@ -1381,6 +1507,18 @@ async function bulkAction(action) {
 
   showToast(`✅ ${done} événement(s) traité(s)${errors ? ` · ${errors} erreur(s)` : ''}`);
 }
+function deviceSummary(uid) {
+  const d = (window._devicesById || {})[uid];
+  if (!d) return '';
+  const parts = [];
+  parts.push(platformLabel(d.platform));
+  const modele = [d.manufacturer, d.model].filter(Boolean).join(' ');
+  if (modele) parts.push(modele);
+  if (d.os_version) parts.push('OS ' + d.os_version);
+  if (d.app_version != null) parts.push('app v' + d.app_version);
+  return parts.join(' · ');
+}
+
 function showUserJourney(uid) {
   const logs = window._lastLogs || [];
   const userLogs = logs.filter(l => l.user_id === uid).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
@@ -1418,6 +1556,7 @@ function showUserJourney(uid) {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div>
           <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:600">Parcours utilisateur</div>
+          ${deviceSummary(uid) ? `<div style="font-size:12px;color:var(--forest);font-weight:500;margin-top:3px">${deviceSummary(uid)}</div>` : ''}
           <div style="font-size:10px;font-family:monospace;color:var(--muted);margin-top:2px">${uid}</div>
         </div>
         <button onclick="document.getElementById('journey-modal').remove()"
@@ -1580,40 +1719,7 @@ function selectEvent(id) {
   document.getElementById('evbtn-crush-true').className = 'vtbtn'+(currentEvCrush?' sel-valid':'');
   document.getElementById('evbtn-crush-false').className = 'vtbtn'+(!currentEvCrush?' sel-invalid':'');
 
-  // État rejeté
-  const rejete = e.rejete === true;
-  document.getElementById('evbtn-rejeter').style.display = rejete ? 'none' : 'block';
-  document.getElementById('ev-rejete-badge').style.display = rejete ? 'block' : 'none';
-  // Griser les boutons pub/non-pub si rejeté
-  document.getElementById('evbtn-true').disabled = rejete;
-  document.getElementById('evbtn-false').disabled = rejete;
-
   renderEventList();
-}
-
-async function rejectEvent() {
-  if (!currentEvId) return;
-  const e = allEvents.find(x => x.id === currentEvId);
-  if (!confirm(`Rejeter définitivement "${e?.nom}" ? L'évènement sera masqué et marqué comme rejeté.`)) return;
-  try {
-    await supa(`evenements?id=eq.${currentEvId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ rejete: true, valide: false }),
-      headers: { 'Prefer': 'return=minimal' }
-    });
-    const idx = allEvents.findIndex(x => x.id === currentEvId);
-    if (idx >= 0) { allEvents[idx].rejete = true; allEvents[idx].valide = false; }
-    // Mettre à jour l'UI
-    document.getElementById('evbtn-rejeter').style.display = 'none';
-    document.getElementById('ev-rejete-badge').style.display = 'block';
-    document.getElementById('evbtn-true').disabled = true;
-    document.getElementById('evbtn-false').disabled = true;
-    document.getElementById('evbtn-true').className = 'vtbtn';
-    document.getElementById('evbtn-false').className = 'vtbtn sel-invalid';
-    applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
-    updateEventStats();
-    showToast('🚫 Évènement rejeté');
-  } catch(err) { showToast('❌ Erreur : ' + err.message); }
 }
 
 function setEvValid(v) {
