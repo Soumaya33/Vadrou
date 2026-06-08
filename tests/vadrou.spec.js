@@ -1,7 +1,14 @@
 // tests/vadrou.spec.js
 // Tests de non-régression Vadrou — vadrou.com
-// Correspond à la checklist : tests automatisables (28/43)
+// Correspond à la checklist : tests automatisables (32/43)
 // Pour ajouter un test : copier un bloc test() existant et l'adapter
+//
+// Nouveautés couvertes (juin 2026) :
+//   T29 — Intégrité de l'encodage UTF-8 (anti-charabia)
+//   T30 — Recherche "Proposer un lieu" (le bug Places d'origine)
+//   T31 — Aucun toast de debug en prod (PLACES_DEBUG / UPDATE_DEBUG = false)
+//   T32 — ID device persistant et stable (suivi des utilisateurs)
+//   T33 — Favoris persistants après rechargement (ID device stable de bout en bout)
 
 const { test, expect } = require('@playwright/test');
 
@@ -40,9 +47,12 @@ test('[T01] La page se charge sans erreur JS critique', async ({ page }) => {
   await page.goto(BASE_URL, { waitUntil: 'networkidle' });
   await page.waitForTimeout(5000);
 
-  // Aucune erreur SyntaxError ou TypeError critique
+  // Renforcé : on attrape aussi les ReferenceError et les références cassées
+  // (fonction/variable inexistante) — typiques d'un fichier mal copié ou mal mergé.
   const criticalErrors = jsErrors.filter(e =>
-    e.includes('SyntaxError') || e.includes('Unexpected token')
+    e.includes('SyntaxError') || e.includes('Unexpected token') ||
+    e.includes('ReferenceError') || e.includes('is not defined') ||
+    e.includes('is not a function')
   );
   expect(criticalErrors, `Erreurs JS : ${criticalErrors.join(', ')}`).toHaveLength(0);
 });
@@ -145,7 +155,7 @@ test('[T12] ⚠️ CRITIQUE — Clic lieu avec apostrophe dans le nom ouvre sa f
   let foundAndClicked = false;
   for (let i = 0; i < count; i++) {
     const name = await allCards.nth(i).locator('.place-card-name, .crush-name').textContent().catch(() => '');
-    if (name.includes("'") || name.includes("'")) {
+    if (name.includes("'") || name.includes("’")) {
       await allCards.nth(i).click();
       await expect(page.locator('#detail-modal.open')).toBeVisible({ timeout: 5000 });
       const detailName = await page.locator('#detail-name').textContent();
@@ -405,4 +415,109 @@ test('[T28] ⚠️ Aucune popup de mise à jour sur le web (non-Android)', async
   const overlay = page.locator('#update-modal-overlay');
   const isVisible = await overlay.isVisible();
   expect(isVisible, 'La popup de mise à jour ne doit pas s\'afficher sur le web').toBe(false);
+});
+
+
+// ════════════════════════════════════════════════════
+// 10. INTÉGRITÉ & NOUVELLES FONCTIONNALITÉS (juin 2026)
+// ════════════════════════════════════════════════════
+
+test('[T29] ⚠️ CRITIQUE — Intégrité de l\'encodage UTF-8 (anti-charabia)', async ({ page }) => {
+  // Garde contre le double-encodage UTF-8 (emojis/accents transformés en "Ã°Å¸...").
+  // C'est le bug qui avait rendu toute l'interface illisible.
+  await waitForAppReady(page);
+
+  const txt = await page.evaluate(() => document.body.innerText || '');
+
+  // 1) Aucune séquence de double-encodage connue.
+  //    (On cible des séquences précises — pas le simple "Â" qui est légitime dans "Âge".)
+  const mojibake = /Ã©|Ã¨|Ã |Ã´|Ã§|Ã®|Ã¯|Ãª|Ã‰|Ã€|â€™|â€œ|â€\u009d|Å¸|Ã‚|ð\u0178/;
+  const found = txt.match(mojibake);
+  expect(found, `Charabia d'encodage détecté : "${found ? found[0] : ''}"`).toBeNull();
+
+  // 2) Les accents et emojis de référence s'affichent correctement.
+  expect(txt, 'L\'accent du sous-titre doit être correct').toContain('Métropole');
+  expect(txt, 'L\'emoji repère doit être intact').toContain('📍');
+});
+
+test('[T30] ⚠️ CRITIQUE — Recherche "Proposer un lieu" ne reste pas bloquée', async ({ page }) => {
+  // Le bug d'origine : la recherche restait figée sur "Recherche…".
+  // Ici on vérifie qu'elle se résout TOUJOURS (résultats ou "Aucun résultat").
+  await waitForAppReady(page);
+
+  await page.locator('#fab').click();
+  await expect(page.locator('#choice-modal.open')).toBeVisible({ timeout: 3000 });
+  await page.locator('#choice-modal .choice-btn').first().click(); // "Proposer un lieu"
+  await expect(page.locator('#add-modal.open')).toBeVisible({ timeout: 3000 });
+
+  await page.locator('#place-search-input').fill('Parc');
+
+  // La boîte de suggestions doit sortir de l'état "Recherche…" (résolution réussie).
+  await page.waitForFunction(() => {
+    const box = document.getElementById('place-suggestions');
+    if (!box) return false;
+    const t = (box.innerText || '').trim();
+    return t.length > 0 && !t.includes('Recherche');
+  }, { timeout: 12000 });
+
+  const boxText = (await page.locator('#place-suggestions').innerText()).trim();
+  expect(boxText, 'La recherche ne doit pas rester bloquée sur "Recherche…"').not.toContain('Recherche…');
+
+  // Idéalement le proxy Places renvoie des résultats ; sinon, état résolu accepté.
+  const items = await page.locator('#place-suggestions .place-suggestion-item').count();
+  console.log(`[T30] suggestions de lieux trouvées : ${items}`);
+});
+
+test('[T31] ⚠️ Aucun toast de debug en production (flags désactivés)', async ({ page }) => {
+  // Vérifie que PLACES_DEBUG et UPDATE_DEBUG sont bien à false :
+  // aucun toast de diagnostic ne doit apparaître au démarrage.
+  await waitForAppReady(page);
+  await page.waitForTimeout(4000); // laisser fetchPlacePredictions / checkForUpdate s'exécuter
+
+  const debugToast = page.locator('body > div').filter({
+    hasText: /installé=|min=\d|config (vide|OK)|Places (HTTP|erreur|:)|RLS|repere/i,
+  });
+  await expect(debugToast, 'Un toast de debug est visible : PLACES_DEBUG/UPDATE_DEBUG doit être false').toHaveCount(0);
+});
+
+test('[T32] ID device persistant et stable après rechargement', async ({ page }) => {
+  // Suivi des utilisateurs : un même appareil doit garder le même identifiant.
+  await waitForAppReady(page);
+  await page.waitForTimeout(1000);
+
+  const id1 = await page.evaluate(() => localStorage.getItem('vadrou_device_id'));
+  expect(id1, 'Un identifiant d\'appareil doit être créé').toBeTruthy();
+
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForSelector('#places-scroll .place-card', { timeout: 15000 });
+  await page.waitForTimeout(1000);
+
+  const id2 = await page.evaluate(() => localStorage.getItem('vadrou_device_id'));
+  expect(id2, 'L\'identifiant doit rester identique après rechargement').toBe(id1);
+});
+
+test('[T33] Favoris persistants après rechargement (ID device stable de bout en bout)', async ({ page }) => {
+  // Valide indirectement la stabilité de l'ID : si l'ID changeait, les favoris
+  // (stockés côté Supabase par device) disparaîtraient au rechargement.
+  await waitForAppReady(page);
+
+  // Ajouter un lieu aux favoris
+  await page.locator('#places-scroll .place-card').first().click();
+  await expect(page.locator('#detail-modal.open')).toBeVisible({ timeout: 5000 });
+  const favBtn = page.locator('#detail-fav-btn');
+  await favBtn.click();
+  await expect(favBtn).toHaveText('❤️');
+  await closeFiche(page);
+
+  // Recharger (même contexte → même device id)
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForSelector('#places-scroll .place-card', { timeout: 15000 });
+  await page.waitForTimeout(1500); // laisser charger les favoris depuis Supabase
+
+  // Le favori doit toujours être présent
+  await page.locator('#nav-favs').click();
+  await expect(
+    page.locator('#favs-list .event').first(),
+    'Le favori doit survivre au rechargement (ID device stable)'
+  ).toBeVisible({ timeout: 5000 });
 });
