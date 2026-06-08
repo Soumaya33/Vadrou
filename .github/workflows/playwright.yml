@@ -11,7 +11,7 @@ jobs:
   test:
     name: Tests Playwright sur vadrou.com
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -43,22 +43,38 @@ jobs:
           python3 << 'PYEOF'
           import json, os, datetime
 
+          # Nombre de tests attendus (32 actifs + 1 skippé = 33). En dessous, le run est incomplet.
+          EXPECTED_MIN = 30
+
           # Lire les résultats JSON
+          results_ok = True
           try:
               with open('results.json', 'r') as f:
                   data = json.load(f)
-          except:
+          except Exception:
               data = {'suites': [], 'stats': {}}
+              results_ok = False
 
           stats = data.get('stats', {})
-          total    = stats.get('expected', 0) + stats.get('unexpected', 0) + stats.get('skipped', 0)
           passed   = stats.get('expected', 0)
           failed   = stats.get('unexpected', 0)
           skipped  = stats.get('skipped', 0)
+          total    = passed + failed + skipped
           duration = round(stats.get('duration', 0) / 1000)
 
-          status_emoji = "✅" if failed == 0 else "❌"
-          status_text  = "SUCCÈS" if failed == 0 else f"ÉCHEC — {failed} test(s) en erreur"
+          # Statut honnête : un run vide ou incomplet n'est PAS un succès.
+          if not results_ok or total == 0:
+              status_emoji = "❌"
+              status_text  = "ÉCHEC — aucun test exécuté (run interrompu ou résultats manquants)"
+          elif total < EXPECTED_MIN:
+              status_emoji = "⚠️"
+              status_text  = f"INCOMPLET — seulement {total} tests sur ~33 (run probablement coupé avant la fin)"
+          elif failed > 0:
+              status_emoji = "❌"
+              status_text  = f"ÉCHEC — {failed} test(s) en erreur"
+          else:
+              status_emoji = "✅"
+              status_text  = "SUCCÈS"
 
           # Collecter les détails par test
           tests_lines = []
@@ -76,6 +92,9 @@ jobs:
                               tests_lines.append(f"⏭️  {title} (skippé)")
                   walk(suite.get('suites', []))
           walk(data.get('suites', []))
+
+          if not tests_lines:
+              tests_lines = ["(aucun test enregistré — résultats vides ou run interrompu)"]
 
           now = datetime.datetime.now().strftime('%d/%m/%Y à %Hh%M')
           commit = os.environ.get('GITHUB_SHA', 'inconnu')[:7]
@@ -110,7 +129,7 @@ jobs:
               f.write(body)
 
           print(f"Email généré : {subject}")
-          print(f"Tests : {passed} ✅ / {failed} ❌ / {skipped} ⏭️")
+          print(f"Tests : {passed} ✅ / {failed} ❌ / {skipped} ⏭️  (total {total})")
           PYEOF
 
       - name: Lire le contenu de l'email
