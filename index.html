@@ -3504,10 +3504,14 @@ async function getInstalledVersionCode() {
 }
 
 async function checkForUpdate() {
-  // Ne vérifier que sur Android (WebView Capacitor)
-  // Sur web ou iOS, pas de popup Play Store
+  // La popup ne concerne QUE l'app native Android (mise à jour via le Play Store).
+  // On exige d'être dans l'app Capacitor native ET sur Android.
+  // -> Exclut le web, y compris ouvert depuis un navigateur Android dont le
+  //    user-agent contient "Android" (sinon la popup s'afficherait sur vadrou.com).
+  const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const isAndroid = /Android/i.test(navigator.userAgent);
-  if (!isAndroid && !UPDATE_DEBUG) return;
+  const isNativeAndroid = isNative && isAndroid;
+  if (!isNativeAndroid && !UPDATE_DEBUG) return;
 
   try {
     const installedCode = await getInstalledVersionCode();
