@@ -1386,11 +1386,14 @@ async function loadStats() {
         </div>
         ${users.slice(0,15).map(([uid, u]) => {
           const dev = (window._devicesById || {})[uid];
-          const devLabel = dev ? platformLabel(dev.platform) : '—';
+          const devModel = dev ? [dev.manufacturer, dev.model].filter(Boolean).join(' ') : '';
+          const devLabel = dev
+            ? `${platformLabel(dev.platform)}${devModel ? ' · ' + devModel : ''}`
+            : '—';
           return `
           <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream2);align-items:center">
             <span style="font-family:monospace;font-size:10px;color:var(--muted)">${uid.slice(0,20)}…</span>
-            <span style="font-size:10px;color:var(--charcoal);white-space:nowrap">${devLabel}</span>
+            <span style="font-size:10px;color:var(--charcoal);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${devLabel}">${devLabel}</span>
             <span style="font-weight:500;color:var(--forest)">${u.actions}</span>
             <span style="font-size:10px">${new Date(u.last).toLocaleDateString('fr-FR')}</span>
             <button onclick='showUserJourney(${JSON.stringify(uid)})' 
