@@ -14,6 +14,10 @@ workflows:
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
         APP_STORE_APPLE_ID: "6771132877"
+        # Version VISIBLE par l'utilisateur (CFBundleShortVersionString).
+        # A incrementer DELIBEREMENT a chaque release publiee (1.2 -> 1.3 -> 2.0 ...).
+        # Doit toujours etre superieure a la derniere version approuvee sur l'App Store.
+        MARKETING_VERSION: "1.2"
       node: 18
     scripts:
       - name: Install dependencies
@@ -35,21 +39,25 @@ workflows:
       - name: Set bundle identifier
         script: |
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" ios/App/App/Info.plist
-      - name: Auto-increment build number (CFBundleVersion)
+      - name: Set versions (marketing deliberee + build auto-incremente)
         script: |
-          # Recupere le dernier numero de build deja uploade (App Store + TestFlight)
-          # et prend le plus eleve, puis +1. Garantit un CFBundleVersion toujours croissant.
+          # 1) Version VISIBLE : valeur de la variable MARKETING_VERSION (decision produit)
+          sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $MARKETING_VERSION;/g" "$XCODE_PROJECT/project.pbxproj"
+          echo "MARKETING_VERSION (version visible) -> $MARKETING_VERSION"
+
+          # 2) Numero de BUILD : dernier connu (App Store + TestFlight) + 1, toujours croissant
           TF=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
           AS=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
           [ -z "$TF" ] && TF=0
           [ -z "$AS" ] && AS=0
           if [ "$TF" -ge "$AS" ]; then LATEST=$TF; else LATEST=$AS; fi
           NEXT=$((LATEST + 1))
-          echo "Dernier build connu (TestFlight=$TF, App Store=$AS) -> nouveau build : $NEXT"
+          echo "Build (CFBundleVersion) : dernier connu (TF=$TF, AS=$AS) -> $NEXT"
           # CURRENT_PROJECT_VERSION pilote CFBundleVersion (2 occurrences : Debug + Release)
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9][0-9]*;/CURRENT_PROJECT_VERSION = $NEXT;/g" "$XCODE_PROJECT/project.pbxproj"
+
           echo "Verification :"
-          grep "CURRENT_PROJECT_VERSION" "$XCODE_PROJECT/project.pbxproj"
+          grep -E "MARKETING_VERSION|CURRENT_PROJECT_VERSION" "$XCODE_PROJECT/project.pbxproj"
       - name: Build iOS
         script: |
           xcode-project use-profiles
