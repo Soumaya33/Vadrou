@@ -17,8 +17,8 @@ const BASE_URL = process.env.BASE_URL || 'https://vadrou.com';
 // ── Helpers ──────────────────────────────────────────
 // Attend que le splash disparaisse et que l'app soit chargée
 async function waitForAppReady(page) {
-  await page.goto(BASE_URL, { waitUntil: 'networkidle' });
-  // Attendre que le splash soit masqué (2s max après networkidle)
+  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+  // Attendre que le splash soit masqué (2s max après chargement)
   await page.waitForSelector('#splash[style*="display:none"], #splash.out', { timeout: 8000 }).catch(() => {});
   // Attendre que les lieux soient chargés (carrousel visible)
   await page.waitForSelector('#places-scroll .place-card', { timeout: 15000 });
@@ -44,7 +44,7 @@ test('[T01] La page se charge sans erreur JS critique', async ({ page }) => {
   const jsErrors = [];
   page.on('pageerror', err => jsErrors.push(err.message));
 
-  await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(5000);
 
   // Renforcé : on attrape aussi les ReferenceError et les références cassées
@@ -488,7 +488,7 @@ test('[T32] ID device persistant et stable après rechargement', async ({ page }
   const id1 = await page.evaluate(() => localStorage.getItem('vadrou_device_id'));
   expect(id1, 'Un identifiant d\'appareil doit être créé').toBeTruthy();
 
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#places-scroll .place-card', { timeout: 15000 });
   await page.waitForTimeout(1000);
 
@@ -510,7 +510,7 @@ test('[T33] Favoris persistants après rechargement (ID device stable de bout en
   await closeFiche(page);
 
   // Recharger (même contexte → même device id)
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#places-scroll .place-card', { timeout: 15000 });
   await page.waitForTimeout(1500); // laisser charger les favoris depuis Supabase
 
