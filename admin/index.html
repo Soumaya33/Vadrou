@@ -644,7 +644,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
 
   <!-- Utilisateurs par plateforme -->
   <div class="stats-section">
-    <div class="stats-section-title">📱 Utilisateurs totaux par device <span style="font-size:11px;font-weight:300;color:var(--muted)">tous depuis le début</span></div>
+    <div class="stats-section-title">📱 Utilisateurs par device <span style="font-size:11px;font-weight:300;color:var(--muted)">plateforme · modèle, sur la période</span></div>
     <div id="devices-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
   </div>
 
@@ -1116,8 +1116,9 @@ function periodFilter() {
 const PLATFORM_LABELS = { android:'🤖 Android', ios:'🍎 iOS', web:'🌐 Web' };
 function platformLabel(p) { return PLATFORM_LABELS[(p||'').toLowerCase()] || ('📱 ' + (p || 'Inconnu')); }
 
-// Affiche le KPI "nouveaux utilisateurs" (sur la periode) + la repartition totale par plateforme
-function renderDeviceStats(devices) {
+// Affiche le KPI "nouveaux utilisateurs" (sur la periode) + la repartition par plateforme/modele
+// des utilisateurs ACTIFS sur la periode selectionnee en haut
+function renderDeviceStats(devices, logs) {
   // ── Nouveaux utilisateurs sur la fenetre courante (par first_seen) ──
   const { start, end } = getDateRange();
   const newCount = devices.filter(d => {
@@ -1131,28 +1132,54 @@ function renderDeviceStats(devices) {
   document.getElementById('kpi-new-sub').textContent =
     (!start && !end) ? 'sur toute la période' : 'sur la période choisie';
 
-  // ── Repartition totale par plateforme (tous les devices) ──
+  // ── Repartition des utilisateurs actifs sur la periode, par plateforme puis modele ──
   const el = document.getElementById('devices-chart');
-  if (!devices.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun device enregistré (vérifie la politique RLS de la table devices)</div>';
+  const activeIds = [...new Set((logs || []).map(l => l.user_id))];
+
+  if (!activeIds.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun utilisateur actif sur cette période</div>';
     return;
   }
-  const counts = {};
-  devices.forEach(d => {
-    const p = (d.platform || 'inconnu').toLowerCase();
-    counts[p] = (counts[p] || 0) + 1;
+
+  // Regrouper : plateforme -> { count, models: { libelleModele -> count } }
+  const byPlatform = {};
+  activeIds.forEach(id => {
+    const d = window._devicesById[id];
+    const p = (d?.platform || 'inconnu').toLowerCase();
+    const model = d ? ([d.manufacturer, d.model].filter(Boolean).join(' ') || 'Modèle inconnu')
+                    : 'Device inconnu';
+    if (!byPlatform[p]) byPlatform[p] = { count: 0, models: {} };
+    byPlatform[p].count++;
+    byPlatform[p].models[model] = (byPlatform[p].models[model] || 0) + 1;
   });
-  const total = devices.length;
-  const max = Math.max(...Object.values(counts), 1);
-  const rows = Object.entries(counts).sort((a,b) => b[1]-a[1]).map(([p, cnt]) => `
-    <div class="bar-row">
-      <div class="bar-label">${platformLabel(p)}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/max*100)}%"></div></div>
-      <div class="bar-count">${cnt}</div>
-    </div>`).join('');
+
+  const total = activeIds.length;
+  const max = Math.max(...Object.values(byPlatform).map(v => v.count), 1);
+
+  const rows = Object.entries(byPlatform)
+    .sort((a, b) => b[1].count - a[1].count)
+    .map(([p, data]) => {
+      const models = Object.entries(data.models)
+        .sort((a, b) => b[1] - a[1])
+        .map(([m, cnt]) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0 2px 22px">
+            <span style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m}</span>
+            <span style="font-size:11px;color:var(--charcoal);font-weight:500;flex-shrink:0;margin-left:8px">${cnt}</span>
+          </div>`).join('');
+      return `
+        <div style="margin-bottom:12px">
+          <div class="bar-row" style="margin-bottom:4px">
+            <div class="bar-label">${platformLabel(p)}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(data.count/max*100)}%"></div></div>
+            <div class="bar-count">${data.count}</div>
+          </div>
+          ${models}
+        </div>`;
+    }).join('');
+
   el.innerHTML = `
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-      <span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--charcoal)">${total}</span> utilisateurs au total
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+      <span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--charcoal)">${total}</span> utilisateurs actifs sur la période
     </div>
     ${rows}`;
 }
@@ -1174,7 +1201,7 @@ async function loadStats() {
     }
     window._devicesById = {};
     devices.forEach(d => { window._devicesById[d.id] = d; });
-    renderDeviceStats(devices);
+    renderDeviceStats(devices, logs);
 
     if (!logs.length) {
       document.getElementById('kpi-opens').textContent = '0';
