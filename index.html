@@ -1699,44 +1699,57 @@ const PLACES_DEBUG = false;
 console.log('[Vadrou] IS_NATIVE=', IS_NATIVE, '| API_BASE=', API_BASE || '(relatif)',
             '| proto=', window.location.protocol, '| host=', window.location.hostname);
 
+// Effectue un GET JSON. Sur app native (iOS/Android) : passe EXPLICITEMENT par le HTTP
+// natif (CapacitorHttp) pour contourner le CORS de la WebView — fiable sur les deux OS,
+// sans dépendre du patch global de fetch. Sur le web : fetch classique (proxy same-origin).
+function _capacitorHttp() {
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp) {
+    return window.Capacitor.Plugins.CapacitorHttp;
+  }
+  if (window.CapacitorHttp) return window.CapacitorHttp;
+  return null;
+}
+
+async function vadrouGetJson(url) {
+  const cap = _capacitorHttp();
+  if (IS_NATIVE && cap) {
+    const res = await cap.get({ url: url, headers: { 'Accept': 'application/json' } });
+    if (res.status < 200 || res.status >= 300) throw new Error('HTTP ' + res.status);
+    let data = res.data;
+    if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e) {} }
+    return data;
+  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return await res.json();
+}
+
 async function fetchPlacePredictions(query) {
   const url = `${API_BASE}/api/places?action=autocomplete&input=${encodeURIComponent(query)}`;
-  console.log('[Vadrou] fetchPlacePredictions ->', url);
+  console.log('[Vadrou] fetchPlacePredictions ->', url, '| native=', IS_NATIVE);
   try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn('[Vadrou] autocomplete HTTP', res.status);
-      if (PLACES_DEBUG) showToast('Places HTTP ' + res.status);
-      return [];
-    }
-    const data = await res.json();
-    console.log('[Vadrou] autocomplete status=', data.status, 'nb=', (data.predictions||[]).length);
-    if (PLACES_DEBUG && data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+    const data = await vadrouGetJson(url);
+    console.log('[Vadrou] autocomplete status=', data && data.status, 'nb=', (data && data.predictions || []).length);
+    if (PLACES_DEBUG && data && data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
       showToast('Places: ' + data.status + (data.error_message ? ' — ' + data.error_message : ''));
     }
-    return data.predictions || [];
+    return (data && data.predictions) || [];
   } catch(e) {
     console.error('[Vadrou] fetchPlacePredictions ERREUR:', e.message);
-    if (PLACES_DEBUG) showToast('Places erreur réseau: ' + e.message);
+    if (PLACES_DEBUG) showToast('Places erreur: ' + e.message);
     return [];
   }
 }
 
 async function fetchPlaceDetails(placeId) {
   const url = `${API_BASE}/api/places?action=details&place_id=${encodeURIComponent(placeId)}`;
-  console.log('[Vadrou] fetchPlaceDetails ->', url);
+  console.log('[Vadrou] fetchPlaceDetails ->', url, '| native=', IS_NATIVE);
   try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn('[Vadrou] details HTTP', res.status);
-      if (PLACES_DEBUG) showToast('Détails HTTP ' + res.status);
-      return null;
-    }
-    const data = await res.json();
-    return data.result || null;
+    const data = await vadrouGetJson(url);
+    return (data && data.result) || null;
   } catch(e) {
     console.error('[Vadrou] fetchPlaceDetails ERREUR:', e.message);
-    if (PLACES_DEBUG) showToast('Détails erreur réseau: ' + e.message);
+    if (PLACES_DEBUG) showToast('Détails erreur: ' + e.message);
     return null;
   }
 }
@@ -3504,32 +3517,40 @@ async function getInstalledVersionCode() {
 }
 
 async function checkForUpdate() {
-  // La popup ne concerne QUE l'app native Android (mise à jour via le Play Store).
-  // On exige d'être dans l'app Capacitor native ET sur Android.
-  // -> Exclut le web, y compris ouvert depuis un navigateur Android dont le
-  //    user-agent contient "Android" (sinon la popup s'afficherait sur vadrou.com).
+  // La popup de MAJ ne concerne que les APPS NATIVES :
+  //   Android -> Play Store (min_version, = versionCode)
+  //   iOS     -> App Store  (min_version_ios, = CFBundleVersion)
+  // Jamais sur le web, y compris navigateur Android (UA "Android") -> on exige le natif.
   const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isNativeAndroid = isNative && isAndroid;
-  if (!isNativeAndroid && !UPDATE_DEBUG) return;
+  if (!isNative && !UPDATE_DEBUG) return;
+
+  const platform = (window.Capacitor && window.Capacitor.getPlatform) ? window.Capacitor.getPlatform() : 'web';
+  let minField = 'min_version'; // Android par défaut
+  if (platform === 'ios') {
+    minField = 'min_version_ios';
+    _updateStoreUrl = 'https://apps.apple.com/app/id6771132877';
+  } else {
+    _updateStoreUrl = 'https://play.google.com/store/apps/details?id=com.vadrou.app';
+  }
 
   try {
     const installedCode = await getInstalledVersionCode();
-    const data = await supaFetch('config?select=min_version&limit=1');
+    // On ne sélectionne QUE le champ utile : Android et iOS sont totalement découplés.
+    const data = await supaFetch('config?select=' + minField + '&limit=1');
     if (!data || !data.length) {
-      // Tableau vide = table inaccessible (RLS sans politique anon) ou aucune ligne
       if (UPDATE_DEBUG) showToast('⚠️ config vide/inaccessible — vérifier RLS');
       return;
     }
 
-    const minVersion = parseInt(data[0].min_version, 10);
+    const minVersion = parseInt(data[0][minField], 10);
     if (!minVersion || isNaN(minVersion)) {
-      if (UPDATE_DEBUG) showToast('⚠️ min_version invalide: ' + data[0].min_version);
+      // Champ absent/null (ex: min_version_ios pas encore défini) -> pas de popup
+      if (UPDATE_DEBUG) showToast('⚠️ ' + minField + ' invalide: ' + data[0][minField]);
       return;
     }
 
     if (UPDATE_DEBUG) {
-      showToast('installé=' + installedCode + ' / min=' + minVersion +
+      showToast(platform + ' installé=' + installedCode + ' / ' + minField + '=' + minVersion +
                 ' → ' + (installedCode < minVersion ? 'MAJ requise' : 'déjà à jour'));
     }
 
@@ -3552,8 +3573,10 @@ function dismissUpdate() {
   if (overlay) overlay.style.display = 'none';
 }
 
+// URL du store, fixée par checkForUpdate selon la plateforme (Play Store / App Store)
+let _updateStoreUrl = 'https://play.google.com/store/apps/details?id=com.vadrou.app';
 function openPlayStore() {
-  window.open('https://play.google.com/store/apps/details?id=com.vadrou.app', '_system');
+  window.open(_updateStoreUrl, '_system');
 }
 
 // ── TOAST ──
