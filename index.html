@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1E3A2F">
@@ -74,7 +74,7 @@ body {
 /* ── HEADER ── */
 #header {
   background:var(--forest);
-  padding:52px 22px 0;
+  padding:max(52px, calc(10px + env(safe-area-inset-top, 42px))) 22px 0;
   position:relative; overflow:hidden;
 }
 #header::before {
@@ -457,7 +457,7 @@ body {
   width:100%; max-width:430px;
   background:var(--white);
   border-top:1px solid rgba(28,28,26,.07);
-  display:flex; padding:9px 0 18px; z-index:100;
+  display:flex; padding:9px 0 max(18px, env(safe-area-inset-bottom, 18px)); z-index:100;
 }
 .nav-item {
   flex:1; display:flex; flex-direction:column;
@@ -1046,7 +1046,7 @@ body {
 
 <!-- PAGE CARTE PLEIN ÉCRAN -->
 <div id="map-fullscreen-page">
-  <div id="map-fs-filters" style="position:absolute;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.97);padding:10px 12px 0;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <div id="map-fs-filters" style="position:absolute;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.97);padding:max(10px, calc(10px + env(safe-area-inset-top, 0px))) 12px 0;box-shadow:0 2px 8px rgba(0,0,0,.08)">
     <!-- Barre de recherche -->
     <div style="position:relative;margin-bottom:8px">
       <input id="fs-search-input" type="text" placeholder="🔍 Rechercher un lieu…"
