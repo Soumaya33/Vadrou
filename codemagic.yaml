@@ -24,7 +24,7 @@ workflows:
         script: npm install
       - name: Install Capacitor CLI and iOS
         script: |
-          npm install @capacitor/cli @capacitor/core @capacitor/ios
+          npm install @capacitor/cli @capacitor/core @capacitor/ios @capacitor/app @capacitor/device @capacitor/preferences
       - name: Prepare web assets
         script: |
           # Créer le dossier www et y copier index.html
