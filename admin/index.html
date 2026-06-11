@@ -536,6 +536,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           <button class="vtbtn" id="evbtn-true" onclick="setEvValid(true)">✅ Publié (visible dans l'app)</button>
           <button class="vtbtn" id="evbtn-false" onclick="setEvValid(false)">⏳ Non publié (en attente)</button>
         </div>
+        <div style="margin-top:8px">
+          <button class="vtbtn" id="evbtn-rejeter" onclick="rejectEvent()"
+            style="width:100%;background:#F5E6FA;border-color:#9B59B6;color:#7B2D9E;font-weight:500">
+            🚫 Rejeter cet évènement
+          </button>
+        </div>
+        <div id="ev-rejete-badge" style="display:none;margin-top:6px;padding:6px 10px;background:#F5E6FA;border-radius:8px;font-size:11px;color:#7B2D9E;font-weight:500;text-align:center">
+          🚫 Évènement rejeté — cliquer « Publié » pour annuler le rejet
+        </div>
       </div>
 
       <!-- COUP DE CŒUR ÉVÉNEMENT -->
@@ -554,7 +563,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       <button class="btn btn-skip mobile-only" onclick="closeMobileEditor()" title="Retour à la liste" style="font-size:18px;padding:10px 12px">←</button>
       <button class="btn btn-delete" onclick="deleteEvent()">🗑️</button>
       <button class="btn btn-skip" onclick="duplicateEvent()" title="Dupliquer">⧉</button>
-      <button class="btn btn-skip" onclick="nextEvent()">Suivant →</button>
+      <button class="btn btn-skip" onclick="prevEvent()">← Préc.</button>
+      <button class="btn btn-skip" onclick="nextEvent()">Suiv. →</button>
       <span id="save-indicator-event" style="font-size:11px;font-weight:500;flex:1;text-align:right;align-self:center;transition:color .2s"></span>
       <button class="btn btn-save" onclick="saveEvent()">💾</button>
     </div>
@@ -1742,8 +1752,11 @@ function selectEvent(id) {
   };
 
   currentEvValid = e.valide;
+  const rejete = e.rejete === true;
   document.getElementById('evbtn-true').className = 'vtbtn'+(e.valide?' sel-valid':'');
   document.getElementById('evbtn-false').className = 'vtbtn'+(!e.valide?' sel-invalid':'');
+  document.getElementById('evbtn-rejeter').style.display = rejete ? 'none' : 'block';
+  document.getElementById('ev-rejete-badge').style.display = rejete ? 'block' : 'none';
 
   currentEvCrush = e.coup_de_coeur || false;
   document.getElementById('evbtn-crush-true').className = 'vtbtn'+(currentEvCrush?' sel-valid':'');
@@ -1777,12 +1790,24 @@ function setEvCrush(v) {
 async function autoSaveEvValid(v) {
   if (!currentEvId) return;
   try {
+    // Si on publie un évènement rejeté, on retire le rejet
+    const patch = { valide: v };
+    const evt = allEvents.find(x=>x.id===currentEvId);
+    if (v && evt?.rejete) patch.rejete = false;
+
     await supa(`evenements?id=eq.${currentEvId}`, {
-      method:'PATCH', body:JSON.stringify({ valide: v }),
+      method:'PATCH', body:JSON.stringify(patch),
       headers:{'Prefer':'return=minimal'}
     });
     const idx = allEvents.findIndex(x=>x.id===currentEvId);
-    if (idx>=0) allEvents[idx].valide = v;
+    if (idx>=0) {
+      allEvents[idx].valide = v;
+      if (patch.rejete === false) allEvents[idx].rejete = false;
+    }
+    // Mettre à jour l'UI rejet
+    document.getElementById('evbtn-rejeter').style.display = 'block';
+    document.getElementById('ev-rejete-badge').style.display = 'none';
+
     applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
     updateEventStats();
     showToast(v ? '✅ Évènement publié' : '⏳ Évènement masqué');
@@ -1858,11 +1883,41 @@ async function duplicateEvent() {
   } catch(e) { showToast('❌ Erreur lors de la duplication'); }
 }
 
+function prevEvent() {
+  const idx = filteredEvents.findIndex(x=>x.id===currentEvId);
+  if (idx > 0) selectEvent(filteredEvents[idx-1].id);
+  else showToast('Premier évènement de la liste !');
+}
+
 function nextEvent() {
   const idx = filteredEvents.findIndex(x=>x.id===currentEvId);
   const next = filteredEvents[idx+1];
   if (next) selectEvent(next.id);
   else showToast('Dernier évènement de la liste !');
+}
+
+async function rejectEvent() {
+  if (!currentEvId) return;
+  const e = allEvents.find(x => x.id === currentEvId);
+  if (!confirm('Rejeter « ' + (e?.nom||'') + ' » ?\nL\'évènement sera masqué et marqué comme rejeté.')) return;
+  try {
+    await supa(`evenements?id=eq.${currentEvId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rejete: true, valide: false }),
+      headers: { 'Prefer': 'return=minimal' }
+    });
+    const idx = allEvents.findIndex(x => x.id === currentEvId);
+    if (idx >= 0) { allEvents[idx].rejete = true; allEvents[idx].valide = false; }
+    // UI
+    currentEvValid = false;
+    document.getElementById('evbtn-true').className = 'vtbtn';
+    document.getElementById('evbtn-false').className = 'vtbtn sel-invalid';
+    document.getElementById('evbtn-rejeter').style.display = 'none';
+    document.getElementById('ev-rejete-badge').style.display = 'block';
+    applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
+    updateEventStats();
+    showToast('🚫 Évènement rejeté');
+  } catch(err) { showToast('❌ Erreur : ' + err.message); }
 }
 
 // ── AUTO-SAVE ──
