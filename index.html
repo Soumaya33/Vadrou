@@ -406,6 +406,7 @@ body {
   width:100%;
   height:100%;
 }
+#map-container {
   border-radius:20px; overflow:hidden;
   height:220px; margin-bottom:24px;
   box-shadow:0 4px 20px rgba(28,28,26,.1);
@@ -423,8 +424,7 @@ body {
 }
 .leaflet-control-zoom { z-index:2 !important; }
 .modal-open .leaflet-control-zoom { display:none !important; }
-}
-#map { width:100%; height:100%; }
+#map-container #map { width:100%; height:100%; }
 .map-placeholder {
   background:linear-gradient(135deg,#d4e8df 0%,#b8d4c8 100%);
   height:220px; border-radius:20px;
@@ -821,6 +821,49 @@ body {
   text-align:center; text-decoration:none; margin-top:16px;
 }
 .detail-link-btn:active { opacity:.85; }
+/* ── RESPONSIVE ──
+   L'app est calibrée pour ~390-430px. Ces règles l'adaptent aux autres gabarits
+   sans rien changer pour les écrans "standards" (aucune query active entre 375 et 767px). */
+
+/* Hauteur de viewport dynamique : sur mobile web, la barre d'URL du navigateur
+   réduit la hauteur réelle ; dvh suit ces variations (vh non). */
+@supports (height: 100dvh) {
+  body { min-height:100dvh; }
+}
+
+/* Petits écrans (iPhone SE, petits Android — largeur <= 374px) :
+   on resserre paddings, polices et cartes pour garder de l'air. */
+@media (max-width: 374px) {
+  #header { padding-left:16px; padding-right:16px; }
+  .search-wrap { padding-left:16px; padding-right:16px; }
+  .body { padding-left:16px; padding-right:16px; }
+  /* Les scrollers horizontaux compensent le padding du parent : on aligne */
+  .hscroll, .crush-scroll { margin:0 -16px; padding:4px 16px 10px; }
+  .logo { font-size:24px; }
+  .header-title { font-size:19px; }
+  .sec-title { font-size:18px; }
+  .place-card { width:146px; }
+  .crush-card { width:180px; }
+  .btn-icon { width:34px; height:34px; font-size:15px; }
+}
+
+/* Écrans courts (hauteur <= 700px — petits téléphones, mode paysage) :
+   on réduit les grandes images fixes pour que le contenu reste visible. */
+@media (max-height: 700px) {
+  .detail-img { height:140px; font-size:48px; }
+  .detail-event-img { height:160px; }
+  .detail-event-placeholder { height:170px; font-size:48px; }
+  .crush-img { height:96px; font-size:30px; }
+}
+
+/* Grands écrans / tablettes : la colonne reste à 430px, centrée,
+   avec un fond latéral et une ombre pour un rendu volontaire. */
+@media (min-width: 768px) {
+  html { background:#EAE3DA; }
+  body { box-shadow:0 0 48px rgba(28,28,26,.12); }
+  /* Le FAB est fixé à droite de l'ÉCRAN : on le ramène au bord de la colonne */
+  #fab { right:calc(50% - 215px + 22px); }
+}
 </style>
 </head>
 <body>
