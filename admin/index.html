@@ -594,6 +594,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
     <input type="date" id="range-end" class="date-input" onchange="applyCustomRange()">
     <button class="period-btn" id="range-clear" onclick="clearCustomRange()" style="display:none">✕ Effacer</button>
     <span id="range-summary" style="font-size:11px;color:var(--forest);font-weight:500;margin-left:4px"></span>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--charcoal);cursor:pointer;margin-left:auto;white-space:nowrap">
+      <input type="checkbox" id="exclude-tests" onchange="loadStats()" style="cursor:pointer">
+      🤖 Exclure le trafic sans modèle (tests auto)
+    </label>
   </div>
 
   <!-- KPIs -->
@@ -650,6 +654,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       <div id="filters-chart"></div>
     </div>
 
+  </div>
+
+  <!-- Favoris actuels -->
+  <div class="stats-2col">
+    <div class="stats-section">
+      <div class="stats-section-title">❤️ Lieux en favoris <span style="font-size:11px;font-weight:300;color:var(--muted)">favoris actuels</span></div>
+      <div id="fav-places-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">❤️ Évènements en favoris <span style="font-size:11px;font-weight:300;color:var(--muted)">favoris actuels</span></div>
+      <div id="fav-events-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
+    </div>
   </div>
 
   <!-- Utilisateurs par plateforme -->
@@ -1126,6 +1142,46 @@ function periodFilter() {
 const PLATFORM_LABELS = { android:'🤖 Android', ios:'🍎 iOS', web:'🌐 Web' };
 function platformLabel(p) { return PLATFORM_LABELS[(p||'').toLowerCase()] || ('📱 ' + (p || 'Inconnu')); }
 
+// Histogrammes des favoris ACTUELS (net = ajouts - retraits), tous depuis le début.
+// Respecte le filtre "exclure le trafic sans modèle".
+async function renderFavorites() {
+  const elP = document.getElementById('fav-places-chart');
+  const elE = document.getElementById('fav-events-chart');
+  let rows = [];
+  try {
+    rows = await supa('events_log?select=action,item_name,user_id&action=in.(add_favorite_place,remove_favorite_place,add_favorite_event,remove_favorite_event)&limit=20000');
+  } catch(e) {
+    elP.innerHTML = elE.innerHTML = '<div style="color:var(--muted);font-size:12px">Impossible de charger les favoris</div>';
+    return;
+  }
+  // Exclure le trafic de test si demandé
+  if (document.getElementById('exclude-tests')?.checked) {
+    rows = rows.filter(r => { const d = window._devicesById[r.user_id]; return d && (d.model || d.manufacturer); });
+  }
+  // Net par item pour un type donné ('place' ou 'event')
+  const netFor = (type) => {
+    const m = {};
+    rows.forEach(r => {
+      if (!r.item_name) return;
+      if (r.action === 'add_favorite_' + type)    m[r.item_name] = (m[r.item_name] || 0) + 1;
+      else if (r.action === 'remove_favorite_' + type) m[r.item_name] = (m[r.item_name] || 0) - 1;
+    });
+    return Object.entries(m).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  };
+  const draw = (el, data) => {
+    if (!data.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun favori actuellement</div>'; return; }
+    const max = Math.max(...data.map(d => d[1]), 1);
+    el.innerHTML = data.map(([name, cnt]) => `
+      <div class="bar-row">
+        <div class="bar-label" title="${name}">${name.slice(0, 32)}${name.length > 32 ? '…' : ''}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt / max * 100)}%"></div></div>
+        <div class="bar-count">${cnt}</div>
+      </div>`).join('');
+  };
+  draw(elP, netFor('place'));
+  draw(elE, netFor('event'));
+}
+
 // Affiche le KPI "nouveaux utilisateurs" (sur la periode) + la repartition par plateforme/modele
 // des utilisateurs ACTIFS sur la periode selectionnee en haut
 function renderDeviceStats(devices, logs) {
@@ -1199,8 +1255,7 @@ async function loadStats() {
     const pf = periodFilter();
 
     // Charger toutes les actions en une seule requête
-    const logs = await supa(`events_log?select=action,item_name,item_cat,user_id,created_at&order=created_at.desc&limit=2000${pf}`);
-    window._lastLogs = logs; // Stocker pour showUserJourney
+    let logs = await supa(`events_log?select=action,item_name,item_cat,user_id,created_at&order=created_at.desc&limit=2000${pf}`);
 
     // ── DEVICES (nouveaux utilisateurs + repartition par plateforme + parcours) ──
     let devices = [];
@@ -1211,7 +1266,18 @@ async function loadStats() {
     }
     window._devicesById = {};
     devices.forEach(d => { window._devicesById[d.id] = d; });
+
+    // ── Exclure le trafic sans modèle (tests auto de non-régression) si demandé ──
+    if (document.getElementById('exclude-tests')?.checked) {
+      logs = logs.filter(l => {
+        const d = window._devicesById[l.user_id];
+        return d && (d.model || d.manufacturer); // garder uniquement les vrais téléphones identifiés
+      });
+    }
+    window._lastLogs = logs; // Stocker pour showUserJourney (après filtrage)
+
     renderDeviceStats(devices, logs);
+    renderFavorites(); // favoris actuels (tous), indépendant de la période
 
     if (!logs.length) {
       document.getElementById('kpi-opens').textContent = '0';
@@ -1241,11 +1307,13 @@ async function loadStats() {
 
     // ── ALERTES CONTENU ──
     try {
-      const [lieuxSansCat, eventsSansCat, lieuxSansDesc, lieuxSansCoords] = await Promise.all([
+      const [lieuxSansCat, lieuxSansDesc, evtSansCat, evtSansDesc, evtSansImage, evtSansLien] = await Promise.all([
         supa('lieux?select=id,nom&or=(categorie.is.null,categorie.eq.{})&valide=eq.true&limit=50'),
-        supa('evenements?select=id,nom&categorie=is.null&valide=eq.true&limit=50'),
         supa('lieux?select=id,nom&description=is.null&valide=eq.true&limit=50'),
-        supa('lieux?select=id,nom&or=(latitude.is.null,longitude.is.null)&valide=eq.true&limit=50'),
+        supa('evenements?select=id,nom&categorie=is.null&valide=eq.true&limit=50'),
+        supa('evenements?select=id,nom&description=is.null&valide=eq.true&limit=50'),
+        supa('evenements?select=id,nom&image_url=is.null&valide=eq.true&limit=50'),
+        supa('evenements?select=id,nom&lien_reservation=is.null&lien_evenement=is.null&valide=eq.true&limit=50'),
       ]);
 
       function alertSection(icon, label, color, tc, items, type) {
@@ -1269,10 +1337,12 @@ async function loadStats() {
       }
 
       const html =
-        alertSection('🏷️', 'Lieux sans catégorie',          '#FBE9E7', 'var(--terracotta)', lieuxSansCat,   'lieu') +
-        alertSection('🏷️', 'Évènements sans catégorie',     '#FBE9E7', 'var(--terracotta)', eventsSansCat,  'event') +
-        alertSection('📝', 'Lieux sans description',         '#FDF3E7', '#854F0B',           lieuxSansDesc,  'lieu') +
-        alertSection('📍', 'Lieux sans coordonnées GPS',     '#FDF3E7', '#854F0B',           lieuxSansCoords,'lieu');
+        alertSection('🏷️', 'Lieux sans catégorie',          '#FBE9E7', 'var(--terracotta)', lieuxSansCat,  'lieu')  +
+        alertSection('📝', 'Lieux sans description',         '#FBE9E7', 'var(--terracotta)', lieuxSansDesc, 'lieu')  +
+        alertSection('🏷️', 'Évènements sans catégorie',     '#FDF3E7', '#854F0B',           evtSansCat,    'event') +
+        alertSection('📝', 'Évènements sans description',    '#FDF3E7', '#854F0B',           evtSansDesc,   'event') +
+        alertSection('🖼️', 'Évènements sans image',          '#FEF9E7', '#7A5F00',           evtSansImage,  'event') +
+        alertSection('🔗', 'Évènements sans lien',           '#FEF9E7', '#7A5F00',           evtSansLien,   'event');
 
       document.getElementById('alerts-list').innerHTML = html ||
         '<div style="color:var(--ok);font-size:12px">✅ Tout est en ordre !</div>';
