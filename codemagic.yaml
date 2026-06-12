@@ -17,7 +17,7 @@ workflows:
         # Version VISIBLE par l'utilisateur (CFBundleShortVersionString).
         # A incrementer DELIBEREMENT a chaque release publiee (1.2 -> 1.3 -> 2.0 ...).
         # Doit toujours etre superieure a la derniere version approuvee sur l'App Store.
-        MARKETING_VERSION: "1.3"
+        MARKETING_VERSION: "1.4"
       node: 18
     scripts:
       - name: Install dependencies
