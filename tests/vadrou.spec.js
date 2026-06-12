@@ -1,6 +1,6 @@
 // tests/vadrou.spec.js
 // Tests de non-régression Vadrou — vadrou.com
-// Correspond à la checklist : tests automatisables (32/43)
+// Correspond à la checklist : tests automatisables (36/43)
 // Pour ajouter un test : copier un bloc test() existant et l'adapter
 //
 // Nouveautés couvertes (juin 2026) :
@@ -9,6 +9,10 @@
 //   T31 — Aucun toast de debug en prod (PLACES_DEBUG / UPDATE_DEBUG = false)
 //   T32 — ID device persistant et stable (suivi des utilisateurs)
 //   T33 — Favoris persistants après rechargement (ID device stable de bout en bout)
+//   T34 — Géolocalisation "Me localiser" fonctionne
+//   T35 — Responsive petit écran (iPhone SE — 375×667)
+//   T36 — Responsive très petit écran (320×568)
+//   T37 — Responsive tablette (768×1024)
 
 const { test, expect } = require('@playwright/test');
 
@@ -33,6 +37,20 @@ async function closeFiche(page) {
     document.body.classList.remove('modal-open');
   }).catch(() => {});
   await page.waitForTimeout(300);
+}
+
+// Vérifie qu'un élément ne déborde pas du viewport
+async function isWithinViewport(page, selector) {
+  return page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return { ok: false, reason: 'not found' };
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (rect.right > vw + 2) return { ok: false, reason: `right edge ${Math.round(rect.right)}px > viewport ${vw}px` };
+    if (rect.left < -2) return { ok: false, reason: `left edge ${Math.round(rect.left)}px < 0` };
+    return { ok: true };
+  }, selector);
 }
 
 
@@ -155,7 +173,7 @@ test('[T12] ⚠️ CRITIQUE — Clic lieu avec apostrophe dans le nom ouvre sa f
   let foundAndClicked = false;
   for (let i = 0; i < count; i++) {
     const name = await allCards.nth(i).locator('.place-card-name, .crush-name').textContent().catch(() => '');
-    if (name.includes("'") || name.includes("’")) {
+    if (name.includes("'") || name.includes("\u2019")) {
       await allCards.nth(i).click();
       await expect(page.locator('#detail-modal.open')).toBeVisible({ timeout: 5000 });
       const detailName = await page.locator('#detail-name').textContent();
@@ -520,4 +538,174 @@ test('[T33] Favoris persistants après rechargement (ID device stable de bout en
     page.locator('#favs-list .event').first(),
     'Le favori doit survivre au rechargement (ID device stable)'
   ).toBeVisible({ timeout: 5000 });
+});
+
+
+// ════════════════════════════════════════════════════
+// 11. GÉOLOCALISATION
+// ════════════════════════════════════════════════════
+
+test('[T34] 📍 Géolocalisation "Me localiser" met à jour l\'interface', async ({ browser }) => {
+  // Playwright peut simuler une position GPS via l'API du contexte.
+  // On vérifie que le clic sur "Me localiser" :
+  //   1) Change le texte du bouton à "✅ Localisé"
+  //   2) Met à jour le titre en "📍 Autour de toi"
+  // Note : on teste ici le fallback web (navigator.geolocation), pas le plugin natif.
+
+  const context = await browser.newContext({
+    geolocation: { latitude: 44.8378, longitude: -0.5792 }, // Bordeaux centre
+    permissions: ['geolocation'],
+    viewport: { width: 390, height: 844 },
+    locale: 'fr-FR',
+    timezoneId: 'Europe/Paris',
+  });
+  const page = await context.newPage();
+
+  await waitForAppReady(page);
+
+  const geoBtn = page.locator('#geo-btn');
+  await expect(geoBtn).toBeVisible();
+  await expect(geoBtn).toContainText('Me localiser');
+
+  await geoBtn.click();
+
+  // Le bouton doit passer à "✅ Localisé" dans les 12 secondes
+  await expect(geoBtn).toContainText('Localisé', { timeout: 12000 });
+
+  // Le titre de section doit refléter la géolocalisation
+  const nearTitle = page.locator('#near-me-title');
+  await expect(nearTitle).toContainText('Autour de toi', { timeout: 3000 });
+
+  // Le header doit aussi être mis à jour
+  const headerCity = page.locator('#header-city');
+  await expect(headerCity).toContainText('Autour de toi', { timeout: 3000 });
+
+  await context.close();
+});
+
+
+// ════════════════════════════════════════════════════
+// 12. RESPONSIVE
+// ════════════════════════════════════════════════════
+
+test('[T35] 📱 Responsive — iPhone SE (375×667) : éléments clés visibles', async ({ browser }) => {
+  // Petit écran courant (iPhone SE 2/3 ou Android compact).
+  // On vérifie que les éléments principaux sont accessibles.
+  const context = await browser.newContext({
+    viewport: { width: 375, height: 667 },
+    locale: 'fr-FR',
+    timezoneId: 'Europe/Paris',
+  });
+  const page = await context.newPage();
+
+  await waitForAppReady(page);
+
+  // Header visible
+  await expect(page.locator('#header')).toBeVisible();
+
+  // Logo lisible
+  const logo = page.locator('.logo');
+  await expect(logo).toBeVisible();
+
+  // Carrousel de lieux visible et avec des cartes
+  const cards = page.locator('#places-scroll .place-card');
+  await expect(cards.first()).toBeVisible();
+
+  // Filtres visibles et cliquables
+  const filters = page.locator('.filter-btn');
+  await expect(filters.first()).toBeVisible();
+
+  // Nav bar visible et complète (4 onglets)
+  const navItems = page.locator('#nav .nav-item');
+  await expect(navItems).toHaveCount(4);
+  await expect(navItems.first()).toBeVisible();
+
+  // FAB (bouton +) visible
+  await expect(page.locator('#fab')).toBeVisible();
+
+  // Le carrousel ne déborde pas du viewport
+  const hscrollCheck = await isWithinViewport(page, '#places-scroll');
+  expect(hscrollCheck.ok, `Carrousel déborde : ${hscrollCheck.reason}`).toBe(true);
+
+  // Le header ne déborde pas
+  const headerCheck = await isWithinViewport(page, '#header');
+  expect(headerCheck.ok, `Header déborde : ${headerCheck.reason}`).toBe(true);
+
+  // Navigation vers la carte fonctionne
+  await page.locator('#nav-map').click();
+  await expect(page.locator('#map-fullscreen-page')).toBeVisible({ timeout: 5000 });
+
+  // Filtres carte visibles
+  await expect(page.locator('#map-fs-filters')).toBeVisible({ timeout: 3000 });
+
+  await context.close();
+});
+
+test('[T36] 📱 Responsive — Très petit écran (320×568) : pas de débordement', async ({ browser }) => {
+  // Gabarit le plus petit encore utilisé (anciens iPhone SE, petits Android).
+  // L'objectif : aucun élément critique ne déborde ou n'est inaccessible.
+  const context = await browser.newContext({
+    viewport: { width: 320, height: 568 },
+    locale: 'fr-FR',
+    timezoneId: 'Europe/Paris',
+  });
+  const page = await context.newPage();
+
+  await waitForAppReady(page);
+
+  // Pas de scrollbar horizontale sur le body (signe de débordement)
+  const hasHScroll = await page.evaluate(() => document.body.scrollWidth > document.body.clientWidth);
+  expect(hasHScroll, 'Le body ne doit pas avoir de scroll horizontal').toBe(false);
+
+  // Header ne déborde pas
+  const headerCheck = await isWithinViewport(page, '#header');
+  expect(headerCheck.ok, `Header déborde à 320px : ${headerCheck.reason}`).toBe(true);
+
+  // Nav ne déborde pas
+  const navCheck = await isWithinViewport(page, '#nav');
+  expect(navCheck.ok, `Nav déborde à 320px : ${navCheck.reason}`).toBe(true);
+
+  // Les cartes sont visibles (même petites)
+  await expect(page.locator('#places-scroll .place-card').first()).toBeVisible();
+
+  // Coups de cœur visibles
+  await expect(page.locator('#crush-grid .crush-card').first()).toBeVisible({ timeout: 10000 });
+
+  // On peut ouvrir une fiche lieu sans problème
+  await page.locator('#places-scroll .place-card').first().click();
+  await expect(page.locator('#detail-modal.open')).toBeVisible({ timeout: 5000 });
+  await closeFiche(page);
+
+  await context.close();
+});
+
+test('[T37] 🖥️ Responsive — Tablette (768×1024) : mise en page centrée', async ({ browser }) => {
+  // Sur un grand écran, l'app doit rester centrée à max 430px de large
+  // et ne pas s'étaler sur toute la largeur.
+  const context = await browser.newContext({
+    viewport: { width: 768, height: 1024 },
+    locale: 'fr-FR',
+    timezoneId: 'Europe/Paris',
+  });
+  const page = await context.newPage();
+
+  await waitForAppReady(page);
+
+  // Le body a un max-width (430px) : vérifier qu'il n'occupe pas les 768px
+  const bodyWidth = await page.evaluate(() => {
+    const body = document.body;
+    return body.getBoundingClientRect().width;
+  });
+  expect(bodyWidth, 'Le body doit rester à ~430px max, pas 768px').toBeLessThanOrEqual(440);
+
+  // Les éléments sont toujours visibles et fonctionnels
+  await expect(page.locator('#header')).toBeVisible();
+  await expect(page.locator('#places-scroll .place-card').first()).toBeVisible();
+  await expect(page.locator('#nav')).toBeVisible();
+
+  // Navigation fonctionne
+  await page.locator('#nav-events').click();
+  await expect(page.locator('#events-page')).toBeVisible({ timeout: 3000 });
+
+  await context.close();
 });
