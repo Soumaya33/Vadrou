@@ -24,7 +24,7 @@ workflows:
         script: npm install
       - name: Install Capacitor CLI and iOS
         script: |
-          npm install @capacitor/cli@^6 @capacitor/core@^6 @capacitor/ios@^6 @capacitor/app@^6 @capacitor/device@^6 @capacitor/preferences@^6
+          npm install @capacitor/cli@^6 @capacitor/core@^6 @capacitor/ios@^6 @capacitor/app@^6 @capacitor/device@^6 @capacitor/preferences@^6 @capacitor/geolocation@^6
       - name: Prepare web assets
         script: |
           # Créer le dossier www et y copier index.html
@@ -39,6 +39,10 @@ workflows:
       - name: Set bundle identifier
         script: |
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" ios/App/App/Info.plist
+          # Autorisation de localisation (sinon iOS refuse l'acces a la position)
+          GEO_MSG="Vadrou utilise ta position pour afficher les lieux les plus proches de toi."
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string $GEO_MSG" ios/App/App/Info.plist \
+            || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription $GEO_MSG" ios/App/App/Info.plist
       - name: Set versions (marketing deliberee + build auto-incremente)
         script: |
           # 1) Version VISIBLE : valeur de la variable MARKETING_VERSION (decision produit)
