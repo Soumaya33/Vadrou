@@ -44,7 +44,7 @@ jobs:
           import json, os, datetime
 
           # Nombre de tests attendus (32 actifs + 1 skippé = 33). En dessous, le run est incomplet.
-          EXPECTED_MIN = 30
+          EXPECTED_MIN = 34
 
           # Lire les résultats JSON
           results_ok = True
