@@ -461,11 +461,13 @@ test('[T29] ⚠️ CRITIQUE — Intégrité de l\'encodage UTF-8 (anti-charabia)
 test('[T30] ⚠️ CRITIQUE — Recherche "Proposer un lieu" ne reste pas bloquée', async ({ page }) => {
   // Le bug d'origine : la recherche restait figée sur "Recherche…".
   // Ici on vérifie qu'elle se résout TOUJOURS (résultats ou "Aucun résultat").
+  //
+  // Depuis l'ajout du FAB contextuel ("＋ Proposer un lieu"), le clic ouvre
+  // directement #add-modal — il n'y a plus de #choice-modal intermédiaire
+  // sur l'onglet Accueil/Carte.
   await waitForAppReady(page);
 
   await page.locator('#fab').click();
-  await expect(page.locator('#choice-modal.open')).toBeVisible({ timeout: 3000 });
-  await page.locator('#choice-modal .choice-btn').first().click(); // "Proposer un lieu"
   await expect(page.locator('#add-modal.open')).toBeVisible({ timeout: 3000 });
 
   await page.locator('#place-search-input').fill('Parc');
