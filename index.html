@@ -439,15 +439,16 @@ body {
 /* ── FAB ── */
 #fab {
   position:fixed; bottom:82px; right:22px;
-  width:54px; height:54px; border-radius:17px;
+  height:48px; padding:0 18px; border-radius:24px;
   background:var(--terracotta);
-  display:flex; align-items:center; justify-content:center;
-  font-size:26px; font-weight:300; color:white;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  font-size:14px; font-weight:500; color:white;
   box-shadow:0 6px 20px rgba(196,98,45,.4);
   cursor:pointer; z-index:50;
   transition:transform .2s, box-shadow .2s;
-  border:none;
+  border:none; white-space:nowrap;
 }
+#fab #fab-icon { font-size:20px; font-weight:300; line-height:1; }
 #fab:active{transform:scale(.91);box-shadow:0 3px 12px rgba(196,98,45,.3)}
 
 /* ── NAV ── */
@@ -1112,7 +1113,7 @@ body {
 </div>
 
 <!-- FAB -->
-<button id="fab" onclick="openChoiceModal()">＋</button>
+<button id="fab" onclick="onFabClick()"><span id="fab-icon">＋</span><span id="fab-label">Proposer un lieu</span></button>
 
 <!-- NAV -->
 <div id="nav">
@@ -2268,6 +2269,18 @@ async function logAction(action, itemName, itemId, itemCat) {
     // Silencieux — le tracking ne doit jamais bloquer l'app
   }
 }
+
+// Envoie un email de notification quand un utilisateur propose un lieu/événement.
+// Fire-and-forget : l'échec n'impacte pas l'utilisateur.
+function notifyNewProposal(data) {
+  const url = (IS_NATIVE ? 'https://vadrou.com' : '') + '/api/notify';
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {}); // silencieux
+}
+
 let userLat = null, userLng = null, userMarker = null;
 
 // Récupère la position de façon unifiée :
@@ -2838,6 +2851,12 @@ function openChoiceModal() {
   document.getElementById('choice-modal').classList.add('open');
 }
 
+// Le FAB est contextuel : sur Événements il propose un événement, ailleurs un lieu.
+// (Plus de modal intermédiaire "lieu ou événement ?" — le bouton dit déjà quoi faire.)
+function onFabClick() {
+  openAddModal(currentTab === 'events' ? 'evenement' : 'lieu');
+}
+
 function closeModalById(id) {
   document.getElementById(id).classList.remove('open');
 }
@@ -2956,6 +2975,17 @@ async function submitNewEvent() {
   try {
     await supaFetch('evenements', { method: 'POST', body: JSON.stringify(evt) });
     logAction('propose_event', name);
+    // Notification email (fire-and-forget)
+    notifyNewProposal({
+      type: 'evenement',
+      nom: evt.nom,
+      adresse: evt.adresse,
+      description: evt.description,
+      date_debut: evt.date_debut,
+      date_fin: evt.date_fin,
+      heure: evt.heure,
+      lien: evt.lien_reservation,
+    });
     btn.textContent = '✅ Merci pour ta proposition !';
     btn.style.background = 'var(--forest)';
     setTimeout(() => {
@@ -3187,6 +3217,14 @@ async function submitNewPlace() {
 
     // Succès
     logAction('propose_place', addSelectedPlace.name);
+    // Notification email (fire-and-forget : l'échec n'empêche pas le succès)
+    notifyNewProposal({
+      type: 'lieu',
+      nom: lieu.nom,
+      adresse: lieu.adresse,
+      categorie: lieu.categorie,
+      description: lieu.description,
+    });
     btn.textContent = '✅ Merci pour ta proposition !';
     btn.style.background = 'var(--forest)';
     setTimeout(() => {
@@ -3422,6 +3460,18 @@ function setNav(tab) {
     history.pushState({ tab: tab }, '', '');
   }
   currentTab = tab;
+
+  // FAB contextuel : libellé selon l'onglet, masqué sur Favoris
+  const fab = document.getElementById('fab');
+  const fabLabel = document.getElementById('fab-label');
+  if (fab) {
+    if (tab === 'favs') {
+      fab.style.display = 'none';
+    } else {
+      fab.style.display = '';
+      if (fabLabel) fabLabel.textContent = (tab === 'events') ? 'Proposer un événement' : 'Proposer un lieu';
+    }
+  }
 
   // Masquer la carte plein écran par défaut
   mapPage.style.display = 'none';
