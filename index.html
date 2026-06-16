@@ -2642,6 +2642,21 @@ function openPlaceById(id) {
   }
 }
 
+// Ouverture d'une fiche depuis les FAVORIS : robuste même si le cache mémoire
+// (placesById / allPlaces) n'est pas encore peuplé. On retombe sur les données
+// du favori chargées depuis Supabase.
+function openFavPlace(lieuId) {
+  if (placesById[lieuId] || allPlaces.find(p => p.id === lieuId)) {
+    return openPlaceById(lieuId);
+  }
+  const f = favorites.find(x => x.lieu_id === lieuId);
+  if (f) {
+    showPlaceDetail(f.name, f.cat, f.addr, f.rating || '', lieuId);
+  } else {
+    console.warn('[Vadrou] openFavPlace: favori introuvable pour id =', lieuId);
+  }
+}
+
 // Fallback pour lieux sans id (secours, rare)
 let _lastFilteredPlaces = [];
 function openPlaceByName(idx) {
@@ -3400,7 +3415,7 @@ function renderFavs() {
     html += favorites.map(p => {
       const primaryCat = Array.isArray(p.cat) ? p.cat[0] : p.cat;
       const cat = CATEGORIES[primaryCat] || CATEGORIES.jeux_ext;
-      return `<div class="event" style="cursor:pointer" onclick="${p.lieu_id ? `openPlaceById('${p.lieu_id}')` : ''}">
+      return `<div class="event" style="cursor:pointer" onclick="${p.lieu_id ? `openFavPlace('${p.lieu_id}')` : ''}">
         <div style="width:46px;height:52px;background:${cat.color};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${cat.emoji}</div>
         <div class="event-info">
           <div class="event-name">${p.name}</div>
