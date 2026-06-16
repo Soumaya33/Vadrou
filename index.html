@@ -2272,11 +2272,10 @@ async function logAction(action, itemName, itemId, itemCat) {
 
 // Envoie un email de notification quand un utilisateur propose un lieu/événement.
 // Fire-and-forget : l'échec n'impacte pas l'utilisateur.
-const NOTIFY_DEBUG = true; // TEMPORAIRE : diagnostic notif native — repasser à false ensuite
+const NOTIFY_DEBUG = false; // debug désactivé en production
 function notifyNewProposal(data) {
   const url = (IS_NATIVE ? 'https://www.vadrou.com' : '') + '/api/notify';
   const cap = _capacitorHttp();
-  if (NOTIFY_DEBUG) showGeoToast('notify → ' + (IS_NATIVE ? 'natif' : 'web') + ' | cap=' + (cap ? 'oui' : 'non'));
   // App native (iOS/Android) : POST via le HTTP natif -> contourne le CORS de la WebView.
   // Web : fetch classique (même origine).
   if (IS_NATIVE && cap) {
@@ -2284,24 +2283,15 @@ function notifyNewProposal(data) {
       url: url,
       headers: { 'Content-Type': 'application/json' },
       data: data,
-      // Suivre les redirections (Vercel renvoie un 307 sur les POST vers la racine)
       disableRedirects: false,
       followRedirects: true,
-    }).then(res => {
-      if (NOTIFY_DEBUG) showGeoToast('notify OK status=' + (res && res.status));
-    }).catch(err => {
-      if (NOTIFY_DEBUG) showGeoToast('notify ERREUR: ' + (err && err.message ? err.message : err));
-    });
+    }).catch(() => {}); // fire-and-forget, silencieux
   } else {
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }).then(res => {
-      if (NOTIFY_DEBUG) showGeoToast('notify OK status=' + res.status);
-    }).catch(err => {
-      if (NOTIFY_DEBUG) showGeoToast('notify ERREUR: ' + (err && err.message ? err.message : err));
-    });
+    }).catch(() => {}); // silencieux
   }
 }
 
