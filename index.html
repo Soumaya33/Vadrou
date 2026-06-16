@@ -2274,11 +2274,22 @@ async function logAction(action, itemName, itemId, itemCat) {
 // Fire-and-forget : l'échec n'impacte pas l'utilisateur.
 function notifyNewProposal(data) {
   const url = (IS_NATIVE ? 'https://vadrou.com' : '') + '/api/notify';
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  }).catch(() => {}); // silencieux
+  const cap = _capacitorHttp();
+  // App native (iOS/Android) : POST via le HTTP natif -> contourne le CORS de la WebView.
+  // Web : fetch classique (même origine).
+  if (IS_NATIVE && cap) {
+    cap.post({
+      url: url,
+      headers: { 'Content-Type': 'application/json' },
+      data: data,
+    }).catch(() => {}); // fire-and-forget, silencieux
+  } else {
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(() => {}); // silencieux
+  }
 }
 
 let userLat = null, userLng = null, userMarker = null;
