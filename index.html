@@ -2274,7 +2274,7 @@ async function logAction(action, itemName, itemId, itemCat) {
 // Fire-and-forget : l'échec n'impacte pas l'utilisateur.
 const NOTIFY_DEBUG = true; // TEMPORAIRE : diagnostic notif native — repasser à false ensuite
 function notifyNewProposal(data) {
-  const url = (IS_NATIVE ? 'https://vadrou.com' : '') + '/api/notify';
+  const url = (IS_NATIVE ? 'https://www.vadrou.com' : '') + '/api/notify';
   const cap = _capacitorHttp();
   if (NOTIFY_DEBUG) showGeoToast('notify → ' + (IS_NATIVE ? 'natif' : 'web') + ' | cap=' + (cap ? 'oui' : 'non'));
   // App native (iOS/Android) : POST via le HTTP natif -> contourne le CORS de la WebView.
