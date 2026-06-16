@@ -439,7 +439,7 @@ body {
 /* ── FAB ── */
 #fab {
   position:fixed;
-  bottom:calc(72px + max(18px, env(safe-area-inset-bottom, 0px)));
+  bottom:calc(80px + max(24px, env(safe-area-inset-bottom, 0px)));
   right:22px;
   height:48px; padding:0 18px; border-radius:24px;
   background:var(--terracotta);
@@ -3400,7 +3400,7 @@ function renderFavs() {
     html += favorites.map(p => {
       const primaryCat = Array.isArray(p.cat) ? p.cat[0] : p.cat;
       const cat = CATEGORIES[primaryCat] || CATEGORIES.jeux_ext;
-      return `<div class="event" style="cursor:pointer" onclick="${p.id ? `openPlaceById('${p.id}')` : ''}">
+      return `<div class="event" style="cursor:pointer" onclick="${p.lieu_id ? `openPlaceById('${p.lieu_id}')` : ''}">
         <div style="width:46px;height:52px;background:${cat.color};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${cat.emoji}</div>
         <div class="event-info">
           <div class="event-name">${p.name}</div>
