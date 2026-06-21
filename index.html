@@ -1579,6 +1579,7 @@ function startApp() {
     ANALYTICS_USER_ID = id;
     loadFavoritesFromSupabase(); // Charger les favoris après avoir le device ID
     registerDevice();            // Enregistrer l'appareil (type + modèle) dans `devices`
+    logAction('app_open');       // Logué ICI : garantit un user_id non-null (sinon course au démarrage)
   });
   setTimeout(function() {
     document.getElementById('splash').classList.add('out');
@@ -1588,7 +1589,6 @@ function startApp() {
     loadGoogleForSearch();
     loadEventsFromSupabase();
     loadCrushPlaces();
-    logAction('app_open');
     checkForUpdate(); // Vérifier si une mise à jour est disponible
   }, 1800);
 }
@@ -2157,37 +2157,43 @@ function truncate(s, n) { return s && s.length > n ? s.slice(0,n)+'…' : (s||''
 let ANALYTICS_USER_ID = null;
 
 async function getOrCreateDeviceId() {
-  // 1) Méthode robuste : identifiant stable fourni par l'OS via @capacitor/device.
-  //    Identique à chaque lancement, indépendant de localStorage/Preferences.
+  const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const Prefs = (isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences)
+    ? window.Capacitor.Plugins.Preferences : null;
+
+  // 1) PRIORITÉ : réutiliser un id déjà persisté → garantit la STABILITÉ entre
+  //    les lancements (sinon un même appareil peut basculer d'un id à l'autre
+  //    selon que le plugin Device répond ou non au démarrage → utilisateurs dédoublés).
   try {
-    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
-        && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
+    if (Prefs) {
+      const { value } = await Prefs.get({ key: 'vadrou_device_id' });
+      if (value) return value;
+    }
+  } catch(e) {}
+  let ls = null;
+  try { ls = localStorage.getItem('vadrou_device_id'); } catch(e) {}
+  if (ls) {
+    try { if (Prefs) await Prefs.set({ key: 'vadrou_device_id', value: ls }); } catch(e) {}
+    return ls;
+  }
+
+  // 2) Aucun id persisté → en créer un. On privilégie l'identifiant OS stable.
+  let newId = null;
+  try {
+    if (isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
       const res = await window.Capacitor.Plugins.Device.getId();
       const stableId = res && (res.identifier || res.uuid); // identifier (Cap 5+) ou uuid (ancien)
-      if (stableId) return 'dev_' + stableId;
+      if (stableId) newId = 'dev_' + stableId;
     }
   } catch(e) {}
-
-  // 2) Repli natif : Capacitor Preferences (persistant)
-  try {
-    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
-        && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-      const Preferences = window.Capacitor.Plugins.Preferences;
-      const { value } = await Preferences.get({ key: 'vadrou_device_id' });
-      if (value) return value;
-      const newId = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
-      await Preferences.set({ key: 'vadrou_device_id', value: newId });
-      return newId;
-    }
-  } catch(e) {}
-
-  // 3) Repli web : localStorage
-  let uid = localStorage.getItem('vadrou_device_id');
-  if (!uid) {
-    uid = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
-    localStorage.setItem('vadrou_device_id', uid);
+  if (!newId) {
+    newId = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
   }
-  return uid;
+
+  // 3) Persister partout (Preferences en natif + localStorage), pour ne plus jamais changer.
+  try { if (Prefs) await Prefs.set({ key: 'vadrou_device_id', value: newId }); } catch(e) {}
+  try { localStorage.setItem('vadrou_device_id', newId); } catch(e) {}
+  return newId;
 }
 
 // Récupère le type et le détail de l'appareil.
@@ -2222,6 +2228,7 @@ async function getDeviceInfo() {
 // Enregistre (ou met à jour) l'appareil dans la table `devices` : 1 ligne par appareil.
 async function registerDevice() {
   try {
+    if (!ANALYTICS_USER_ID) ANALYTICS_USER_ID = await getOrCreateDeviceId();
     const info = await getDeviceInfo();
     let appVer = null;
     try { appVer = await getInstalledVersionCode(); } catch(e) {}
@@ -2251,6 +2258,7 @@ async function registerDevice() {
 
 async function logAction(action, itemName, itemId, itemCat) {
   try {
+    if (!ANALYTICS_USER_ID) ANALYTICS_USER_ID = await getOrCreateDeviceId();
     await fetch(SUPABASE_URL + '/rest/v1/events_log', {
       method: 'POST',
       headers: {
@@ -2476,8 +2484,22 @@ let _mapsLat = null, _mapsLng = null, _mapsAddr = null;
 
 // Variables globales pour le lieu actuellement affiché (évite apostrophes dans onclick)
 let _currentPlaceAddr = '';
+let _currentPlaceName = '';
 let _currentPlaceLat = null;
 let _currentPlaceLng = null;
+
+// Ouvre le LIEU sur Google Maps (vue du lieu : avis, infos, photos).
+// L'utilisateur peut ensuite lancer l'itinéraire depuis Maps s'il le souhaite.
+function openPlaceOnMaps() {
+  const parts = [];
+  if (_currentPlaceName) parts.push(_currentPlaceName);
+  if (_currentPlaceAddr) parts.push(_currentPlaceAddr);
+  const q = encodeURIComponent(parts.join(', ') + ', Bordeaux');
+  const url = 'https://www.google.com/maps/search/?api=1&query=' + q;
+  // _system : ouvre dans l'app Maps / le navigateur externe (fiable en WebView native)
+  if (IS_NATIVE) { window.open(url, '_system'); }
+  else { window.open(url, '_blank'); }
+}
 
 // Appelé par le bouton Itinéraire de la fiche lieu
 function openCurrentPlaceInMaps() {
@@ -2506,7 +2528,8 @@ function confirmOpenMaps() {
   } else {
     url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_mapsAddr + ', Bordeaux')}`;
   }
-  window.open(url, '_blank');
+  if (IS_NATIVE) { window.open(url, '_system'); }
+  else { window.open(url, '_blank'); }
   closeMapsSheet();
 }
 
@@ -2699,13 +2722,14 @@ function showPlaceDetail(name, cat, addr, rating, placeId) {
   document.getElementById('detail-name').textContent = name;
   // Stocker addr/lat/lng dans des variables globales pour openInMaps (évite apostrophes dans onclick)
   _currentPlaceAddr = addr || '';
+  _currentPlaceName = name || '';
   _currentPlaceLat = lat;
   _currentPlaceLng = lng;
 
   document.getElementById('detail-meta').innerHTML = [
-    addr ? `<div class="detail-meta-item" onclick="openCurrentPlaceInMaps()" style="cursor:pointer;border:1.5px solid var(--sand);background:var(--cream)">
+    addr ? `<div class="detail-meta-item" onclick="openPlaceOnMaps()" style="cursor:pointer;border:1.5px solid var(--sand);background:var(--cream)">
       📍 <strong style="color:var(--charcoal)">${addr}</strong>
-      <span style="margin-left:6px;font-size:11px;color:var(--terracotta);font-weight:500">Itinéraire →</span>
+      <span style="margin-left:6px;font-size:11px;color:var(--terracotta);font-weight:500">Voir sur Maps →</span>
     </div>` : '',
     rating ? `<div class="detail-meta-item">${rating}</div>` : '',
   ].join('');
