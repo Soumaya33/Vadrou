@@ -35,10 +35,38 @@ const supabase = createClient(
 // ---------------------------------------------------------------------------
 
 // Communes cibles avec coordonnées centre + rayon de recherche (mètres)
-// VERSION TEST : 2 communes seulement (1 métropole + 1 zone eau)
 const COMMUNES = [
-  { nom: 'Gradignan', lat: 44.776, lng: -0.622, rayon: 3000 },  // métropole, absente de la base
-  { nom: 'Lacanau',   lat: 44.974, lng: -1.079, rayon: 5000 },  // zone eau périphérique
+  // Métropole bordelaise — complètement absentes
+  { nom: 'Floirac',                lat: 44.836,  lng: -0.521,  rayon: 3000 },
+  { nom: 'Gradignan',              lat: 44.776,  lng: -0.622,  rayon: 3000 },
+  { nom: 'Le Haillan',             lat: 44.872,  lng: -0.676,  rayon: 2500 },
+  { nom: 'Le Taillan-Médoc',       lat: 44.914,  lng: -0.668,  rayon: 2500 },
+  { nom: 'Artigues-près-Bordeaux', lat: 44.852,  lng: -0.481,  rayon: 2500 },
+  { nom: 'Carbon-Blanc',           lat: 44.896,  lng: -0.504,  rayon: 2500 },
+  { nom: 'Bassens',                lat: 44.904,  lng: -0.513,  rayon: 2000 },
+  { nom: 'Parempuyre',             lat: 44.948,  lng: -0.604,  rayon: 2000 },
+  { nom: 'Martignas-sur-Jalle',    lat: 44.893,  lng: -0.773,  rayon: 2000 },
+  { nom: 'Saint-Aubin-de-Médoc',   lat: 44.913,  lng: -0.724,  rayon: 2000 },
+  { nom: 'Ambès',                  lat: 45.004,  lng: -0.543,  rayon: 2000 },
+  { nom: 'Ambarès-et-Lagrave',     lat: 44.942,  lng: -0.479,  rayon: 2500 },
+  // Métropole — sous-représentées
+  { nom: 'Cenon',                  lat: 44.857,  lng: -0.524,  rayon: 3000 },
+  { nom: 'Bègles',                 lat: 44.801,  lng: -0.545,  rayon: 3000 },
+  { nom: 'Pessac',                 lat: 44.806,  lng: -0.631,  rayon: 4000 },
+  { nom: 'Eysines',                lat: 44.881,  lng: -0.650,  rayon: 3000 },
+  { nom: "Villenave-d'Ornon",      lat: 44.774,  lng: -0.575,  rayon: 3000 },
+  { nom: 'Saint-Médard-en-Jalles', lat: 44.897,  lng: -0.742,  rayon: 3500 },
+  // Zones eau périphériques
+  { nom: 'Lacanau',                lat: 44.974,  lng: -1.079,  rayon: 5000 },
+  { nom: 'Lacanau-Océan',          lat: 44.991,  lng: -1.193,  rayon: 3000 },
+  { nom: 'Arcachon',               lat: 44.659,  lng: -1.168,  rayon: 4000 },
+  { nom: 'La Teste-de-Buch',       lat: 44.625,  lng: -1.142,  rayon: 4000 },
+  { nom: 'Andernos-les-Bains',     lat: 44.740,  lng: -1.097,  rayon: 3000 },
+  { nom: 'Lège-Cap-Ferret',        lat: 44.758,  lng: -1.198,  rayon: 4000 },
+  { nom: 'Hourtin',                lat: 45.177,  lng: -1.063,  rayon: 3000 },
+  { nom: 'Carcans',                lat: 45.078,  lng: -1.045,  rayon: 3000 },
+  { nom: 'Blaye',                  lat: 45.127,  lng: -0.664,  rayon: 3000 },
+  { nom: 'Libourne',               lat: 44.919,  lng: -0.242,  rayon: 3500 },
 ];
 
 // Mapping catégories Vadrou → types Google Places groupés
@@ -245,7 +273,10 @@ async function main() {
           'driving_school', 'school', 'university',
           'government_office', 'city_hall', 'courthouse',
           'real_estate_agency', 'insurance_agency',
-          'stadium',  // trop grand, pas pour familles
+          'stadium',
+          // Hébergement / sport adulte (faux positifs identifiés au test)
+          'lodging', 'hotel', 'campground', 'rv_park',
+          'gym', 'fitness_center', 'yoga_studio', 'sports_club',
         ];
         if (TYPES_EXCLUS.includes(primaryType)) continue;
 
@@ -255,9 +286,24 @@ async function main() {
           'discothèque', 'discotheque', 'nightclub',
           'ostéopathe', 'kinésithérapeute', 'permis bateau',
           'école de conduite', 'auto-école',
-          'gymnase', 'salle des sports',  // équipements municipaux fermés au public
+          'gymnase', 'salle des sports',
+          // Bibliothèques universitaires / enseignement supérieur
+          'université', 'universitaire', 'campus', 'faculté', 'faculte',
+          'sciences humaines', 'science politique',
+          // Hôtels / hébergement
+          'hôtel', 'hotel', 'best western', 'holiday inn', 'ibis', 'novotel',
+          'mercure', 'camping', 'capfun',
+          // Sport / fitness adultes
+          'keepcool', 'keep cool', 'fitness', 'pilates', 'yoga', 'crossfit',
+          'salle de sport', 'urbansoccer', 'urban soccer', 'basic fit', 'basic-fit',
+          // Écoles de musique / cours (pas des lieux de visite famille)
+          'école de musique', 'ecole de musique', 'cours de',
         ];
         if (NOMS_EXCLUS.some(exclu => nomLower.includes(exclu))) continue;
+
+        // Exclure les noms trop génériques (ex: "Gironde", "Garonne" seuls)
+        const NOMS_GENERIQUES = ['gironde', 'garonne', 'aquitaine', 'nouvelle-aquitaine'];
+        if (NOMS_GENERIQUES.includes(nomLower.trim())) continue;
 
         const lieuData = {
           nom: place.displayName?.text || 'Lieu sans nom',
