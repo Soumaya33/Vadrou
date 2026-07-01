@@ -1,0 +1,22 @@
+name: Backfill quartiers (geocoding)
+
+on:
+  workflow_dispatch: # Déclenchement manuel uniquement
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run backfill-quartiers.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_GEOCODING_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
+        run: node scripts/backfill-quartiers.js
