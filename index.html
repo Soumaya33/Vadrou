@@ -1054,6 +1054,13 @@ body {
       </div>
     </div>
 
+    <!-- Sélecteur quartier -->
+    <div class="events-filters" id="ep-quartier-row" style="padding-bottom:4px">
+      <button class="ef-btn" id="ep-quartier-btn" onclick="openQuartierSheet()" style="display:flex;align-items:center;gap:6px">
+        📍 <span id="ep-quartier-label">Tous les quartiers</span> <span style="opacity:.6">▾</span>
+      </button>
+    </div>
+
     <!-- Filtres catégories -->
     <div class="events-filters" id="ep-cat-filters">
       <button class="ef-btn active" onclick="filterEventsCat(this,'all')">Tout</button>
@@ -1504,6 +1511,18 @@ body {
   </div>
 </div>
 
+<!-- QUARTIER BOTTOM SHEET -->
+<div class="maps-sheet-overlay" id="quartier-sheet" onclick="closeQuartierSheet(event)">
+  <div class="maps-sheet" style="max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div class="maps-sheet-handle"></div>
+    <div class="maps-sheet-title" style="margin-bottom:14px">📍 Choisir un quartier</div>
+    <div id="quartier-list"></div>
+    <button class="maps-sheet-btn maps-sheet-btn-cancel" onclick="closeQuartierSheet()" style="margin-top:8px">
+      Fermer
+    </button>
+  </div>
+</div>
+
 <!-- MAPS BOTTOM SHEET -->
 <div class="maps-sheet-overlay" id="maps-sheet" onclick="closeMapsSheet(event)">
   <div class="maps-sheet">
@@ -1805,6 +1824,7 @@ let allEvents = [];
 let evPageCat = 'all';
 let evPageAge = 'all';
 let evPagePeriod = 'all';
+let evPageQuartier = 'all';
 
 async function loadEventsFromSupabase() {
   try {
@@ -1823,6 +1843,7 @@ async function loadEventsFromSupabase() {
       });
 
       allEvents = actifs;
+      buildQuartierList();
       renderHomeEvents(actifs.filter(e => e.coup_de_coeur).slice(0, 5));
       renderEventsPage();
     }
@@ -1869,6 +1890,26 @@ function renderHomeEvents(events) {
 }
 
 // Affichage page événements — cartes avec image
+// Renvoie un libellé période pour un événement :
+//  - une seule date (ou date_fin = date_debut) -> ponctuel  -> null (pas de badge)
+//  - date_fin > date_debut                     -> "période" -> badge
+// Pour les longues plages, on privilégie "Jusqu'au X" (plus parlant qu'une plage géante).
+function eventPeriodBadge(evt) {
+  if (!evt.date_debut || !evt.date_fin || evt.date_fin <= evt.date_debut) return null;
+  const d1 = new Date(evt.date_debut + 'T12:00:00');
+  const d2 = new Date(evt.date_fin + 'T12:00:00');
+  const todayStr = new Date().toLocaleDateString('fr-CA');
+  const fmt = (d) => `${d.getDate()} ${MOIS[d.getMonth()].toLowerCase()}`;
+  // Déjà commencé et toujours en cours -> "En ce moment · jusqu'au X"
+  if (evt.date_debut <= todayStr) {
+    return { label: `🔵 En ce moment`, sub: `Jusqu'au ${fmt(d2)}` };
+  }
+  // À venir, sur une période
+  const nbJours = Math.round((d2 - d1) / 86400000);
+  if (nbJours > 31) return { label: `📆 Sur une période`, sub: `Dès le ${fmt(d1)}` };
+  return { label: `📆 Du ${fmt(d1)} au ${fmt(d2)}`, sub: '' };
+}
+
 function renderEventsPage(filtered) {
   const container = document.getElementById('events-page-list');
   if (!container) return;
@@ -1913,9 +1954,10 @@ function renderEventsPage(filtered) {
           <div style="flex:1">
             <div class="event-card-title">${evt.nom}</div>
             <div class="event-card-meta">
-              ${addr ? '📍 ' + addr : ''}${heure ? ' · 🕐 ' + heure : ''}
+              ${addr ? '📍 ' + addr : ''}${evt.quartier ? ' · ' + evt.quartier : ''}${heure ? ' · 🕐 ' + heure : ''}
             </div>
             <div class="event-card-tags event-tags">
+              ${(() => { const b = eventPeriodBadge(evt); return b ? `<span class="etag" style="background:#E8F0FB;color:#2C5BA8;font-weight:500">${b.label}${b.sub ? ' · ' + b.sub : ''}</span>` : ''; })()}
               <span class="etag">${cat.emoji} ${cat.label}</span>
               ${tarif ? `<span class="etag">${tarif}</span>` : ''}
               ${evt.age_min !== null && evt.age_min !== undefined ? `<span class="etag">Dès ${evt.age_min} ans</span>` : ''}
@@ -1925,6 +1967,51 @@ function renderEventsPage(filtered) {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── Sélecteur quartier ──────────────────────────────────────
+// Construit la liste des quartiers réellement présents dans les événements.
+function buildQuartierList() {
+  const counts = {};
+  allEvents.forEach(e => {
+    const q = (e.quartier || '').trim();
+    if (q) counts[q] = (counts[q] || 0) + 1;
+  });
+  const quartiers = Object.keys(counts).sort((a, b) => a.localeCompare(b, 'fr'));
+  const listEl = document.getElementById('quartier-list');
+  if (!listEl) return;
+
+  const row = (value, label, count) =>
+    `<div onclick="selectQuartier('${value.replace(/'/g, "\\'")}')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--cream2);cursor:pointer">
+       <span style="font-size:15px;color:var(--charcoal)${evPageQuartier === value ? ';font-weight:600' : ''}">${label}</span>
+       <span style="font-size:12px;color:var(--muted)">${count != null ? count : ''} ${evPageQuartier === value ? '✓' : ''}</span>
+     </div>`;
+
+  listEl.innerHTML =
+    row('all', 'Tous les quartiers', allEvents.length) +
+    quartiers.map(q => row(q, q, counts[q])).join('');
+}
+
+function openQuartierSheet() {
+  buildQuartierList();
+  document.getElementById('quartier-sheet').classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeQuartierSheet(e) {
+  if (e && e.target !== document.getElementById('quartier-sheet')) return;
+  document.getElementById('quartier-sheet').classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+function selectQuartier(value) {
+  evPageQuartier = value;
+  const label = value === 'all' ? 'Tous les quartiers' : value;
+  document.getElementById('ep-quartier-label').textContent = label;
+  const btn = document.getElementById('ep-quartier-btn');
+  if (btn) btn.classList.toggle('active', value !== 'all');
+  closeQuartierSheet();
+  filterEventsAll();
 }
 
 // Filtres page événements
@@ -1972,6 +2059,9 @@ function filterEventsAll() {
 
   // Filtre catégorie
   if (evPageCat !== 'all') filtered = filtered.filter(e => e.categorie === evPageCat);
+
+  // Filtre quartier
+  if (evPageQuartier !== 'all') filtered = filtered.filter(e => (e.quartier || '').trim() === evPageQuartier);
 
   // Filtre âge
   if (evPageAge !== 'all') {
