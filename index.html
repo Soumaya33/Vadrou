@@ -1031,7 +1031,7 @@ body {
       <div class="sec-title">📅 Tous les évènements</div>
     </div>
 
-    <!-- Recherche + filtre dates -->
+    <!-- Recherche -->
     <div style="padding:0 0 10px;display:flex;gap:8px;align-items:center">
       <div style="flex:1;position:relative">
         <input id="ep-search" type="text" placeholder="🔍 Rechercher un évènement…"
@@ -1040,48 +1040,14 @@ body {
       </div>
     </div>
 
-    <!-- Filtre période -->
-    <div class="events-filters" id="ep-date-filters" style="padding-bottom:4px">
-      <button class="ef-btn active" onclick="filterEventsPeriod(this,'all')">Toutes dates</button>
-      <button class="ef-btn" onclick="filterEventsPeriod(this,'today')">Aujourd'hui</button>
-      <button class="ef-btn" onclick="filterEventsPeriod(this,'week')">Cette semaine</button>
-      <button class="ef-btn" onclick="filterEventsPeriod(this,'weekend')">Ce week-end</button>
-      <button class="ef-btn" onclick="filterEventsPeriod(this,'month')">Ce mois</button>
-      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-        <input type="date" id="ep-date-from" style="padding:5px 8px;border-radius:8px;border:1.5px solid var(--sand);font-family:'DM Sans',sans-serif;font-size:11px;background:var(--white);color:var(--charcoal);outline:none" onchange="filterEventsAll()">
-        <span style="font-size:11px;color:var(--muted)">→</span>
-        <input type="date" id="ep-date-to" style="padding:5px 8px;border-radius:8px;border:1.5px solid var(--sand);font-family:'DM Sans',sans-serif;font-size:11px;background:var(--white);color:var(--charcoal);outline:none" onchange="filterEventsAll()">
-      </div>
-    </div>
-
-    <!-- Sélecteur quartier -->
-    <div class="events-filters" id="ep-quartier-row" style="padding-bottom:4px">
-      <button class="ef-btn" id="ep-quartier-btn" onclick="openQuartierSheet()" style="display:flex;align-items:center;gap:6px">
+    <!-- Ligne de filtres compacte : quartier + plus de filtres -->
+    <div class="events-filters" id="ep-quartier-row" style="padding-bottom:10px">
+      <button class="ef-btn" id="ep-quartier-btn" onclick="openQuartierSheet()" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         📍 <span id="ep-quartier-label">Tous les quartiers</span> <span style="opacity:.6">▾</span>
       </button>
-    </div>
-
-    <!-- Filtres catégories -->
-    <div class="events-filters" id="ep-cat-filters">
-      <button class="ef-btn active" onclick="filterEventsCat(this,'all')">Tout</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'musique')">🎵 Musique</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'theatre')">🎭 Théâtre</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'sport')">⚽ Sport</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'expos')">🖼️ Expositions</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'sciences')">🔬 Sciences</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'ateliers')">🎨 Ateliers</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'nature')">🌿 Nature</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'jeux')">🎲 Jeux</button>
-      <button class="ef-btn" onclick="filterEventsCat(this,'parents')">🧑‍🍼 Parents</button>
-    </div>
-
-    <!-- Filtres âge -->
-    <div class="events-filters" id="ep-age-filters" style="padding-bottom:8px">
-      <button class="ef-btn active" onclick="filterEventsAge(this,'all')">Tous âges</button>
-      <button class="ef-btn" onclick="filterEventsAge(this,'0-3')">👶 0–3 ans</button>
-      <button class="ef-btn" onclick="filterEventsAge(this,'3-6')">🧒 3–6 ans</button>
-      <button class="ef-btn" onclick="filterEventsAge(this,'6-12')">🧑 6–12 ans</button>
-      <button class="ef-btn" onclick="filterEventsAge(this,'12+')">👦 12+ ans</button>
+      <button class="ef-btn" id="ep-morefilters-btn" onclick="openFiltersSheet()" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ⚙️ Plus de filtres<span id="ep-filters-count" style="display:none;background:var(--terracotta);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:600;line-height:16px"></span>
+      </button>
     </div>
 
     <div id="ep-result-count" style="font-size:11px;color:var(--muted);padding:0 0 8px;font-weight:500"></div>
@@ -1511,6 +1477,72 @@ body {
   </div>
 </div>
 
+<!-- PLUS DE FILTRES BOTTOM SHEET -->
+<div class="maps-sheet-overlay" id="filters-sheet" onclick="closeFiltersSheet(event)">
+  <div class="maps-sheet" style="max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left">
+    <div class="maps-sheet-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="maps-sheet-title" style="margin:0">⚙️ Filtres</div>
+      <button onclick="resetEventFilters()" style="background:none;border:none;color:var(--terracotta);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">Réinitialiser</button>
+    </div>
+
+    <!-- Quand ? -->
+    <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Quand ?</div>
+    <div class="events-filters" id="ep-date-filters" style="flex-wrap:wrap;overflow-x:visible;padding-bottom:8px">
+      <button class="ef-btn active" onclick="filterEventsPeriod(this,'all')">Toutes dates</button>
+      <button class="ef-btn" onclick="filterEventsPeriod(this,'today')">Aujourd'hui</button>
+      <button class="ef-btn" onclick="filterEventsPeriod(this,'week')">Cette semaine</button>
+      <button class="ef-btn" onclick="filterEventsPeriod(this,'weekend')">Ce week-end</button>
+      <button class="ef-btn" onclick="filterEventsPeriod(this,'month')">Ce mois</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;padding-bottom:14px">
+      <input type="date" id="ep-date-from" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--sand);font-family:'DM Sans',sans-serif;font-size:12px;background:var(--white);color:var(--charcoal);outline:none" onchange="filterEventsAll()">
+      <span style="font-size:12px;color:var(--muted)">→</span>
+      <input type="date" id="ep-date-to" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--sand);font-family:'DM Sans',sans-serif;font-size:12px;background:var(--white);color:var(--charcoal);outline:none" onchange="filterEventsAll()">
+    </div>
+
+    <!-- Durée : masquer longue durée -->
+    <div onclick="toggleLongDuree()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--cream2);border-bottom:1px solid var(--cream2);margin-bottom:14px;cursor:pointer">
+      <div>
+        <div style="font-size:14px;color:var(--charcoal);font-weight:500">Masquer les événements longue durée</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Expos et activités qui durent plus de 2 semaines</div>
+      </div>
+      <div id="ep-longduree-toggle" style="flex-shrink:0;width:44px;height:26px;border-radius:13px;background:var(--sand);position:relative;transition:background .2s">
+        <div id="ep-longduree-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+      </div>
+    </div>
+
+    <!-- Catégorie -->
+    <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Catégorie</div>
+    <div class="events-filters" id="ep-cat-filters" style="flex-wrap:wrap;overflow-x:visible;padding-bottom:14px">
+      <button class="ef-btn active" onclick="filterEventsCat(this,'all')">Tout</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'musique')">🎵 Musique</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'theatre')">🎭 Théâtre</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'sport')">⚽ Sport</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'expos')">🖼️ Expositions</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'sciences')">🔬 Sciences</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'ateliers')">🎨 Ateliers</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'nature')">🌿 Nature</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'jeux')">🎲 Jeux</button>
+      <button class="ef-btn" onclick="filterEventsCat(this,'parents')">🧑‍🍼 Parents</button>
+    </div>
+
+    <!-- Âge -->
+    <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Âge</div>
+    <div class="events-filters" id="ep-age-filters" style="flex-wrap:wrap;overflow-x:visible;padding-bottom:18px">
+      <button class="ef-btn active" onclick="filterEventsAge(this,'all')">Tous âges</button>
+      <button class="ef-btn" onclick="filterEventsAge(this,'0-3')">👶 0–3 ans</button>
+      <button class="ef-btn" onclick="filterEventsAge(this,'3-6')">🧒 3–6 ans</button>
+      <button class="ef-btn" onclick="filterEventsAge(this,'6-12')">🧑 6–12 ans</button>
+      <button class="ef-btn" onclick="filterEventsAge(this,'12+')">👦 12+ ans</button>
+    </div>
+
+    <button class="maps-sheet-btn maps-sheet-btn-primary" onclick="closeFiltersSheet()">
+      Voir les résultats
+    </button>
+  </div>
+</div>
+
 <!-- QUARTIER BOTTOM SHEET -->
 <div class="maps-sheet-overlay" id="quartier-sheet" onclick="closeQuartierSheet(event)">
   <div class="maps-sheet" style="max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
@@ -1825,6 +1857,7 @@ let evPageCat = 'all';
 let evPageAge = 'all';
 let evPagePeriod = 'all';
 let evPageQuartier = 'all';
+let evPageLongDuree = false; // true = masquer les événements longue durée (> 14 j)
 
 async function loadEventsFromSupabase() {
   try {
@@ -1890,24 +1923,17 @@ function renderHomeEvents(events) {
 }
 
 // Affichage page événements — cartes avec image
-// Renvoie un libellé période pour un événement :
-//  - une seule date (ou date_fin = date_debut) -> ponctuel  -> null (pas de badge)
-//  - date_fin > date_debut                     -> "période" -> badge
-// Pour les longues plages, on privilégie "Jusqu'au X" (plus parlant qu'une plage géante).
-function eventPeriodBadge(evt) {
+// Renvoie un libellé court à placer SOUS la box date, pour les événements sur une période.
+//  - ponctuel (une seule date) -> null
+//  - en cours -> "jusqu'au 31 août"
+//  - à venir sur une période -> "→ 15 oct."
+function eventPeriodSub(evt) {
   if (!evt.date_debut || !evt.date_fin || evt.date_fin <= evt.date_debut) return null;
-  const d1 = new Date(evt.date_debut + 'T12:00:00');
   const d2 = new Date(evt.date_fin + 'T12:00:00');
   const todayStr = new Date().toLocaleDateString('fr-CA');
   const fmt = (d) => `${d.getDate()} ${MOIS[d.getMonth()].toLowerCase()}`;
-  // Déjà commencé et toujours en cours -> "En ce moment · jusqu'au X"
-  if (evt.date_debut <= todayStr) {
-    return { label: `🔵 En ce moment`, sub: `Jusqu'au ${fmt(d2)}` };
-  }
-  // À venir, sur une période
-  const nbJours = Math.round((d2 - d1) / 86400000);
-  if (nbJours > 31) return { label: `📆 Sur une période`, sub: `Dès le ${fmt(d1)}` };
-  return { label: `📆 Du ${fmt(d1)} au ${fmt(d2)}`, sub: '' };
+  if (evt.date_debut <= todayStr) return `jusqu'au ${fmt(d2)}`; // déjà commencé, en cours
+  return `→ ${fmt(d2)}`; // à venir : début dans la box, fin ici
 }
 
 function renderEventsPage(filtered) {
@@ -1947,9 +1973,12 @@ function renderEventsPage(filtered) {
       }
       <div class="event-card-body">
         <div style="display:flex;gap:12px;align-items:flex-start">
-          <div class="event-date" style="flex-shrink:0">
-            <div class="event-day">${d ? d.getDate() : '?'}</div>
-            <div class="event-month">${d ? MOIS[d.getMonth()] : ''}</div>
+          <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;width:52px">
+            <div class="event-date" style="width:46px">
+              <div class="event-day">${d ? d.getDate() : '?'}</div>
+              <div class="event-month">${d ? MOIS[d.getMonth()] : ''}</div>
+            </div>
+            ${(() => { const s = eventPeriodSub(evt); return s ? `<div style="font-size:9px;font-weight:600;color:var(--terracotta);margin-top:4px;line-height:1.1;text-align:center">${s}</div>` : ''; })()}
           </div>
           <div style="flex:1">
             <div class="event-card-title">${evt.nom}</div>
@@ -1957,7 +1986,6 @@ function renderEventsPage(filtered) {
               ${addr ? '📍 ' + addr : ''}${evt.quartier ? ' · ' + evt.quartier : ''}${heure ? ' · 🕐 ' + heure : ''}
             </div>
             <div class="event-card-tags event-tags">
-              ${(() => { const b = eventPeriodBadge(evt); return b ? `<span class="etag" style="background:#E8F0FB;color:#2C5BA8;font-weight:500">${b.label}${b.sub ? ' · ' + b.sub : ''}</span>` : ''; })()}
               <span class="etag">${cat.emoji} ${cat.label}</span>
               ${tarif ? `<span class="etag">${tarif}</span>` : ''}
               ${evt.age_min !== null && evt.age_min !== undefined ? `<span class="etag">Dès ${evt.age_min} ans</span>` : ''}
@@ -2014,6 +2042,68 @@ function selectQuartier(value) {
   filterEventsAll();
 }
 
+// ── Sheet "Plus de filtres" ─────────────────────────────────
+function openFiltersSheet() {
+  document.getElementById('filters-sheet').classList.add('open');
+  document.body.classList.add('modal-open');
+}
+function closeFiltersSheet(e) {
+  if (e && e.target !== document.getElementById('filters-sheet')) return;
+  document.getElementById('filters-sheet').classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+const LONG_DUREE_SEUIL = 14; // jours au-delà desquels un événement est "longue durée"
+
+function toggleLongDuree() {
+  evPageLongDuree = !evPageLongDuree;
+  const tog = document.getElementById('ep-longduree-toggle');
+  const knob = document.getElementById('ep-longduree-knob');
+  if (tog && knob) {
+    tog.style.background = evPageLongDuree ? 'var(--forest)' : 'var(--sand)';
+    knob.style.left = evPageLongDuree ? '21px' : '3px';
+  }
+  filterEventsAll();
+}
+
+// Compte les filtres actifs (hors quartier, qui a son propre bouton) et met à jour la pastille
+function updateFiltersCount() {
+  let n = 0;
+  if (evPageCat !== 'all') n++;
+  if (evPageAge !== 'all') n++;
+  if (evPagePeriod !== 'all') n++;
+  if (evPageLongDuree) n++;
+  const from = document.getElementById('ep-date-from')?.value;
+  const to = document.getElementById('ep-date-to')?.value;
+  if (from || to) n++;
+  const badge = document.getElementById('ep-filters-count');
+  if (badge) {
+    badge.textContent = n;
+    badge.style.display = n > 0 ? 'inline-block' : 'none';
+  }
+  const btn = document.getElementById('ep-morefilters-btn');
+  if (btn) btn.classList.toggle('active', n > 0);
+}
+
+function resetEventFilters() {
+  evPageCat = 'all'; evPageAge = 'all'; evPagePeriod = 'all'; evPageLongDuree = false;
+  // Réactiver les boutons "tout" par défaut
+  const setActive = (sel, idx) => {
+    const btns = document.querySelectorAll(sel + ' .ef-btn');
+    btns.forEach((b, i) => b.classList.toggle('active', i === idx));
+  };
+  setActive('#ep-cat-filters', 0);
+  setActive('#ep-age-filters', 0);
+  setActive('#ep-date-filters', 0);
+  const df = document.getElementById('ep-date-from'); if (df) df.value = '';
+  const dt = document.getElementById('ep-date-to'); if (dt) dt.value = '';
+  const tog = document.getElementById('ep-longduree-toggle');
+  const knob = document.getElementById('ep-longduree-knob');
+  if (tog) tog.style.background = 'var(--sand)';
+  if (knob) knob.style.left = '3px';
+  filterEventsAll();
+}
+
 // Filtres page événements
 function filterEventsCat(btn, cat) {
   document.querySelectorAll('#ep-cat-filters .ef-btn').forEach(b => b.classList.remove('active'));
@@ -2062,6 +2152,15 @@ function filterEventsAll() {
 
   // Filtre quartier
   if (evPageQuartier !== 'all') filtered = filtered.filter(e => (e.quartier || '').trim() === evPageQuartier);
+
+  // Filtre "masquer longue durée" : retire les événements dont la période dépasse le seuil
+  if (evPageLongDuree) {
+    filtered = filtered.filter(e => {
+      if (!e.date_debut || !e.date_fin || e.date_fin <= e.date_debut) return true; // ponctuel → gardé
+      const nbJours = Math.round((new Date(e.date_fin) - new Date(e.date_debut)) / 86400000);
+      return nbJours <= LONG_DUREE_SEUIL;
+    });
+  }
 
   // Filtre âge
   if (evPageAge !== 'all') {
@@ -2118,6 +2217,7 @@ function filterEventsAll() {
   const countEl = document.getElementById('ep-result-count');
   if (countEl) countEl.textContent = filtered.length ? `${filtered.length} évènement${filtered.length > 1 ? 's' : ''}` : '';
 
+  updateFiltersCount();
   renderEventsPage(filtered);
 }
 
