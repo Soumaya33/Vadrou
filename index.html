@@ -2417,11 +2417,27 @@ async function getDeviceInfo() {
 
 // Enregistre (ou met à jour) l'appareil dans la table `devices` : 1 ligne par appareil.
 async function registerDevice() {
+  if (isTestTraffic()) return; // trafic de test : ne pas enregistrer l'appareil
   try {
     if (!ANALYTICS_USER_ID) ANALYTICS_USER_ID = await getOrCreateDeviceId();
     const info = await getDeviceInfo();
     let appVer = null;
     try { appVer = await getInstalledVersionCode(); } catch(e) {}
+
+    // Payload de base (toujours envoyé)
+    const payload = {
+      id:        ANALYTICS_USER_ID,
+      platform:  info.platform,
+      last_seen: new Date().toISOString(),
+    };
+    // Champs "descriptifs" : on ne les envoie QUE s'ils ont une valeur.
+    // Sinon l'upsert merge-duplicates écraserait un modèle déjà connu par null
+    // (ex. si getInfo() échoue transitoirement sur un lancement ultérieur).
+    if (info.model)        payload.model        = info.model;
+    if (info.manufacturer) payload.manufacturer = info.manufacturer;
+    if (info.os_version)   payload.os_version   = info.os_version;
+    if (appVer)            payload.app_version  = appVer;
+
     await fetch(SUPABASE_URL + '/rest/v1/devices', {
       method: 'POST',
       headers: {
@@ -2431,22 +2447,21 @@ async function registerDevice() {
         // Upsert : si l'appareil existe déjà (même id), on met à jour les colonnes envoyées.
         'Prefer': 'resolution=merge-duplicates,return=minimal',
       },
-      body: JSON.stringify({
-        id:           ANALYTICS_USER_ID,
-        platform:     info.platform,
-        model:        info.model,
-        manufacturer: info.manufacturer,
-        os_version:   info.os_version,
-        app_version:  appVer,
-        last_seen:    new Date().toISOString(),
-      }),
+      body: JSON.stringify(payload),
     });
   } catch(e) {
     // Silencieux — le tracking ne doit jamais bloquer l'app
   }
 }
 
+// Détecte le trafic de test automatisé (Playwright pose ce marqueur).
+// Permet d'exclure les tests des analytics et de la table `devices`.
+function isTestTraffic() {
+  try { return !!localStorage.getItem('vadrou_is_test'); } catch(e) { return false; }
+}
+
 async function logAction(action, itemName, itemId, itemCat) {
+  if (isTestTraffic()) return; // trafic de test : pas de log
   try {
     if (!ANALYTICS_USER_ID) ANALYTICS_USER_ID = await getOrCreateDeviceId();
     await fetch(SUPABASE_URL + '/rest/v1/events_log', {
