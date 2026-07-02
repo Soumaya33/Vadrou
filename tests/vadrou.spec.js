@@ -21,6 +21,11 @@ const BASE_URL = process.env.BASE_URL || 'https://vadrou.com';
 // ── Helpers ──────────────────────────────────────────
 // Attend que le splash disparaisse et que l'app soit chargée
 async function waitForAppReady(page) {
+  // Marque tout le trafic de test pour que l'app n'enregistre NI analytics NI device.
+  // Doit être posé avant la navigation (s'applique aussi aux rechargements).
+  await page.addInitScript(() => {
+    try { localStorage.setItem('vadrou_is_test', '1'); } catch (e) {}
+  });
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
   // Attendre que le splash soit masqué (2s max après chargement)
   await page.waitForSelector('#splash[style*="display:none"], #splash.out', { timeout: 8000 }).catch(() => {});
