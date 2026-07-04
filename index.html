@@ -1631,6 +1631,7 @@ function startApp() {
     loadFavoritesFromSupabase(); // Charger les favoris après avoir le device ID
     registerDevice();            // Enregistrer l'appareil (type + modèle) dans `devices`
     logAction('app_open');       // Logué ICI : garantit un user_id non-null (sinon course au démarrage)
+    registerPushToken();         // Demander la permission + enregistrer le token FCM
   });
   setTimeout(function() {
     document.getElementById('splash').classList.add('out');
@@ -1997,7 +1998,56 @@ function renderEventsPage(filtered) {
   }).join('');
 }
 
-// ── Sélecteur quartier ──────────────────────────────────────
+// ── Notifications push ──────────────────────────────────────
+// Demande la permission, récupère le token FCM, et le stocke dans push_tokens.
+// Silencieux en cas d'erreur ou si l'utilisateur refuse.
+async function registerPushToken() {
+  if (isTestTraffic()) return;
+  if (!IS_NATIVE) return; // Push uniquement sur app native
+  const Push = window.Capacitor?.Plugins?.PushNotifications;
+  if (!Push) return; // Plugin absent (build sans le plugin)
+
+  try {
+    // Demande la permission (iOS affiche une popup, Android 13+ aussi)
+    const permResult = await Push.requestPermissions();
+    if (permResult.receive !== 'granted') return; // Utilisateur a refusé
+
+    // Écouter le token quand il arrive
+    await Push.addListener('registration', async (data) => {
+      const token = data.value;
+      if (!token || !ANALYTICS_USER_ID) return;
+
+      // Détecter la plateforme
+      const platform = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'ios' : 'android';
+
+      // Stocker le token dans Supabase (upsert sur le token pour éviter les doublons)
+      try {
+        await fetch(SUPABASE_URL + '/rest/v1/push_tokens', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=minimal',
+          },
+          body: JSON.stringify({
+            device_id:  ANALYTICS_USER_ID,
+            token:      token,
+            platform:   platform,
+            updated_at: new Date().toISOString(),
+          }),
+        });
+      } catch(e) { /* silencieux */ }
+    });
+
+    // Écouter les erreurs d'enregistrement
+    await Push.addListener('registrationError', () => { /* silencieux */ });
+
+    // Déclencher l'enregistrement
+    await Push.register();
+
+  } catch(e) { /* silencieux */ }
+}
 // Construit la liste des quartiers réellement présents dans les événements.
 function buildQuartierList() {
   const counts = {};
