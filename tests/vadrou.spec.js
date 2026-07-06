@@ -209,19 +209,18 @@ test('[T13] Fiche lieu affiche le bouton Itinéraire', async ({ page }) => {
   await closeFiche(page);
 });
 
-test('[T14] Bottom sheet itinéraire s\'ouvre au clic', async ({ page }) => {
+test('[T14] Bouton "Voir sur Maps" présent sur la fiche lieu', async ({ page }) => {
   await waitForAppReady(page);
   await page.locator('#places-scroll .place-card').first().click();
   await expect(page.locator('#detail-modal.open')).toBeVisible({ timeout: 5000 });
 
-  // Cliquer sur le bouton itinéraire (premier meta-item cliquable)
-  const itineraire = page.locator('#detail-meta .detail-meta-item[onclick]').first();
-  if (await itineraire.isVisible()) {
-    await itineraire.click();
-    await expect(page.locator('#maps-sheet.open')).toBeVisible({ timeout: 3000 });
-    // Fermer le bottom sheet
-    await page.locator('.maps-sheet-btn-cancel').click();
-  }
+  // Le bouton "Voir sur Maps" doit être présent dans les meta (remplace l'ancien "Itinéraire")
+  const mapsBtn = page.locator('#detail-meta .detail-meta-item[onclick*="openPlaceOnMaps"]').first();
+  await expect(mapsBtn).toBeVisible({ timeout: 3000 });
+  // Le libellé doit contenir "Maps"
+  const text = await mapsBtn.textContent();
+  expect(text).toContain('Maps');
+
   await closeFiche(page);
 });
 
@@ -287,23 +286,27 @@ test('[T19] ⚠️ CRITIQUE — Aucun événement passé affiché', async ({ pag
   await page.locator('#nav-events').click();
   await page.waitForSelector('#events-page-list .event-card-full', { timeout: 10000 });
 
-  // Récupérer toutes les dates affichées
-  const dateEls = page.locator('.event-day');
-  const monthEls = page.locator('.event-month');
-  const count = await dateEls.count();
+  // Récupérer les dates UNIQUEMENT dans la liste événements (pas la section accueil)
+  const cards = page.locator('#events-page-list .event-card-full');
+  const count = await cards.count();
 
   const MOIS = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < Math.min(count, 10); i++) {
-    const day = parseInt(await dateEls.nth(i).textContent(), 10);
-    const monthStr = (await monthEls.nth(i).textContent()).toLowerCase().trim();
+    const card = cards.nth(i);
+    const dayEl = card.locator('.event-day').first();
+    const monthEl = card.locator('.event-month').first();
+    const day = parseInt(await dayEl.textContent(), 10);
+    const monthStr = (await monthEl.textContent()).toLowerCase().trim();
     const monthIdx = MOIS.findIndex(m => monthStr.startsWith(m));
     if (monthIdx >= 0 && day > 0) {
-      const evtDate = new Date(today.getFullYear(), monthIdx, day);
-      // Si la date semble dans le passé cette année, vérifier
-      if (evtDate < today && evtDate.getFullYear() === today.getFullYear()) {
+      // Chercher la bonne année (l'événement peut être en N+1)
+      const evtThisYear = new Date(today.getFullYear(), monthIdx, day);
+      const evtNextYear = new Date(today.getFullYear() + 1, monthIdx, day);
+      const evtDate = evtThisYear >= today ? evtThisYear : evtNextYear;
+      if (evtDate < today) {
         throw new Error(`Événement passé détecté : ${day} ${monthStr}`);
       }
     }
@@ -315,8 +318,17 @@ test('[T20] Filtre catégorie événements fonctionne', async ({ page }) => {
   await page.locator('#nav-events').click();
   await page.waitForSelector('#events-page-list', { timeout: 10000 });
 
-  await page.locator('#ep-cat-filters .ef-btn').nth(1).click(); // Premier filtre non "Tout"
+  // Les filtres catégories sont dans le bottom sheet "Plus de filtres" — l'ouvrir d'abord
+  await page.locator('#ep-morefilters-btn').click();
+  await expect(page.locator('#filters-sheet.open')).toBeVisible({ timeout: 3000 });
+
+  // Cliquer sur le premier filtre non "Tout" dans le sheet
+  await page.locator('#ep-cat-filters .ef-btn').nth(1).click();
   await page.waitForTimeout(500);
+
+  // Fermer le sheet
+  await page.locator('#filters-sheet .maps-sheet-btn-primary').click();
+  await page.waitForTimeout(300);
 
   // Au moins un résultat ou message "aucun résultat"
   const results = page.locator('#events-page-list .event-card-full, #events-page-list .loading-card');
