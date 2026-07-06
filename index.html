@@ -1579,7 +1579,7 @@ const SUPABASE_URL = 'https://xwykpuytwjiwuxhpeqrt.supabase.co';
 
 // ── VERSION DE L'APP ──
 // À incrémenter à chaque build Android (doit correspondre à versionCode dans build.gradle)
-const APP_VERSION = 28;
+const APP_VERSION = 44;
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3eWtwdXl0d2ppd3V4aHBlcXJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NDc2OTUsImV4cCI6MjA5MzQyMzY5NX0.eOwSEwEuKChEV-oygJkpimKPO7vT4aiHm7oPiKYveGE';
 
 async function supaFetch(path, opts) {
@@ -2012,41 +2012,53 @@ async function registerPushToken() {
     const permResult = await Push.requestPermissions();
     if (permResult.receive !== 'granted') return; // Utilisateur a refusé
 
+    // Détection plateforme fiable via Capacitor (navigator.userAgent peu fiable en WebView native)
+    const platform = (window.Capacitor?.getPlatform?.() || 'android').toLowerCase();
+
     // Écouter le token quand il arrive
     await Push.addListener('registration', async (data) => {
       const token = data.value;
       if (!token || !ANALYTICS_USER_ID) return;
 
-      // Détecter la plateforme
-      const platform = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'ios' : 'android';
-
-      // Stocker le token dans Supabase (upsert sur le token pour éviter les doublons)
+      const payload = { device_id: ANALYTICS_USER_ID, token, platform, updated_at: new Date().toISOString() };
+      const cap = _capacitorHttp();
       try {
-        await fetch(SUPABASE_URL + '/rest/v1/push_tokens', {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=minimal',
-          },
-          body: JSON.stringify({
-            device_id:  ANALYTICS_USER_ID,
-            token:      token,
-            platform:   platform,
-            updated_at: new Date().toISOString(),
-          }),
-        });
-      } catch(e) { /* silencieux */ }
+        if (cap) {
+          // HTTP natif : contourne le CORS de la WebView (même pattern que notify)
+          await cap.post({
+            url: SUPABASE_URL + '/rest/v1/push_tokens',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=minimal',
+            },
+            data: payload,
+          });
+        } else {
+          await fetch(SUPABASE_URL + '/rest/v1/push_tokens', {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=minimal',
+            },
+            body: JSON.stringify(payload),
+          });
+        }
+      } catch(e) { console.warn('[Push] Erreur enregistrement token:', e); }
     });
 
-    // Écouter les erreurs d'enregistrement
-    await Push.addListener('registrationError', () => { /* silencieux */ });
+    // Écouter les erreurs d'enregistrement FCM/APNs
+    await Push.addListener('registrationError', (err) => {
+      console.warn('[Push] Erreur registration:', err);
+    });
 
     // Déclencher l'enregistrement
     await Push.register();
 
-  } catch(e) { /* silencieux */ }
+  } catch(e) { console.warn('[Push] Erreur registerPushToken:', e); }
 }
 // Construit la liste des quartiers réellement présents dans les événements.
 function buildQuartierList() {
