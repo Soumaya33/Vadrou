@@ -17,16 +17,12 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charcoal);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-
-/* HEADER */
 .hd{background:var(--forest);padding:12px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
 .logo{font-family:'Fraunces',serif;font-size:20px;color:var(--cream);}
 .logo em{font-style:italic;font-weight:300;color:var(--gold);}
 .badge{background:var(--terracotta);color:white;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;}
 .hd-info{margin-left:auto;font-size:12px;color:rgba(246,241,233,.5);}
 #prog{color:var(--gold);font-weight:500;}
-
-/* STATS PAGE */
 .stats-page{flex:1;overflow-y:auto;padding:24px;display:none;background:var(--cream);}
 .stats-page.visible{display:block;}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
@@ -61,51 +57,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
 .stats-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .refresh-btn{background:none;border:1.5px solid var(--sand);border-radius:8px;padding:5px 12px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;color:var(--muted);}
 .refresh-btn:hover{border-color:var(--forest);color:var(--forest);}
-
-/* BULK ACTION BAR */
-.bulk-bar {
-  background:var(--forest); color:var(--cream);
-  padding:10px 16px; display:none;
-  align-items:center; gap:10px; flex-shrink:0;
-  border-bottom:1px solid rgba(255,255,255,.1);
-}
-.bulk-bar.visible { display:flex; }
-.bulk-count { font-size:12px; font-weight:500; flex:1; }
-.bulk-btn {
-  padding:6px 12px; border-radius:8px; border:none;
-  font-family:'DM Sans',sans-serif; font-size:11px;
-  font-weight:500; cursor:pointer; transition:all .15s;
-}
-.bulk-btn-publish { background:var(--ok-bg); color:var(--ok); }
-.bulk-btn-unpublish { background:#FDF3E7; color:#854F0B; }
-.bulk-btn-delete { background:#FBE9E7; color:var(--terracotta); }
-.bulk-btn-clear { background:rgba(255,255,255,.15); color:var(--cream); }
-
-/* CHECKBOX */
-.pr-check {
-  width:16px; height:16px; border-radius:4px;
-  border:1.5px solid var(--sand); background:var(--cream);
-  flex-shrink:0; cursor:pointer; appearance:none;
-  transition:all .15s; margin-top:2px;
-}
-.pr-check:checked { background:var(--forest); border-color:var(--forest); }
-.pr-check:checked::after {
-  content:'✓'; color:white; font-size:10px;
-  display:flex; align-items:center; justify-content:center;
-  width:100%; height:100%;
-}
+.bulk-bar{background:var(--forest);color:var(--cream);padding:10px 16px;display:none;align-items:center;gap:10px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.1);}
+.bulk-bar.visible{display:flex;}
+.bulk-count{font-size:12px;font-weight:500;flex:1;}
+.bulk-btn{padding:6px 12px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;}
+.bulk-btn-publish{background:var(--ok-bg);color:var(--ok);}
+.bulk-btn-unpublish{background:#FDF3E7;color:#854F0B;}
+.bulk-btn-delete{background:#FBE9E7;color:var(--terracotta);}
+.bulk-btn-clear{background:rgba(255,255,255,.15);color:var(--cream);}
+.pr-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--sand);background:var(--cream);flex-shrink:0;cursor:pointer;appearance:none;transition:all .15s;margin-top:2px;}
+.pr-check:checked{background:var(--forest);border-color:var(--forest);}
+.pr-check:checked::after{content:'✓';color:white;font-size:10px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
 .tabs{background:var(--forest);display:flex;gap:0;padding:0 24px;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;}
 .tab{padding:10px 18px;font-size:12px;font-weight:500;color:rgba(246,241,233,.45);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .tab.active{color:var(--cream);border-bottom-color:var(--gold);}
-
-/* EVENT FILTERS */
 .ef-filter{padding:4px 10px;border-radius:20px;border:1.5px solid var(--sand);background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;color:var(--muted);transition:all .15s;}
 .ef-filter.active{background:var(--forest);border-color:var(--forest);color:var(--cream);}
-
-/* ── LAYOUT DESKTOP (≥ 768px) ── */
 .main{display:grid;grid-template-columns:360px 1fr;flex:1;overflow:hidden;}
-
-/* LEFT */
 .left{display:flex;flex-direction:column;background:var(--white);border-right:1px solid var(--sand);overflow:hidden;}
 .left-hd{padding:12px 16px 10px;border-bottom:1px solid var(--cream2);flex-shrink:0;}
 .search-box{width:100%;padding:8px 12px;border:1.5px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;background:var(--cream);}
@@ -122,85 +90,56 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
 .pr-tag{font-size:9px;padding:2px 6px;border-radius:8px;background:var(--cream2);color:var(--muted);}
 .pr-tag.valid{background:var(--ok-bg);color:var(--ok);}
 .pr-tag.invalid{background:#FBE9E7;color:var(--terracotta);}
-
-/* STATS */
 .stats{padding:8px 16px;background:var(--forest);display:flex;gap:14px;font-size:10px;color:rgba(246,241,233,.55);flex-shrink:0;}
 .st{display:flex;align-items:center;gap:4px;}
 .st-dot{width:5px;height:5px;border-radius:50%;}
-
-/* RIGHT */
 .right{display:flex;flex-direction:column;overflow:hidden;}
 #map{height:260px;flex-shrink:0;}
 .editor{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin;}
 .empty{display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:8px;color:var(--muted);}
 .empty-icon{font-size:40px;}
-
-/* ── BOUTON RETOUR MOBILE ── */
 .mobile-back-btn{display:none;align-items:center;gap:8px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--cream);cursor:pointer;padding:0;flex-shrink:0;}
 .mobile-back-btn::before{content:'←';font-size:16px;}
 .mobile-only{display:none;}
 @media(max-width:767px){.mobile-only{display:flex;}}
-
-/* ── RESPONSIVE MOBILE (< 768px) ── */
 @media(max-width:767px){
   body{overflow:hidden;}
   .mobile-back-btn{display:flex;}
   .main{display:block;position:relative;flex:1;overflow:hidden;}
-  /* Vue LISTE : occupe tout l'écran */
   .left{position:absolute;inset:0;width:100%;border-right:none;transform:translateX(0);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:2;}
-  /* Vue ÉDITEUR : glissée à droite par défaut */
   .right{position:absolute;inset:0;width:100%;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);background:var(--white);z-index:3;overflow-y:auto;display:flex;flex-direction:column;}
-  /* Quand l'éditeur est actif */
   .main.editor-open .left{transform:translateX(-100%);}
   .main.editor-open .right{transform:translateX(0);}
-  /* Carte plus compacte */
   #map{height:180px;}
   .editor{padding:14px 16px;}
   .action-bar{position:sticky;bottom:0;background:var(--white);border-top:1px solid var(--cream2);padding:12px 16px;z-index:10;}
-  /* Stats */
   .stats-grid{grid-template-columns:repeat(2,1fr);}
   .stats-2col{grid-template-columns:1fr;}
-  /* Tabs */
   .tabs{padding:0 12px;}
   .tab{padding:10px 12px;font-size:11px;}
-  /* Bulk */
   .bulk-bar{flex-wrap:wrap;gap:6px;}
   .left-hd{padding:10px 12px 8px;}
 }
-
-/* FORM */
 .section-title{font-size:10px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cream2);}
 .field{margin-bottom:10px;}
 .field label{font-size:10px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;}
-.field input,.field textarea,.field select{
-  width:100%;padding:8px 12px;border:1.5px solid var(--sand);border-radius:8px;
-  font-family:'DM Sans',sans-serif;font-size:13px;color:var(--charcoal);
-  background:var(--cream);outline:none;transition:border-color .15s;
-}
+.field input,.field textarea,.field select{width:100%;padding:8px 12px;border:1.5px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--charcoal);background:var(--cream);outline:none;transition:border-color .15s;}
 .field input:focus,.field textarea:focus{border-color:var(--forest);}
 .field textarea{resize:vertical;line-height:1.5;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-
-/* CATEGORIES */
 .cat-grid{display:flex;flex-wrap:wrap;gap:6px;}
 .cat-btn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--sand);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;color:var(--muted);}
 .cat-btn.sel{background:var(--forest);border-color:var(--forest);color:var(--cream);}
-
-/* VALID TOGGLE */
 .valid-toggle{display:flex;gap:8px;}
 .vtbtn{flex:1;padding:9px;border:1.5px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;background:transparent;color:var(--muted);}
 .vtbtn.sel-valid{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);}
 .vtbtn.sel-invalid{background:#FBE9E7;border-color:var(--terracotta);color:var(--terracotta);}
-
-/* SEARCH SUGGESTIONS */
 .suggestions{border:1.5px solid var(--sand);border-radius:8px;overflow:hidden;margin-top:-6px;margin-bottom:8px;display:none;max-height:160px;overflow-y:auto;}
 .suggestion{padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--cream2);transition:background .1s;}
 .suggestion:last-child{border-bottom:none;}
 .suggestion:hover{background:var(--cream);}
 .sg-name{font-weight:500;}
 .sg-addr{color:var(--muted);font-size:11px;}
-
-/* ACTIONS */
 .action-bar{display:flex;gap:8px;padding:16px 20px;background:var(--white);border-top:1px solid var(--cream2);flex-shrink:0;}
 .btn{padding:10px 18px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;}
 .btn-save{background:var(--forest);color:var(--cream);flex:1;}
@@ -208,12 +147,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
 .btn-skip{background:var(--cream2);color:var(--muted);}
 .btn-skip:hover{background:var(--sand);}
 .btn-delete{background:#FBE9E7;color:var(--terracotta);}
-
-/* TOAST */
 .toast{position:fixed;bottom:20px;right:20px;background:var(--forest);color:var(--cream);padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:999;}
 .toast.show{opacity:1;transform:translateY(0);}
-
-/* MAP HINT */
 .map-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(30,58,47,.85);color:var(--cream);font-size:11px;padding:4px 12px;border-radius:20px;z-index:400;pointer-events:none;backdrop-filter:blur(4px);}
 </style>
 </head>
@@ -230,10 +165,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
   <div class="tab active" id="tab-lieux" onclick="switchTab('lieux')">📍 Lieux</div>
   <div class="tab" id="tab-events" onclick="switchTab('events')">📅 Évènements</div>
   <div class="tab" id="tab-stats" onclick="switchTab('stats')">📊 Statistiques</div>
+  <div class="tab" id="tab-notif" onclick="switchTab('notif')">📨 Notifications</div>
 </div>
 
 <div class="main" id="section-lieux">
-  <!-- LEFT : liste -->
   <div class="left">
     <div class="left-hd">
       <input class="search-box" type="text" id="search-list" placeholder="🔍 Filtrer les lieux…" oninput="filterList(this.value)">
@@ -251,22 +186,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       <div class="st"><div class="st-dot" style="background:var(--gold)"></div><span id="s-total">—</span></div>
     </div>
   </div>
-
-  <!-- RIGHT : carte + éditeur -->
   <div class="right">
     <div style="position:relative">
       <div id="map"></div>
       <div class="map-hint">Clique sur la carte ou glisse le marqueur pour repositionner</div>
     </div>
-
     <div id="empty-state" class="empty">
       <div class="empty-icon">👈</div>
       <div>Sélectionne un lieu pour l'éditer</div>
     </div>
-
     <div id="editor" class="editor" style="display:none">
-
-      <!-- COORDONNÉES -->
       <div>
         <div class="section-title">📍 Coordonnées & adresse</div>
         <div style="display:flex;gap:8px;margin-bottom:6px">
@@ -294,8 +223,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           </div>
         </div>
       </div>
-
-      <!-- INFORMATIONS -->
       <div>
         <div class="section-title">✏️ Informations</div>
         <div class="field">
@@ -311,8 +238,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           <textarea id="f-desc" oninput="debounceSavePlace()" rows="3" placeholder="Description affichée dans la fiche lieu…"></textarea>
         </div>
       </div>
-
-      <!-- CATÉGORIES -->
       <div>
         <div class="section-title">🏷️ Catégories</div>
         <div class="cat-grid" id="cat-grid">
@@ -324,8 +249,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           <button class="cat-btn" data-cat="eau" onclick="toggleCat(this)">🌊 Au bord de l'eau</button>
         </div>
       </div>
-
-      <!-- DÉTAILS -->
       <div>
         <div class="section-title">🔖 Détails</div>
         <div class="grid2">
@@ -339,8 +262,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           </div>
         </div>
       </div>
-
-      <!-- VALIDATION -->
       <div>
         <div class="section-title">✅ Statut de publication</div>
         <div class="valid-toggle">
@@ -348,8 +269,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           <button class="vtbtn" id="vbtn-false" onclick="setValid(false)">⏳ Non publié (en attente)</button>
         </div>
       </div>
-
-      <!-- COUP DE CŒUR -->
       <div>
         <div class="section-title">💛 Coup de cœur</div>
         <div class="valid-toggle">
@@ -358,15 +277,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
         </div>
         <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
           <label style="font-size:11px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);white-space:nowrap">Ordre d'affichage</label>
-          <input type="number" id="f-crush-order" oninput="debounceSavePlace()" min="1" max="20" placeholder="1, 2, 3…"
-            style="width:80px;padding:7px 10px;border:1.5px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);outline:none">
+          <input type="number" id="f-crush-order" oninput="debounceSavePlace()" min="1" max="20" placeholder="1, 2, 3…" style="width:80px;padding:7px 10px;border:1.5px solid var(--sand);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);outline:none">
           <span style="font-size:11px;color:var(--muted)">1 = affiché en premier</span>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px">Les coups de cœur sont triés par ordre croissant.</div>
       </div>
-
     </div>
-
     <div class="action-bar" id="action-bar" style="display:none">
       <button class="btn btn-skip mobile-only" onclick="closeMobileEditor()" title="Retour à la liste" style="font-size:18px;padding:10px 12px">←</button>
       <button class="btn btn-delete" onclick="deletePlace()">🗑️</button>
@@ -377,12 +293,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
   </div>
 </div>
 
-</div><!-- end section-lieux -->
-
-<!-- ═══════════════ SECTION ÉVÉNEMENTS ═══════════════ -->
 <div class="main" id="section-events" style="display:none">
-
-  <!-- LEFT : liste événements -->
   <div class="left">
     <div class="left-hd">
       <input class="search-box" type="text" id="search-events" placeholder="🔍 Filtrer les évènements…" oninput="filterEvents(this.value)">
@@ -400,13 +311,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
         <button class="period-btn" id="sort-desc" onclick="setSortOrder('desc')">Date ↓</button>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-        <input type="checkbox" id="select-all-events" onchange="toggleSelectAll(this.checked)"
-          style="width:15px;height:15px;cursor:pointer;accent-color:var(--forest)">
+        <input type="checkbox" id="select-all-events" onchange="toggleSelectAll(this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--forest)">
         <label for="select-all-events" style="font-size:11px;color:var(--muted);cursor:pointer">Tout sélectionner</label>
       </div>
     </div>
-
-    <!-- BARRE ACTIONS EN MASSE -->
     <div class="bulk-bar" id="bulk-bar">
       <div class="bulk-count" id="bulk-count">0 sélectionné(s)</div>
       <button class="bulk-btn bulk-btn-publish" onclick="bulkAction('publish')">✅ Publier</button>
@@ -415,7 +323,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       <button class="bulk-btn bulk-btn-delete" onclick="bulkAction('delete')">🗑️ Supprimer</button>
       <button class="bulk-btn bulk-btn-clear" onclick="clearSelection()">✕</button>
     </div>
-
     <div class="list" id="event-list"></div>
     <div class="stats">
       <div class="st"><div class="st-dot" style="background:var(--ok)"></div><span id="es-valid">—</span></div>
@@ -424,59 +331,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       <div class="st"><div class="st-dot" style="background:var(--gold)"></div><span id="es-total">—</span></div>
     </div>
   </div>
-
-  <!-- RIGHT : éditeur événement -->
   <div class="right">
     <div id="ev-empty" class="empty" style="flex:1">
       <div class="empty-icon">👈</div>
       <div>Sélectionne un évènement pour l'éditer</div>
     </div>
-
     <div id="ev-editor" class="editor" style="display:none">
-
-      <!-- INFOS PRINCIPALES -->
       <div>
         <div class="section-title">✏️ Informations principales</div>
-        <div class="field">
-          <label>Nom de l'évènement</label>
-          <input type="text" id="ef-nom" oninput="debounceSaveEvent()" placeholder="Nom…">
-        </div>
+        <div class="field"><label>Nom de l'évènement</label><input type="text" id="ef-nom" oninput="debounceSaveEvent()" placeholder="Nom…"></div>
         <div class="grid2">
-          <div class="field">
-            <label>Date de début</label>
-            <input type="date" id="ef-date-debut" onchange="debounceSaveEvent()">
-          </div>
-          <div class="field">
-            <label>Date de fin</label>
-            <input type="date" id="ef-date-fin" onchange="debounceSaveEvent()">
-          </div>
+          <div class="field"><label>Date de début</label><input type="date" id="ef-date-debut" onchange="debounceSaveEvent()"></div>
+          <div class="field"><label>Date de fin</label><input type="date" id="ef-date-fin" onchange="debounceSaveEvent()"></div>
         </div>
-        <div class="field">
-          <label>Heure</label>
-          <input type="text" id="ef-heure" oninput="debounceSaveEvent()" placeholder="Ex : 10h–12h, dès 14h…">
-        </div>
+        <div class="field"><label>Heure</label><input type="text" id="ef-heure" oninput="debounceSaveEvent()" placeholder="Ex : 10h–12h, dès 14h…"></div>
       </div>
-
-      <!-- LIEU -->
       <div>
         <div class="section-title">📍 Lieu</div>
-        <div class="field">
-          <label>Adresse</label>
-          <input type="text" id="ef-adresse" oninput="debounceSaveEvent()" placeholder="Adresse de l'évènement…">
-        </div>
+        <div class="field"><label>Adresse</label><input type="text" id="ef-adresse" oninput="debounceSaveEvent()" placeholder="Adresse de l'évènement…"></div>
         <div class="grid2">
-          <div class="field" style="margin-bottom:0">
-            <label>Latitude</label>
-            <input type="number" id="ef-lat" step="0.000001" placeholder="44.8378">
-          </div>
-          <div class="field" style="margin-bottom:0">
-            <label>Longitude</label>
-            <input type="number" id="ef-lng" step="0.000001" placeholder="-0.5792">
-          </div>
+          <div class="field" style="margin-bottom:0"><label>Latitude</label><input type="number" id="ef-lat" step="0.000001" placeholder="44.8378"></div>
+          <div class="field" style="margin-bottom:0"><label>Longitude</label><input type="number" id="ef-lng" step="0.000001" placeholder="-0.5792"></div>
         </div>
       </div>
-
-      <!-- CATÉGORIE & DÉTAILS -->
       <div>
         <div class="section-title">🏷️ Catégorie & détails</div>
         <div class="field">
@@ -494,28 +371,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           </select>
         </div>
         <div class="grid2">
-          <div class="field">
-            <label>Âge minimum</label>
-            <input type="number" id="ef-age-min" oninput="debounceSaveEvent()" placeholder="Ex : 3">
-          </div>
-          <div class="field">
-            <label>Âge maximum</label>
-            <input type="number" id="ef-age-max" oninput="debounceSaveEvent()" placeholder="Ex : 12">
-          </div>
+          <div class="field"><label>Âge minimum</label><input type="number" id="ef-age-min" oninput="debounceSaveEvent()" placeholder="Ex : 3"></div>
+          <div class="field"><label>Âge maximum</label><input type="number" id="ef-age-max" oninput="debounceSaveEvent()" placeholder="Ex : 12"></div>
         </div>
-        <div class="field">
-          <label>Tarif</label>
-          <input type="text" id="ef-tarif" oninput="debounceSaveEvent()" placeholder="Gratuit, 5€/enfant…">
-        </div>
+        <div class="field"><label>Tarif</label><input type="text" id="ef-tarif" oninput="debounceSaveEvent()" placeholder="Gratuit, 5€/enfant…"></div>
       </div>
-
-      <!-- DESCRIPTION -->
       <div>
         <div class="section-title">📝 Description & médias</div>
-        <div class="field">
-          <label>Description</label>
-          <textarea id="ef-desc" oninput="debounceSaveEvent()" rows="4" placeholder="Description de l'évènement…"></textarea>
-        </div>
+        <div class="field"><label>Description</label><textarea id="ef-desc" oninput="debounceSaveEvent()" rows="4" placeholder="Description de l'évènement…"></textarea></div>
         <div class="field">
           <label>Image (URL)</label>
           <input type="url" id="ef-image" placeholder="https://… (jpg, png)">
@@ -523,13 +386,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
             <img id="ef-img-tag" src="" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1.5px solid var(--sand)" onerror="document.getElementById('ef-image-preview').style.display='none'">
           </div>
         </div>
-        <div class="field">
-          <label>Lien réservation / infos</label>
-          <input type="url" id="ef-lien" oninput="debounceSaveEvent()" placeholder="https://…">
-        </div>
+        <div class="field"><label>Lien réservation / infos</label><input type="url" id="ef-lien" oninput="debounceSaveEvent()" placeholder="https://…"></div>
       </div>
-
-      <!-- PUBLICATION -->
       <div>
         <div class="section-title">✅ Statut de publication</div>
         <div class="valid-toggle">
@@ -537,17 +395,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
           <button class="vtbtn" id="evbtn-false" onclick="setEvValid(false)">⏳ Non publié (en attente)</button>
         </div>
         <div style="margin-top:8px">
-          <button class="vtbtn" id="evbtn-rejeter" onclick="rejectEvent()"
-            style="width:100%;background:#F5E6FA;border-color:#9B59B6;color:#7B2D9E;font-weight:500">
-            🚫 Rejeter cet évènement
-          </button>
+          <button class="vtbtn" id="evbtn-rejeter" onclick="rejectEvent()" style="width:100%;background:#F5E6FA;border-color:#9B59B6;color:#7B2D9E;font-weight:500">🚫 Rejeter cet évènement</button>
         </div>
-        <div id="ev-rejete-badge" style="display:none;margin-top:6px;padding:6px 10px;background:#F5E6FA;border-radius:8px;font-size:11px;color:#7B2D9E;font-weight:500;text-align:center">
-          🚫 Évènement rejeté — cliquer « Publié » pour annuler le rejet
-        </div>
+        <div id="ev-rejete-badge" style="display:none;margin-top:6px;padding:6px 10px;background:#F5E6FA;border-radius:8px;font-size:11px;color:#7B2D9E;font-weight:500;text-align:center">🚫 Évènement rejeté — cliquer « Publié » pour annuler le rejet</div>
       </div>
-
-      <!-- COUP DE CŒUR ÉVÉNEMENT -->
       <div>
         <div class="section-title">💛 À ne pas rater</div>
         <div class="valid-toggle">
@@ -556,9 +407,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px">Les évènements "À ne pas rater" apparaissent en premier sur l'accueil avec un badge doré.</div>
       </div>
-
     </div>
-
     <div class="action-bar" id="ev-action-bar" style="display:none">
       <button class="btn btn-skip mobile-only" onclick="closeMobileEditor()" title="Retour à la liste" style="font-size:18px;padding:10px 12px">←</button>
       <button class="btn btn-delete" onclick="deleteEvent()">🗑️</button>
@@ -569,13 +418,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       <button class="btn btn-save" onclick="saveEvent()">💾</button>
     </div>
   </div>
+</div>
 
-</div><!-- end section-events -->
-
-<!-- ═══════════════ SECTION STATS ═══════════════ -->
 <div class="stats-page" id="section-stats">
-
-  <!-- Période -->
   <div class="stats-period">
     <button class="period-btn active" onclick="setPeriod(this,1)">Aujourd'hui</button>
     <button class="period-btn" onclick="setPeriod(this,2)">Hier</button>
@@ -585,8 +430,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
     <button class="period-btn" onclick="setPeriod(this,0)">Tout</button>
     <button class="refresh-btn" onclick="loadStats()" style="margin-left:auto">↻ Actualiser</button>
   </div>
-
-  <!-- Plage de dates personnalisée -->
   <div class="stats-period" style="margin-top:-10px;align-items:center;flex-wrap:wrap">
     <span style="font-size:11px;color:var(--muted)">📅 Plage personnalisée :</span>
     <input type="date" id="range-start" class="date-input" onchange="applyCustomRange()">
@@ -599,8 +442,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       🤖 Exclure le trafic sans modèle (tests auto)
     </label>
   </div>
-
-  <!-- KPIs -->
   <div class="stats-grid" id="stats-kpis">
     <div class="stat-card"><div class="stat-card-label">Ouvertures app</div><div class="stat-card-value" id="kpi-opens">—</div></div>
     <div class="stat-card"><div class="stat-card-label">Utilisateurs uniques</div><div class="stat-card-value" id="kpi-users">—</div></div>
@@ -612,80 +453,66 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
     <div class="stat-card"><div class="stat-card-label">Géolocalisations</div><div class="stat-card-value" id="kpi-geo">—</div></div>
     <div class="stat-card"><div class="stat-card-label">Itinéraires Maps</div><div class="stat-card-value" id="kpi-maps">—</div></div>
   </div>
-
-  <!-- Alertes contenu -->
-  <div class="stats-section">
-    <div class="stats-section-title">⚠️ Alertes contenu</div>
-    <div id="alerts-list"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
-  </div>
-
-  <!-- Graphique par jour -->
-  <div class="stats-section">
-    <div class="stats-section-title">📈 Activité par jour <span style="font-size:11px;font-weight:300;color:var(--muted)">utilisateurs · vues</span></div>
-    <div id="daily-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
-  </div>
-
+  <div class="stats-section"><div class="stats-section-title">⚠️ Alertes contenu</div><div id="alerts-list"><div style="color:var(--muted);font-size:12px">Chargement…</div></div></div>
+  <div class="stats-section"><div class="stats-section-title">📈 Activité par jour <span style="font-size:11px;font-weight:300;color:var(--muted)">utilisateurs · vues</span></div><div id="daily-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div></div>
   <div class="stats-2col">
-    <!-- Top lieux -->
-    <div class="stats-section">
-      <div class="stats-section-title">🏆 Top lieux consultés</div>
-      <div class="top-list" id="top-places"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
-    </div>
-
-    <!-- Top événements -->
-    <div class="stats-section">
-      <div class="stats-section-title">🎭 Top évènements consultés</div>
-      <div class="top-list" id="top-events-stat"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
-    </div>
-
+    <div class="stats-section"><div class="stats-section-title">🏆 Top lieux consultés</div><div class="top-list" id="top-places"><div style="color:var(--muted);font-size:12px">Chargement…</div></div></div>
+    <div class="stats-section"><div class="stats-section-title">🎭 Top évènements consultés</div><div class="top-list" id="top-events-stat"><div style="color:var(--muted);font-size:12px">Chargement…</div></div></div>
   </div>
-
   <div class="stats-2col">
-
-    <!-- Actions par type -->
-    <div class="stats-section">
-      <div class="stats-section-title">📊 Actions par type</div>
-      <div id="actions-chart"></div>
-    </div>
-
-    <!-- Filtres populaires -->
-    <div class="stats-section">
-      <div class="stats-section-title">🏷️ Filtres populaires</div>
-      <div id="filters-chart"></div>
-    </div>
-
+    <div class="stats-section"><div class="stats-section-title">📊 Actions par type</div><div id="actions-chart"></div></div>
+    <div class="stats-section"><div class="stats-section-title">🏷️ Filtres populaires</div><div id="filters-chart"></div></div>
   </div>
-
-  <!-- Favoris actuels -->
   <div class="stats-2col">
+    <div class="stats-section"><div class="stats-section-title">❤️ Lieux en favoris <span style="font-size:11px;font-weight:300;color:var(--muted)">favoris actuels</span></div><div id="fav-places-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div></div>
+    <div class="stats-section"><div class="stats-section-title">❤️ Évènements en favoris <span style="font-size:11px;font-weight:300;color:var(--muted)">favoris actuels</span></div><div id="fav-events-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div></div>
+  </div>
+  <div class="stats-section"><div class="stats-section-title">📱 Utilisateurs par device <span style="font-size:11px;font-weight:300;color:var(--muted)">plateforme · modèle, sur la période</span></div><div id="devices-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div></div>
+  <div class="stats-section"><div class="stats-section-title">👥 Utilisateurs</div><div id="users-table" style="font-size:12px;color:var(--muted)">Chargement…</div></div>
+</div>
+
+<!-- ═══════════════ SECTION NOTIFICATIONS ═══════════════ -->
+<div class="stats-page" id="section-notif">
+  <div style="max-width:640px;margin:0 auto">
     <div class="stats-section">
-      <div class="stats-section-title">❤️ Lieux en favoris <span style="font-size:11px;font-weight:300;color:var(--muted)">favoris actuels</span></div>
-      <div id="fav-places-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
+      <div class="stats-section-title">📨 Envoyer une notification push</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">
+        La notification sera envoyée à tous les appareils qui ont accepté les notifications.<br>
+        <strong>Astuce :</strong> commence toujours par un test à toi seule avant d'envoyer à tous.
+      </div>
+      <div class="field">
+        <label>Titre (visible sur l'écran verrouillé)</label>
+        <input type="text" id="notif-title" placeholder="Ex : Nouveautés Vadrou 🎉" maxlength="65">
+        <div id="notif-title-count" style="font-size:10px;color:var(--muted);margin-top:3px;text-align:right">0 / 65</div>
+      </div>
+      <div class="field">
+        <label>Message</label>
+        <textarea id="notif-body" rows="3" placeholder="Ex : Cette semaine, 12 nouveaux évènements famille à Bordeaux !" maxlength="240"></textarea>
+        <div id="notif-body-count" style="font-size:10px;color:var(--muted);margin-top:3px;text-align:right">0 / 240</div>
+      </div>
+      <div class="field">
+        <label>Destinataire</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="vtbtn" id="notif-target-me" onclick="setNotifTarget('me')">🧪 Moi uniquement (test)</button>
+          <button class="vtbtn" id="notif-target-all" onclick="setNotifTarget('all')">📣 Tous les utilisateurs</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px" id="notif-target-hint">Sélectionne un destinataire pour continuer.</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-save" id="notif-send-btn" onclick="sendNotification()" disabled style="opacity:.5;cursor:not-allowed">🚀 Envoyer la notification</button>
+      </div>
+      <div id="notif-result" style="margin-top:16px;display:none;padding:12px 14px;border-radius:10px;font-size:13px"></div>
     </div>
     <div class="stats-section">
-      <div class="stats-section-title">❤️ Évènements en favoris <span style="font-size:11px;font-weight:300;color:var(--muted)">favoris actuels</span></div>
-      <div id="fav-events-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
+      <div class="stats-section-title">📊 Portée estimée</div>
+      <div id="notif-reach" style="font-size:13px;color:var(--charcoal);line-height:1.7">Chargement…</div>
     </div>
   </div>
-
-  <!-- Utilisateurs par plateforme -->
-  <div class="stats-section">
-    <div class="stats-section-title">📱 Utilisateurs par device <span style="font-size:11px;font-weight:300;color:var(--muted)">plateforme · modèle, sur la période</span></div>
-    <div id="devices-chart"><div style="color:var(--muted);font-size:12px">Chargement…</div></div>
-  </div>
-
-  <!-- Utilisateurs actifs -->
-  <div class="stats-section">
-    <div class="stats-section-title">👥 Utilisateurs</div>
-    <div id="users-table" style="font-size:12px;color:var(--muted)">Chargement…</div>
-  </div>
-
-</div><!-- end section-stats -->
+</div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// Protection mot de passe admin
 const ADMIN_PASSWORD = 'vadrou2025';
 (function() {
   const stored = sessionStorage.getItem('vadrou_admin_auth');
@@ -702,1368 +529,379 @@ const SUPABASE_URL = 'https://xwykpuytwjiwuxhpeqrt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3eWtwdXl0d2ppd3V4aHBlcXJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NDc2OTUsImV4cCI6MjA5MzQyMzY5NX0.eOwSEwEuKChEV-oygJkpimKPO7vT4aiHm7oPiKYveGE';
 const GOOGLE_KEY   = 'AIzaSyDiU-kFZkJxaPDKkyar5YY73EoCuYYotOg';
 
-const CATS = {
-  jeux_ext:'🌳', jeux_int:'🎲', culture:'🎭',
-  apero:'🍷', resto:'🍕', eau:'🌊'
-};
+const CATS = { jeux_ext:'🌳', jeux_int:'🎲', culture:'🎭', apero:'🍷', resto:'🍕', eau:'🌊' };
 
 let allPlaces = [], filtered = [];
-let currentId = null;
-let currentValid = true;
-let currentCats = [];
-let currentCrush = false;
+let currentId = null, currentValid = true, currentCats = [], currentCrush = false;
 let map, marker, geoDebounce;
 
-// ── MAP ──
 map = L.map('map', { zoomControl:true, attributionControl:false }).setView([44.8378,-0.5792], 13);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
-map.on('click', e => {
-  if (!currentId) return;
-  setMarker(e.latlng.lat, e.latlng.lng);
-  reverseGeocode(e.latlng.lat, e.latlng.lng);
-});
+map.on('click', e => { if (!currentId) return; setMarker(e.latlng.lat, e.latlng.lng); reverseGeocode(e.latlng.lat, e.latlng.lng); });
 
 function setMarker(lat, lng, color='#C4622D') {
   if (marker) map.removeLayer(marker);
-  marker = L.marker([lat,lng], {
-    draggable:true,
-    icon: L.divIcon({
-      className:'',
-      html:`<div style="background:${color};width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>`,
-      iconSize:[18,18], iconAnchor:[9,9]
-    })
-  }).addTo(map);
-  marker.on('dragend', e => {
-    const {lat,lng} = e.target.getLatLng();
-    document.getElementById('f-lat').value = lat.toFixed(6);
-    document.getElementById('f-lng').value = lng.toFixed(6);
-    reverseGeocode(lat, lng);
-  });
+  marker = L.marker([lat,lng], { draggable:true, icon: L.divIcon({ className:'', html:`<div style="background:${color};width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>`, iconSize:[18,18], iconAnchor:[9,9] }) }).addTo(map);
+  marker.on('dragend', e => { const {lat,lng} = e.target.getLatLng(); document.getElementById('f-lat').value = lat.toFixed(6); document.getElementById('f-lng').value = lng.toFixed(6); reverseGeocode(lat, lng); });
   document.getElementById('f-lat').value = parseFloat(lat).toFixed(6);
   document.getElementById('f-lng').value = parseFloat(lng).toFixed(6);
 }
 
 async function reverseGeocode(lat, lng) {
-  try {
-    const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=fr&key=${GOOGLE_KEY}`);
-    const d = await r.json();
-    if (d.results?.[0]) document.getElementById('f-adresse').value = d.results[0].formatted_address;
-  } catch(e){}
+  try { const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=fr&key=${GOOGLE_KEY}`); const d = await r.json(); if (d.results?.[0]) document.getElementById('f-adresse').value = d.results[0].formatted_address; } catch(e){}
 }
 
 function onCoordsInput() {
-  const lat = parseFloat(document.getElementById('f-lat').value);
-  const lng = parseFloat(document.getElementById('f-lng').value);
-  if (lat && lng && lat > 40 && lat < 50 && lng > -5 && lng < 5) {
-    map.setView([lat,lng], map.getZoom());
-    setMarker(lat, lng);
-  }
+  const lat = parseFloat(document.getElementById('f-lat').value); const lng = parseFloat(document.getElementById('f-lng').value);
+  if (lat && lng && lat > 40 && lat < 50 && lng > -5 && lng < 5) { map.setView([lat,lng], map.getZoom()); setMarker(lat, lng); }
 }
 
-// ── SUPABASE ──
 async function supa(path, opts={}) {
-  const r = await fetch(SUPABASE_URL+'/rest/v1/'+path, {
-    method: opts.method||'GET',
-    headers: { 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json', ...(opts.headers||{}) },
-    body: opts.body
-  });
+  const r = await fetch(SUPABASE_URL+'/rest/v1/'+path, { method: opts.method||'GET', headers: { 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json', ...(opts.headers||{}) }, body: opts.body });
   if (!r.ok) throw new Error(await r.text());
   if (opts.method && opts.method !== 'GET') return r;
-  const t = await r.text();
-  return t ? JSON.parse(t) : [];
+  const t = await r.text(); return t ? JSON.parse(t) : [];
 }
 
-// ── LOAD ──
 async function load() {
   document.getElementById('prog').textContent = 'Chargement…';
   allPlaces = await supa('lieux?select=*&order=nom.asc&limit=1000');
-  filtered = [...allPlaces];
-  renderList();
-  updateStats();
+  filtered = [...allPlaces]; renderList(); updateStats();
   document.getElementById('prog').textContent = `${allPlaces.length} lieux`;
 }
 
-// ── LIST ──
 let placeStatusFilter = 'all';
-
-function filterPlaceStatus(btn, f) {
-  document.querySelectorAll('.left-hd .ef-filter').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  placeStatusFilter = f;
-  filterList(document.getElementById('search-list').value);
-}
-
+function filterPlaceStatus(btn, f) { document.querySelectorAll('.left-hd .ef-filter').forEach(b => b.classList.remove('active')); btn.classList.add('active'); placeStatusFilter = f; filterList(document.getElementById('search-list').value); }
 function filterList(q) {
   const ql = (q || '').toLowerCase();
-  filtered = allPlaces.filter(p => {
-    const matchQ = !ql || p.nom?.toLowerCase().includes(ql) || p.adresse?.toLowerCase().includes(ql);
-    const matchS = placeStatusFilter === 'all' ? true
-      : placeStatusFilter === 'crush' ? p.coup_de_coeur
-      : placeStatusFilter === 'true' ? p.valide
-      : !p.valide;
-    return matchQ && matchS;
-  });
+  filtered = allPlaces.filter(p => { const matchQ = !ql || p.nom?.toLowerCase().includes(ql) || p.adresse?.toLowerCase().includes(ql); const matchS = placeStatusFilter === 'all' ? true : placeStatusFilter === 'crush' ? p.coup_de_coeur : placeStatusFilter === 'true' ? p.valide : !p.valide; return matchQ && matchS; });
   renderList();
 }
-
 function renderList() {
   const cats = p => (Array.isArray(p.categorie)?p.categorie:[p.categorie]).map(c=>CATS[c]||'').join('');
-  document.getElementById('place-list').innerHTML = filtered.map(p => `
-    <div class="place-row ${p.id===currentId?'active':''}" onclick="selectPlace('${p.id}')">
-      <div class="pr-dot" style="background:${p.valide?'var(--ok)':'var(--terracotta)'}"></div>
-      <div class="pr-info">
-        <div class="pr-nom">${cats(p)} ${p.nom}</div>
-        <div class="pr-addr">${p.adresse||'Adresse inconnue'}</div>
-        <div class="pr-tags">
-          <span class="pr-tag ${p.valide?'valid':'invalid'}">${p.valide?'✅ Publié':'⏳ En attente'}</span>
-          ${!p.latitude?'<span class="pr-tag invalid">📍 Sans coords</span>':''}
-          ${!p.description?'<span class="pr-tag">Sans description</span>':''}
-        </div>
-      </div>
-    </div>`).join('');
+  document.getElementById('place-list').innerHTML = filtered.map(p => `<div class="place-row ${p.id===currentId?'active':''}" onclick="selectPlace('${p.id}')"><div class="pr-dot" style="background:${p.valide?'var(--ok)':'var(--terracotta)'}"></div><div class="pr-info"><div class="pr-nom">${cats(p)} ${p.nom}</div><div class="pr-addr">${p.adresse||'Adresse inconnue'}</div><div class="pr-tags"><span class="pr-tag ${p.valide?'valid':'invalid'}">${p.valide?'✅ Publié':'⏳ En attente'}</span>${!p.latitude?'<span class="pr-tag invalid">📍 Sans coords</span>':''}${!p.description?'<span class="pr-tag">Sans description</span>':''}</div></div></div>`).join('');
 }
+function updateStats() { const v = allPlaces.filter(p=>p.valide).length; const pending = allPlaces.filter(p=>!p.valide).length; const crush = allPlaces.filter(p=>p.coup_de_coeur).length; document.getElementById('s-valid').textContent = v+' publiés'; document.getElementById('s-invalid').textContent = pending+' en attente'; document.getElementById('s-total').textContent = crush+' 💛'; }
 
-function updateStats() {
-  const v = allPlaces.filter(p=>p.valide).length;
-  const pending = allPlaces.filter(p=>!p.valide).length;
-  const crush = allPlaces.filter(p=>p.coup_de_coeur).length;
-  document.getElementById('s-valid').textContent = v+' publiés';
-  document.getElementById('s-invalid').textContent = pending+' en attente';
-  document.getElementById('s-total').textContent = crush+' 💛';
-}
-
-// ── SELECT ──
 function selectPlace(id) {
-  currentId = id;
-  const p = allPlaces.find(x=>x.id===id);
-  if (!p) return;
-
-  // Show editor
-  document.getElementById('empty-state').style.display = 'none';
-  document.getElementById('editor').style.display = 'flex';
-  document.getElementById('action-bar').style.display = 'flex';
-
-  // Fill fields
-  document.getElementById('f-nom').value = p.nom||'';
-  document.getElementById('f-adresse').value = p.adresse||'';
-  document.getElementById('f-lat').value = p.latitude||'';
-  document.getElementById('f-lng').value = p.longitude||'';
-  document.getElementById('f-label').value = p.label_redac||'';
-  document.getElementById('f-desc').value = p.description||'';
-  document.getElementById('f-ages').value = Array.isArray(p.ages)?p.ages.join(', '):(p.ages||'');
-  document.getElementById('f-tarif').value = p.tarif||'';
-  document.getElementById('geo-search').value = p.nom||'';
-  document.getElementById('geo-suggestions').style.display = 'none';
-
-  // Categories
+  currentId = id; const p = allPlaces.find(x=>x.id===id); if (!p) return;
+  document.getElementById('empty-state').style.display = 'none'; document.getElementById('editor').style.display = 'flex'; document.getElementById('action-bar').style.display = 'flex';
+  document.getElementById('f-nom').value = p.nom||''; document.getElementById('f-adresse').value = p.adresse||''; document.getElementById('f-lat').value = p.latitude||''; document.getElementById('f-lng').value = p.longitude||''; document.getElementById('f-label').value = p.label_redac||''; document.getElementById('f-desc').value = p.description||''; document.getElementById('f-ages').value = Array.isArray(p.ages)?p.ages.join(', '):(p.ages||''); document.getElementById('f-tarif').value = p.tarif||''; document.getElementById('geo-search').value = p.nom||''; document.getElementById('geo-suggestions').style.display = 'none';
   currentCats = Array.isArray(p.categorie)?[...p.categorie]:(p.categorie?[p.categorie]:[]);
-  document.querySelectorAll('.cat-btn').forEach(b => {
-    b.classList.toggle('sel', currentCats.includes(b.dataset.cat));
-  });
-
-  // Valid
-  currentValid = p.valide;
-  document.getElementById('vbtn-true').classList.toggle('sel-valid', p.valide);
-  document.getElementById('vbtn-false').classList.toggle('sel-invalid', !p.valide);
-
-  currentCrush = p.coup_de_coeur || false;
-  document.getElementById('vbtn-crush-true').className = 'vtbtn' + (currentCrush ? ' sel-valid' : '');
-  document.getElementById('vbtn-crush-false').className = 'vtbtn' + (!currentCrush ? ' sel-invalid' : '');
-  document.getElementById('f-crush-order').value = p.crush_order || '';
-
-  // Map
-  if (p.latitude && p.longitude) {
-    map.setView([p.latitude, p.longitude], 15);
-    setMarker(p.latitude, p.longitude, p.valide?'#1E3A2F':'#C4622D');
-  } else {
-    if (marker) map.removeLayer(marker);
-    map.setView([44.8378,-0.5792], 13);
-  }
-
+  document.querySelectorAll('.cat-btn').forEach(b => { b.classList.toggle('sel', currentCats.includes(b.dataset.cat)); });
+  currentValid = p.valide; document.getElementById('vbtn-true').classList.toggle('sel-valid', p.valide); document.getElementById('vbtn-false').classList.toggle('sel-invalid', !p.valide);
+  currentCrush = p.coup_de_coeur || false; document.getElementById('vbtn-crush-true').className = 'vtbtn' + (currentCrush ? ' sel-valid' : ''); document.getElementById('vbtn-crush-false').className = 'vtbtn' + (!currentCrush ? ' sel-invalid' : ''); document.getElementById('f-crush-order').value = p.crush_order || '';
+  if (p.latitude && p.longitude) { map.setView([p.latitude, p.longitude], 15); setMarker(p.latitude, p.longitude, p.valide?'#1E3A2F':'#C4622D'); } else { if (marker) map.removeLayer(marker); map.setView([44.8378,-0.5792], 13); }
   renderList();
 }
 
-// ── CATS ──
-function toggleCat(btn) {
-  const cat = btn.dataset.cat;
-  if (currentCats.includes(cat)) {
-    currentCats = currentCats.filter(c=>c!==cat);
-    btn.classList.remove('sel');
-  } else {
-    currentCats.push(cat);
-    btn.classList.add('sel');
-  }
-}
-
-// ── VALID ──
-function setValid(v) {
-  currentValid = v;
-  document.getElementById('vbtn-true').className = 'vtbtn' + (v?' sel-valid':'');
-  document.getElementById('vbtn-false').className = 'vtbtn' + (!v?' sel-invalid':'');
-  autoSavePlaceValid(v);
-}
-
-function setCrush(v) {
-  currentCrush = v;
-  document.getElementById('vbtn-crush-true').className = 'vtbtn' + (v ? ' sel-valid' : '');
-  document.getElementById('vbtn-crush-false').className = 'vtbtn' + (!v ? ' sel-invalid' : '');
-  autoSavePlaceValid(null, { coup_de_coeur: v });
-}
+function toggleCat(btn) { const cat = btn.dataset.cat; if (currentCats.includes(cat)) { currentCats = currentCats.filter(c=>c!==cat); btn.classList.remove('sel'); } else { currentCats.push(cat); btn.classList.add('sel'); } }
+function setValid(v) { currentValid = v; document.getElementById('vbtn-true').className = 'vtbtn' + (v?' sel-valid':''); document.getElementById('vbtn-false').className = 'vtbtn' + (!v?' sel-invalid':''); autoSavePlaceValid(v); }
+function setCrush(v) { currentCrush = v; document.getElementById('vbtn-crush-true').className = 'vtbtn' + (v ? ' sel-valid' : ''); document.getElementById('vbtn-crush-false').className = 'vtbtn' + (!v ? ' sel-invalid' : ''); autoSavePlaceValid(null, { coup_de_coeur: v }); }
 
 async function autoSavePlaceValid(v, extra) {
-  if (!currentId) return;
-  const patch = extra ? extra : { valide: v };
-  try {
-    await supa(`lieux?id=eq.${currentId}`, {
-      method:'PATCH', body:JSON.stringify(patch),
-      headers:{'Prefer':'return=minimal'}
-    });
-    const idx = allPlaces.findIndex(x=>x.id===currentId);
-    if (idx>=0) Object.assign(allPlaces[idx], patch);
-    filterList(document.getElementById('search-list').value);
-    updateStats();
-    if ('valide' in patch) showToast(patch.valide ? '✅ Lieu publié' : '⏳ Lieu masqué');
-    if ('coup_de_coeur' in patch) showToast(patch.coup_de_coeur ? '💛 Coup de cœur activé' : '○ Coup de cœur retiré');
-  } catch(e) { showToast('❌ Erreur : '+e.message); }
+  if (!currentId) return; const patch = extra ? extra : { valide: v };
+  try { await supa(`lieux?id=eq.${currentId}`, { method:'PATCH', body:JSON.stringify(patch), headers:{'Prefer':'return=minimal'} }); const idx = allPlaces.findIndex(x=>x.id===currentId); if (idx>=0) Object.assign(allPlaces[idx], patch); filterList(document.getElementById('search-list').value); updateStats(); if ('valide' in patch) showToast(patch.valide ? '✅ Lieu publié' : '⏳ Lieu masqué'); if ('coup_de_coeur' in patch) showToast(patch.coup_de_coeur ? '💛 Coup de cœur activé' : '○ Coup de cœur retiré'); } catch(e) { showToast('❌ Erreur : '+e.message); }
 }
 
-// ── GEO SEARCH ──
-function debounceGeoSearch(val) {
-  clearTimeout(geoDebounce);
-  if (val.length < 3) { document.getElementById('geo-suggestions').style.display='none'; return; }
-  geoDebounce = setTimeout(triggerGeoSearch, 400);
-}
-
+function debounceGeoSearch(val) { clearTimeout(geoDebounce); if (val.length < 3) { document.getElementById('geo-suggestions').style.display='none'; return; } geoDebounce = setTimeout(triggerGeoSearch, 400); }
 async function triggerGeoSearch() {
-  const val = document.getElementById('geo-search').value.trim();
-  if (!val) return;
-  const box = document.getElementById('geo-suggestions');
-  box.innerHTML = '<div class="suggestion" style="color:var(--muted)">Recherche…</div>';
-  box.style.display = 'block';
-  try {
-    const r = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(val+' Bordeaux')}&location=44.8378,-0.5792&radius=25000&language=fr&key=${GOOGLE_KEY}`);
-    const d = await r.json();
-    if (!d.results?.length) { box.innerHTML='<div class="suggestion" style="color:var(--muted)">Aucun résultat</div>'; return; }
-    window._gsr = d.results;
-    box.innerHTML = d.results.slice(0,6).map((r,i)=>`
-      <div class="suggestion" onclick="applyGeoResult(${i})">
-        <div class="sg-name">${r.name}</div>
-        <div class="sg-addr">${r.formatted_address}</div>
-      </div>`).join('');
-  } catch(e) { box.innerHTML='<div class="suggestion" style="color:var(--muted)">Erreur API</div>'; }
+  const val = document.getElementById('geo-search').value.trim(); if (!val) return;
+  const box = document.getElementById('geo-suggestions'); box.innerHTML = '<div class="suggestion" style="color:var(--muted)">Recherche…</div>'; box.style.display = 'block';
+  try { const r = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(val+' Bordeaux')}&location=44.8378,-0.5792&radius=25000&language=fr&key=${GOOGLE_KEY}`); const d = await r.json(); if (!d.results?.length) { box.innerHTML='<div class="suggestion" style="color:var(--muted)">Aucun résultat</div>'; return; } window._gsr = d.results; box.innerHTML = d.results.slice(0,6).map((r,i)=>`<div class="suggestion" onclick="applyGeoResult(${i})"><div class="sg-name">${r.name}</div><div class="sg-addr">${r.formatted_address}</div></div>`).join(''); } catch(e) { box.innerHTML='<div class="suggestion" style="color:var(--muted)">Erreur API</div>'; }
 }
+function applyGeoResult(i) { const r = window._gsr?.[i]; if (!r) return; const lat = r.geometry?.location?.lat; const lng = r.geometry?.location?.lng; document.getElementById('f-adresse').value = r.formatted_address; document.getElementById('geo-suggestions').style.display = 'none'; if (lat && lng) { map.setView([lat,lng],15); setMarker(lat,lng); } }
 
-function applyGeoResult(i) {
-  const r = window._gsr?.[i]; if (!r) return;
-  const lat = r.geometry?.location?.lat;
-  const lng = r.geometry?.location?.lng;
-  document.getElementById('f-adresse').value = r.formatted_address;
-  document.getElementById('geo-suggestions').style.display = 'none';
-  if (lat && lng) { map.setView([lat,lng],15); setMarker(lat,lng); }
-}
-
-// ── SAVE ──
 async function savePlace() {
   if (!currentId) return;
-  const lat = parseFloat(document.getElementById('f-lat').value)||null;
-  const lng = parseFloat(document.getElementById('f-lng').value)||null;
-  const ages_raw = document.getElementById('f-ages').value.trim();
-
-  const patch = {
-    nom:        document.getElementById('f-nom').value.trim()||undefined,
-    adresse:    document.getElementById('f-adresse').value.trim()||null,
-    latitude:   lat,
-    longitude:  lng,
-    label_redac:document.getElementById('f-label').value.trim()||null,
-    description:document.getElementById('f-desc').value.trim()||null,
-    categorie:  currentCats.length ? currentCats : null,
-    tarif:      document.getElementById('f-tarif').value.trim()||null,
-    ages:       ages_raw ? ages_raw.split(',').map(s=>s.trim()).filter(Boolean) : null,
-    valide:        currentValid,
-    coup_de_coeur: currentCrush,
-    crush_order:   parseInt(document.getElementById('f-crush-order').value) || null,
-  };
-
-  // Nettoyer les undefined
+  const lat = parseFloat(document.getElementById('f-lat').value)||null; const lng = parseFloat(document.getElementById('f-lng').value)||null; const ages_raw = document.getElementById('f-ages').value.trim();
+  const patch = { nom: document.getElementById('f-nom').value.trim()||undefined, adresse: document.getElementById('f-adresse').value.trim()||null, latitude: lat, longitude: lng, label_redac: document.getElementById('f-label').value.trim()||null, description: document.getElementById('f-desc').value.trim()||null, categorie: currentCats.length ? currentCats : null, tarif: document.getElementById('f-tarif').value.trim()||null, ages: ages_raw ? ages_raw.split(',').map(s=>s.trim()).filter(Boolean) : null, valide: currentValid, coup_de_coeur: currentCrush, crush_order: parseInt(document.getElementById('f-crush-order').value) || null };
   Object.keys(patch).forEach(k => patch[k]===undefined && delete patch[k]);
-
-  try {
-    await supa(`lieux?id=eq.${currentId}`, {
-      method:'PATCH', body:JSON.stringify(patch),
-      headers:{'Prefer':'return=minimal'}
-    });
-    // Update local
-    const idx = allPlaces.findIndex(x=>x.id===currentId);
-    if (idx>=0) allPlaces[idx] = {...allPlaces[idx], ...patch};
-    filterList(document.getElementById('search-list').value);
-    updateStats();
-    showToast('✅ Enregistré !');
-    if (marker && lat && lng) {
-      map.removeLayer(marker);
-      setMarker(lat, lng, currentValid?'#1E3A2F':'#C4622D');
-    }
-  } catch(e) { showToast('❌ Erreur : '+e.message); }
+  try { await supa(`lieux?id=eq.${currentId}`, { method:'PATCH', body:JSON.stringify(patch), headers:{'Prefer':'return=minimal'} }); const idx = allPlaces.findIndex(x=>x.id===currentId); if (idx>=0) allPlaces[idx] = {...allPlaces[idx], ...patch}; filterList(document.getElementById('search-list').value); updateStats(); showToast('✅ Enregistré !'); if (marker && lat && lng) { map.removeLayer(marker); setMarker(lat, lng, currentValid?'#1E3A2F':'#C4622D'); } } catch(e) { showToast('❌ Erreur : '+e.message); }
 }
 
-// ── DELETE ──
 async function deletePlace() {
-  if (!currentId) return;
-  const p = allPlaces.find(x=>x.id===currentId);
-  if (!confirm(`Supprimer "${p?.nom}" définitivement ?`)) return;
-  try {
-    await supa(`lieux?id=eq.${currentId}`, { method:'DELETE' });
-    allPlaces = allPlaces.filter(x=>x.id!==currentId);
-    filtered = filtered.filter(x=>x.id!==currentId);
-    currentId = null;
-    document.getElementById('empty-state').style.display = 'flex';
-    document.getElementById('editor').style.display = 'none';
-    document.getElementById('action-bar').style.display = 'none';
-    if (marker) { map.removeLayer(marker); marker=null; }
-    renderList(); updateStats();
-    showToast('🗑️ Lieu supprimé');
-  } catch(e) { showToast('❌ Erreur : '+e.message); }
+  if (!currentId) return; const p = allPlaces.find(x=>x.id===currentId); if (!confirm(`Supprimer "${p?.nom}" définitivement ?`)) return;
+  try { await supa(`lieux?id=eq.${currentId}`, { method:'DELETE' }); allPlaces = allPlaces.filter(x=>x.id!==currentId); filtered = filtered.filter(x=>x.id!==currentId); currentId = null; document.getElementById('empty-state').style.display = 'flex'; document.getElementById('editor').style.display = 'none'; document.getElementById('action-bar').style.display = 'none'; if (marker) { map.removeLayer(marker); marker=null; } renderList(); updateStats(); showToast('🗑️ Lieu supprimé'); } catch(e) { showToast('❌ Erreur : '+e.message); }
 }
 
-// ── NEXT ──
-function nextPlace() {
-  const idx = filtered.findIndex(x=>x.id===currentId);
-  const next = filtered[idx+1];
-  if (next) selectPlace(next.id);
-  else showToast('Dernier lieu de la liste !');
-}
+function nextPlace() { const idx = filtered.findIndex(x=>x.id===currentId); const next = filtered[idx+1]; if (next) selectPlace(next.id); else showToast('Dernier lieu de la liste !'); }
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500); }
 
-// ── TOAST ──
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
-}
-
-// ── TAB SWITCH ──
 function switchTab(tab) {
-  document.getElementById('tab-lieux').classList.toggle('active', tab==='lieux');
-  document.getElementById('tab-events').classList.toggle('active', tab==='events');
-  document.getElementById('tab-stats').classList.toggle('active', tab==='stats');
+  ['lieux','events','stats','notif'].forEach(t => { document.getElementById('tab-'+t).classList.toggle('active', t===tab); });
   document.getElementById('section-lieux').style.display = tab==='lieux' ? 'grid' : 'none';
   document.getElementById('section-events').style.display = tab==='events' ? 'grid' : 'none';
   document.getElementById('section-stats').classList.toggle('visible', tab==='stats');
+  document.getElementById('section-notif').classList.toggle('visible', tab==='notif');
   if (tab==='events' && allEvents.length===0) loadEvents();
   if (tab==='stats') loadStats();
-  document.getElementById('prog').textContent = tab==='stats' ? 'Stats' : '';
+  if (tab==='notif') loadNotifReach();
+  document.getElementById('prog').textContent = tab==='stats' ? 'Stats' : (tab==='notif' ? 'Notifications' : '');
 }
 
 // ── STATISTIQUES ──
-let statsPeriodDays = 1; // defaut : aujourd'hui (J)
-let customStart = null, customEnd = null; // YYYY-MM-DD si plage personnalisee
-
-function setPeriod(btn, days) {
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  statsPeriodDays = days;
-  // Annuler la plage personnalisee
-  customStart = customEnd = null;
-  document.getElementById('range-start').value = '';
-  document.getElementById('range-end').value = '';
-  document.getElementById('range-start').classList.remove('set');
-  document.getElementById('range-end').classList.remove('set');
-  document.getElementById('range-clear').style.display = 'none';
-  document.getElementById('range-summary').textContent = '';
-  loadStats();
-}
-
-function applyCustomRange() {
-  customStart = document.getElementById('range-start').value || null;
-  customEnd   = document.getElementById('range-end').value || null;
-  if (!customStart && !customEnd) { clearCustomRange(); return; }
-  // Desactiver les boutons preset
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('range-start').classList.toggle('set', !!customStart);
-  document.getElementById('range-end').classList.toggle('set', !!customEnd);
-  document.getElementById('range-clear').style.display = 'inline-block';
-  const fmt = s => s ? new Date(s+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '…';
-  document.getElementById('range-summary').textContent = `${fmt(customStart)} → ${fmt(customEnd)}`;
-  loadStats();
-}
-
-function clearCustomRange() {
-  customStart = customEnd = null;
-  document.getElementById('range-start').value = '';
-  document.getElementById('range-end').value = '';
-  document.getElementById('range-start').classList.remove('set');
-  document.getElementById('range-end').classList.remove('set');
-  document.getElementById('range-clear').style.display = 'none';
-  document.getElementById('range-summary').textContent = '';
-  // Revenir a "Aujourd'hui"
-  const btns = document.querySelectorAll('.period-btn');
-  btns.forEach(b => b.classList.remove('active'));
-  if (btns[0]) btns[0].classList.add('active');
-  statsPeriodDays = 1;
-  loadStats();
-}
-
-// Retourne {start: Date|null, end: Date|null} pour la fenetre courante
-function getDateRange() {
-  if (customStart || customEnd) {
-    return {
-      start: customStart ? new Date(customStart+'T00:00:00') : null,
-      end:   customEnd   ? new Date(customEnd+'T23:59:59')   : null,
-    };
-  }
-  if (statsPeriodDays === 0) return { start:null, end:null };
-  if (statsPeriodDays === 1) {
-    const s = new Date(); s.setHours(0,0,0,0);
-    const e = new Date(); e.setHours(23,59,59,999);
-    return { start:s, end:e };
-  }
-  if (statsPeriodDays === 2) {
-    const s = new Date(); s.setDate(s.getDate()-1); s.setHours(0,0,0,0);
-    const e = new Date(); e.setDate(e.getDate()-1); e.setHours(23,59,59,999);
-    return { start:s, end:e };
-  }
-  const s = new Date(); s.setDate(s.getDate()-statsPeriodDays);
-  return { start:s, end:null };
-}
-
-// Construit un filtre PostgREST sur la colonne demandee selon la fenetre courante
-function rangeFilter(col) {
-  const { start, end } = getDateRange();
-  let f = '';
-  if (start) f += `&${col}=gte.${start.toISOString()}`;
-  if (end)   f += `&${col}=lte.${end.toISOString()}`;
-  return f;
-}
-
-function periodFilter() {
-  return rangeFilter('created_at');
-}
-
-// Libelles des plateformes
+let statsPeriodDays = 1, customStart = null, customEnd = null;
+function setPeriod(btn, days) { document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); statsPeriodDays = days; customStart = customEnd = null; document.getElementById('range-start').value = ''; document.getElementById('range-end').value = ''; document.getElementById('range-start').classList.remove('set'); document.getElementById('range-end').classList.remove('set'); document.getElementById('range-clear').style.display = 'none'; document.getElementById('range-summary').textContent = ''; loadStats(); }
+function applyCustomRange() { customStart = document.getElementById('range-start').value || null; customEnd = document.getElementById('range-end').value || null; if (!customStart && !customEnd) { clearCustomRange(); return; } document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active')); document.getElementById('range-start').classList.toggle('set', !!customStart); document.getElementById('range-end').classList.toggle('set', !!customEnd); document.getElementById('range-clear').style.display = 'inline-block'; const fmt = s => s ? new Date(s+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '…'; document.getElementById('range-summary').textContent = `${fmt(customStart)} → ${fmt(customEnd)}`; loadStats(); }
+function clearCustomRange() { customStart = customEnd = null; document.getElementById('range-start').value = ''; document.getElementById('range-end').value = ''; document.getElementById('range-start').classList.remove('set'); document.getElementById('range-end').classList.remove('set'); document.getElementById('range-clear').style.display = 'none'; document.getElementById('range-summary').textContent = ''; const btns = document.querySelectorAll('.period-btn'); btns.forEach(b => b.classList.remove('active')); if (btns[0]) btns[0].classList.add('active'); statsPeriodDays = 1; loadStats(); }
+function getDateRange() { if (customStart || customEnd) { return { start: customStart ? new Date(customStart+'T00:00:00') : null, end: customEnd ? new Date(customEnd+'T23:59:59') : null }; } if (statsPeriodDays === 0) return { start:null, end:null }; if (statsPeriodDays === 1) { const s = new Date(); s.setHours(0,0,0,0); const e = new Date(); e.setHours(23,59,59,999); return { start:s, end:e }; } if (statsPeriodDays === 2) { const s = new Date(); s.setDate(s.getDate()-1); s.setHours(0,0,0,0); const e = new Date(); e.setDate(e.getDate()-1); e.setHours(23,59,59,999); return { start:s, end:e }; } const s = new Date(); s.setDate(s.getDate()-statsPeriodDays); return { start:s, end:null }; }
+function rangeFilter(col) { const { start, end } = getDateRange(); let f = ''; if (start) f += `&${col}=gte.${start.toISOString()}`; if (end) f += `&${col}=lte.${end.toISOString()}`; return f; }
+function periodFilter() { return rangeFilter('created_at'); }
 const PLATFORM_LABELS = { android:'🤖 Android', ios:'🍎 iOS', web:'🌐 Web' };
 function platformLabel(p) { return PLATFORM_LABELS[(p||'').toLowerCase()] || ('📱 ' + (p || 'Inconnu')); }
 
-// Histogrammes des favoris ACTUELS (net = ajouts - retraits), tous depuis le début.
-// Respecte le filtre "exclure le trafic sans modèle".
 async function renderFavorites() {
-  const elP = document.getElementById('fav-places-chart');
-  const elE = document.getElementById('fav-events-chart');
+  const elP = document.getElementById('fav-places-chart'); const elE = document.getElementById('fav-events-chart');
   let rows = [];
-  try {
-    rows = await supa('events_log?select=action,item_name,user_id&action=in.(add_favorite_place,remove_favorite_place,add_favorite_event,remove_favorite_event)&limit=20000');
-  } catch(e) {
-    elP.innerHTML = elE.innerHTML = '<div style="color:var(--muted);font-size:12px">Impossible de charger les favoris</div>';
-    return;
-  }
-  // Exclure le trafic de test si demandé
-  if (document.getElementById('exclude-tests')?.checked) {
-    rows = rows.filter(r => { const d = window._devicesById[r.user_id]; return d && (d.model || d.manufacturer); });
-  }
-  // Net par item pour un type donné ('place' ou 'event')
-  const netFor = (type) => {
-    const m = {};
-    rows.forEach(r => {
-      if (!r.item_name) return;
-      if (r.action === 'add_favorite_' + type)    m[r.item_name] = (m[r.item_name] || 0) + 1;
-      else if (r.action === 'remove_favorite_' + type) m[r.item_name] = (m[r.item_name] || 0) - 1;
-    });
-    return Object.entries(m).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  };
-  const draw = (el, data) => {
-    if (!data.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun favori actuellement</div>'; return; }
-    const max = Math.max(...data.map(d => d[1]), 1);
-    el.innerHTML = data.map(([name, cnt]) => `
-      <div class="bar-row">
-        <div class="bar-label" title="${name}">${name.slice(0, 32)}${name.length > 32 ? '…' : ''}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt / max * 100)}%"></div></div>
-        <div class="bar-count">${cnt}</div>
-      </div>`).join('');
-  };
-  draw(elP, netFor('place'));
-  draw(elE, netFor('event'));
+  try { rows = await supa('events_log?select=action,item_name,user_id&action=in.(add_favorite_place,remove_favorite_place,add_favorite_event,remove_favorite_event)&limit=20000'); } catch(e) { elP.innerHTML = elE.innerHTML = '<div style="color:var(--muted);font-size:12px">Impossible de charger les favoris</div>'; return; }
+  if (document.getElementById('exclude-tests')?.checked) { rows = rows.filter(r => { const d = window._devicesById[r.user_id]; return d && (d.model || d.manufacturer); }); }
+  const netFor = (type) => { const m = {}; rows.forEach(r => { if (!r.item_name) return; if (r.action === 'add_favorite_' + type) m[r.item_name] = (m[r.item_name] || 0) + 1; else if (r.action === 'remove_favorite_' + type) m[r.item_name] = (m[r.item_name] || 0) - 1; }); return Object.entries(m).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 10); };
+  const draw = (el, data) => { if (!data.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun favori actuellement</div>'; return; } const max = Math.max(...data.map(d => d[1]), 1); el.innerHTML = data.map(([name, cnt]) => `<div class="bar-row"><div class="bar-label" title="${name}">${name.slice(0, 32)}${name.length > 32 ? '…' : ''}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt / max * 100)}%"></div></div><div class="bar-count">${cnt}</div></div>`).join(''); };
+  draw(elP, netFor('place')); draw(elE, netFor('event'));
 }
 
-// Affiche le KPI "nouveaux utilisateurs" (sur la periode) + la repartition par plateforme/modele
-// des utilisateurs ACTIFS sur la periode selectionnee en haut
 function renderDeviceStats(devices, logs) {
-  // ── Nouveaux utilisateurs sur la fenetre courante (par first_seen) ──
   const { start, end } = getDateRange();
-  const newCount = devices.filter(d => {
-    if (!d.first_seen) return false;
-    const fs = new Date(d.first_seen);
-    if (start && fs < start) return false;
-    if (end && fs > end) return false;
-    return true;
-  }).length;
-  document.getElementById('kpi-new').textContent = newCount;
-  document.getElementById('kpi-new-sub').textContent =
-    (!start && !end) ? 'sur toute la période' : 'sur la période choisie';
-
-  // ── Repartition des utilisateurs actifs sur la periode, par plateforme puis modele ──
-  const el = document.getElementById('devices-chart');
-  const activeIds = [...new Set((logs || []).map(l => l.user_id))];
-
-  if (!activeIds.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun utilisateur actif sur cette période</div>';
-    return;
-  }
-
-  // Regrouper : plateforme -> { count, models: { libelleModele -> count } }
-  const byPlatform = {};
-  activeIds.forEach(id => {
-    const d = window._devicesById[id];
-    const p = (d?.platform || 'inconnu').toLowerCase();
-    const model = d ? ([d.manufacturer, d.model].filter(Boolean).join(' ') || 'Modèle inconnu')
-                    : 'Device inconnu';
-    if (!byPlatform[p]) byPlatform[p] = { count: 0, models: {} };
-    byPlatform[p].count++;
-    byPlatform[p].models[model] = (byPlatform[p].models[model] || 0) + 1;
-  });
-
-  const total = activeIds.length;
-  const max = Math.max(...Object.values(byPlatform).map(v => v.count), 1);
-
-  const rows = Object.entries(byPlatform)
-    .sort((a, b) => b[1].count - a[1].count)
-    .map(([p, data]) => {
-      const models = Object.entries(data.models)
-        .sort((a, b) => b[1] - a[1])
-        .map(([m, cnt]) => `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0 2px 22px">
-            <span style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m}</span>
-            <span style="font-size:11px;color:var(--charcoal);font-weight:500;flex-shrink:0;margin-left:8px">${cnt}</span>
-          </div>`).join('');
-      return `
-        <div style="margin-bottom:12px">
-          <div class="bar-row" style="margin-bottom:4px">
-            <div class="bar-label">${platformLabel(p)}</div>
-            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(data.count/max*100)}%"></div></div>
-            <div class="bar-count">${data.count}</div>
-          </div>
-          ${models}
-        </div>`;
-    }).join('');
-
-  el.innerHTML = `
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
-      <span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--charcoal)">${total}</span> utilisateurs actifs sur la période
-    </div>
-    ${rows}`;
+  const newCount = devices.filter(d => { if (!d.first_seen) return false; const fs = new Date(d.first_seen); if (start && fs < start) return false; if (end && fs > end) return false; return true; }).length;
+  document.getElementById('kpi-new').textContent = newCount; document.getElementById('kpi-new-sub').textContent = (!start && !end) ? 'sur toute la période' : 'sur la période choisie';
+  const el = document.getElementById('devices-chart'); const activeIds = [...new Set((logs || []).map(l => l.user_id))];
+  if (!activeIds.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">Aucun utilisateur actif sur cette période</div>'; return; }
+  const byPlatform = {}; activeIds.forEach(id => { const d = window._devicesById[id]; const p = (d?.platform || 'inconnu').toLowerCase(); const model = d ? ([d.manufacturer, d.model].filter(Boolean).join(' ') || 'Modèle inconnu') : 'Device inconnu'; if (!byPlatform[p]) byPlatform[p] = { count: 0, models: {} }; byPlatform[p].count++; byPlatform[p].models[model] = (byPlatform[p].models[model] || 0) + 1; });
+  const total = activeIds.length; const max = Math.max(...Object.values(byPlatform).map(v => v.count), 1);
+  const rows = Object.entries(byPlatform).sort((a, b) => b[1].count - a[1].count).map(([p, data]) => { const models = Object.entries(data.models).sort((a, b) => b[1] - a[1]).map(([m, cnt]) => `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0 2px 22px"><span style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m}</span><span style="font-size:11px;color:var(--charcoal);font-weight:500;flex-shrink:0;margin-left:8px">${cnt}</span></div>`).join(''); return `<div style="margin-bottom:12px"><div class="bar-row" style="margin-bottom:4px"><div class="bar-label">${platformLabel(p)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(data.count/max*100)}%"></div></div><div class="bar-count">${data.count}</div></div>${models}</div>`; }).join('');
+  el.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:12px"><span style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--charcoal)">${total}</span> utilisateurs actifs sur la période</div>${rows}`;
 }
 
 async function loadStats() {
   try {
     const pf = periodFilter();
-
-    // Charger toutes les actions en une seule requête
     let logs = await supa(`events_log?select=action,item_name,item_cat,user_id,created_at&order=created_at.desc&limit=2000${pf}`);
-
-    // ── DEVICES (nouveaux utilisateurs + repartition par plateforme + parcours) ──
-    let devices = [];
-    try {
-      devices = await supa('devices?select=*&limit=5000');
-    } catch(e) {
-      console.warn('Table devices non accessible :', e.message);
-    }
-    window._devicesById = {};
-    devices.forEach(d => { window._devicesById[d.id] = d; });
-
-    // ── Exclure le trafic sans modèle (tests auto de non-régression) si demandé ──
-    if (document.getElementById('exclude-tests')?.checked) {
-      logs = logs.filter(l => {
-        const d = window._devicesById[l.user_id];
-        return d && (d.model || d.manufacturer); // garder uniquement les vrais téléphones identifiés
-      });
-    }
-    window._lastLogs = logs; // Stocker pour showUserJourney (après filtrage)
-
-    renderDeviceStats(devices, logs);
-    renderFavorites(); // favoris actuels (tous), indépendant de la période
-
-    if (!logs.length) {
-      document.getElementById('kpi-opens').textContent = '0';
-      document.getElementById('kpi-users').textContent = '0';
-      document.getElementById('kpi-views').textContent = '0';
-      document.getElementById('kpi-favs').textContent = '0';
-      document.getElementById('kpi-reviews').textContent = '0';
-      document.getElementById('kpi-proposals').textContent = '0';
-      document.getElementById('kpi-geo').textContent = '0';
-      document.getElementById('kpi-maps').textContent = '0';
-      document.getElementById('users-table').innerHTML = '<div style="color:var(--muted);font-size:12px">Aucune activité sur cette période</div>';
-      return;
-    }
-
-    // ── KPIs ──
+    let devices = []; try { devices = await supa('devices?select=*&limit=5000'); } catch(e) {}
+    window._devicesById = {}; devices.forEach(d => { window._devicesById[d.id] = d; });
+    if (document.getElementById('exclude-tests')?.checked) { logs = logs.filter(l => { const d = window._devicesById[l.user_id]; return d && (d.model || d.manufacturer); }); }
+    window._lastLogs = logs;
+    renderDeviceStats(devices, logs); renderFavorites();
+    if (!logs.length) { ['kpi-opens','kpi-users','kpi-views','kpi-favs','kpi-reviews','kpi-proposals','kpi-geo','kpi-maps'].forEach(id => document.getElementById(id).textContent = '0'); document.getElementById('users-table').innerHTML = '<div style="color:var(--muted);font-size:12px">Aucune activité sur cette période</div>'; return; }
     const count = (action) => logs.filter(l => l.action === action).length;
     const countMulti = (actions) => logs.filter(l => actions.includes(l.action)).length;
-
-    document.getElementById('kpi-opens').textContent    = count('app_open');
-    document.getElementById('kpi-users').textContent    = new Set(logs.map(l => l.user_id)).size;
-    document.getElementById('kpi-views').textContent    = countMulti(['view_place','view_event']);
-    document.getElementById('kpi-favs').textContent     = countMulti(['add_favorite_place','add_favorite_event']);
-    document.getElementById('kpi-reviews').textContent  = count('submit_review');
-    document.getElementById('kpi-proposals').textContent = countMulti(['propose_place','propose_event']);
-    document.getElementById('kpi-geo').textContent      = count('geolocate');
-    document.getElementById('kpi-maps').textContent     = count('open_maps') || '—';
-
-    // ── ALERTES CONTENU ──
+    document.getElementById('kpi-opens').textContent = count('app_open'); document.getElementById('kpi-users').textContent = new Set(logs.map(l => l.user_id)).size; document.getElementById('kpi-views').textContent = countMulti(['view_place','view_event']); document.getElementById('kpi-favs').textContent = countMulti(['add_favorite_place','add_favorite_event']); document.getElementById('kpi-reviews').textContent = count('submit_review'); document.getElementById('kpi-proposals').textContent = countMulti(['propose_place','propose_event']); document.getElementById('kpi-geo').textContent = count('geolocate'); document.getElementById('kpi-maps').textContent = count('open_maps') || '—';
     try {
-      const [lieuxSansCat, lieuxSansDesc, evtSansCat, evtSansDesc, evtSansImage, evtSansLien] = await Promise.all([
-        supa('lieux?select=id,nom&or=(categorie.is.null,categorie.eq.{})&valide=eq.true&limit=50'),
-        supa('lieux?select=id,nom&description=is.null&valide=eq.true&limit=50'),
-        supa('evenements?select=id,nom&categorie=is.null&valide=eq.true&limit=50'),
-        supa('evenements?select=id,nom&description=is.null&valide=eq.true&limit=50'),
-        supa('evenements?select=id,nom&image_url=is.null&valide=eq.true&limit=50'),
-        supa('evenements?select=id,nom&lien_reservation=is.null&lien_evenement=is.null&valide=eq.true&limit=50'),
-      ]);
-
-      function alertSection(icon, label, color, tc, items, type) {
-        if (!items.length) return '';
-        const list = items.map(item => `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid ${color}">
-            <span style="font-size:12px;color:var(--charcoal)">${item.nom}</span>
-            <button onclick="${type==='lieu' ? `selectPlace('${item.id}');switchTab('lieux')` : `selectEvent('${item.id}');switchTab('events')`}"
-              style="font-size:10px;padding:2px 8px;border:1px solid ${tc};border-radius:6px;background:transparent;color:${tc};cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px">
-              Corriger →
-            </button>
-          </div>`).join('');
-        return `
-          <div style="background:${color};border-radius:12px;padding:12px 14px;margin-bottom:10px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <span style="font-size:13px;font-weight:500;color:var(--charcoal)">${icon} ${label}</span>
-              <span style="font-weight:600;color:${tc};font-size:13px">${items.length}</span>
-            </div>
-            <div>${list}</div>
-          </div>`;
-      }
-
-      const html =
-        alertSection('🏷️', 'Lieux sans catégorie',          '#FBE9E7', 'var(--terracotta)', lieuxSansCat,  'lieu')  +
-        alertSection('📝', 'Lieux sans description',         '#FBE9E7', 'var(--terracotta)', lieuxSansDesc, 'lieu')  +
-        alertSection('🏷️', 'Évènements sans catégorie',     '#FDF3E7', '#854F0B',           evtSansCat,    'event') +
-        alertSection('📝', 'Évènements sans description',    '#FDF3E7', '#854F0B',           evtSansDesc,   'event') +
-        alertSection('🖼️', 'Évènements sans image',          '#FEF9E7', '#7A5F00',           evtSansImage,  'event') +
-        alertSection('🔗', 'Évènements sans lien',           '#FEF9E7', '#7A5F00',           evtSansLien,   'event');
-
-      document.getElementById('alerts-list').innerHTML = html ||
-        '<div style="color:var(--ok);font-size:12px">✅ Tout est en ordre !</div>';
-    } catch(e) {
-      document.getElementById('alerts-list').innerHTML = '<div style="color:var(--muted);font-size:12px">Impossible de charger les alertes</div>';
-    }
-    const placeViews = {};
-    logs.filter(l => l.action === 'view_place').forEach(l => {
-      if (l.item_name) placeViews[l.item_name] = (placeViews[l.item_name] || 0) + 1;
-    });
-    const topPlaces = Object.entries(placeViews).sort((a,b) => b[1]-a[1]).slice(0,8);
-    const RANK_CLASS = ['gold','silver','bronze'];
-    document.getElementById('top-places').innerHTML = topPlaces.length
-      ? topPlaces.map(([name, count], i) => `
-        <div class="top-item">
-          <div class="top-rank ${RANK_CLASS[i]||''}">${i+1}</div>
-          <div class="top-info"><div class="top-name">${name}</div></div>
-          <div class="top-count">${count} vue${count>1?'s':''}</div>
-        </div>`).join('')
-      : '<div style="color:var(--muted);font-size:12px;padding:8px 0">Aucune donnée</div>';
-
-    // ── TOP ÉVÉNEMENTS ──
-    const eventViews = {};
-    logs.filter(l => l.action === 'view_event').forEach(l => {
-      if (l.item_name) eventViews[l.item_name] = (eventViews[l.item_name] || 0) + 1;
-    });
-    const topEvents = Object.entries(eventViews).sort((a,b) => b[1]-a[1]).slice(0,8);
-    document.getElementById('top-events-stat').innerHTML = topEvents.length
-      ? topEvents.map(([name, count], i) => `
-        <div class="top-item">
-          <div class="top-rank ${RANK_CLASS[i]||''}">${i+1}</div>
-          <div class="top-info"><div class="top-name">${name.slice(0,35)}${name.length>35?'…':''}</div></div>
-          <div class="top-count">${count} vue${count>1?'s':''}</div>
-        </div>`).join('')
-      : '<div style="color:var(--muted);font-size:12px;padding:8px 0">Aucune donnée</div>';
-
-    // ── ACTIONS PAR TYPE ──
-    const actionLabels = {
-      'app_open': 'Ouverture app',
-      'view_place': 'Fiche lieu',
-      'view_event': 'Fiche évènement',
-      'add_favorite_place': 'Favori lieu',
-      'add_favorite_event': 'Favori évènement',
-      'submit_review': 'Avis déposé',
-      'geolocate': 'Géolocalisation',
-      'propose_place': 'Lieu proposé',
-      'propose_event': 'Évènement proposé',
-      'filter_cat': 'Filtre catégorie',
-      'view_events_page': 'Page évènements',
-    };
-    const actionCounts = {};
-    logs.forEach(l => { actionCounts[l.action] = (actionCounts[l.action] || 0) + 1; });
-    const maxAction = Math.max(...Object.values(actionCounts), 1);
-    document.getElementById('actions-chart').innerHTML = Object.entries(actionCounts)
-      .sort((a,b) => b[1]-a[1])
-      .map(([action, cnt]) => `
-        <div class="bar-row">
-          <div class="bar-label">${actionLabels[action] || action}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxAction*100)}%"></div></div>
-          <div class="bar-count">${cnt}</div>
-        </div>`).join('');
-
-    // ── FILTRES POPULAIRES ──
-    const filterCounts = {};
-    const CATS = { jeux_ext:'🌳 Jeux ext.', jeux_int:'🎲 Jeux int.', culture:'🎭 Culture', apero:'🍷 Apéro', resto:'🍕 Resto', eau:'🌊 Eau' };
-    logs.filter(l => l.action === 'filter_cat' && l.item_name).forEach(l => {
-      const label = CATS[l.item_name] || l.item_name;
-      filterCounts[label] = (filterCounts[label] || 0) + 1;
-    });
-    const maxFilter = Math.max(...Object.values(filterCounts), 1);
-    document.getElementById('filters-chart').innerHTML = Object.keys(filterCounts).length
-      ? Object.entries(filterCounts).sort((a,b) => b[1]-a[1]).map(([label, cnt]) => `
-        <div class="bar-row">
-          <div class="bar-label">${label}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxFilter*100)}%"></div></div>
-          <div class="bar-count">${cnt}</div>
-        </div>`).join('')
-      : '<div style="color:var(--muted);font-size:12px">Aucun filtre utilisé</div>';
-
-    // ── GRAPHIQUE PAR JOUR ──
-    const dailyUsers = {}, dailyViews = {};
-    logs.forEach(l => {
-      const day = l.created_at?.split('T')[0];
-      if (!day) return;
-      if (!dailyUsers[day]) dailyUsers[day] = new Set();
-      dailyUsers[day].add(l.user_id);
-      if (l.action === 'view_place' || l.action === 'view_event') {
-        dailyViews[day] = (dailyViews[day] || 0) + 1;
-      }
-    });
-    const days = [...new Set([...Object.keys(dailyUsers), ...Object.keys(dailyViews)])].sort();
-    const maxDailyUsers = Math.max(...days.map(d => dailyUsers[d]?.size || 0), 1);
-    const maxDailyViews = Math.max(...days.map(d => dailyViews[d] || 0), 1);
-
-    document.getElementById('daily-chart').innerHTML = days.length ? `
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;gap:16px;font-size:10px;color:var(--muted);margin-bottom:4px">
-          <span style="display:flex;align-items:center;gap:4px"><span style="background:var(--forest);width:10px;height:10px;border-radius:2px;display:inline-block"></span>Utilisateurs</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="background:var(--gold);width:10px;height:10px;border-radius:2px;display:inline-block"></span>Vues</span>
-        </div>
-        ${days.map(day => {
-          const u = dailyUsers[day]?.size || 0;
-          const v = dailyViews[day] || 0;
-          const label = new Date(day+'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
-          return `<div style="display:flex;align-items:center;gap:8px">
-            <div style="font-size:10px;color:var(--muted);width:52px;text-align:right;flex-shrink:0">${label}</div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-              <div style="background:var(--cream2);border-radius:3px;height:6px;overflow:hidden">
-                <div style="background:var(--forest);height:100%;width:${Math.round(u/maxDailyUsers*100)}%;border-radius:3px"></div>
-              </div>
-              <div style="background:var(--cream2);border-radius:3px;height:6px;overflow:hidden">
-                <div style="background:var(--gold);height:100%;width:${Math.round(v/maxDailyViews*100)}%;border-radius:3px"></div>
-              </div>
-            </div>
-            <div style="font-size:10px;color:var(--muted);width:36px;flex-shrink:0">${u}u·${v}v</div>
-          </div>`;
-        }).join('')}
-      </div>` : '<div style="color:var(--muted);font-size:12px">Aucune donnée</div>';
-
-    // ── UTILISATEURS avec clic → parcours ──
-    const userMap = {};
-    logs.forEach(l => {
-      if (!userMap[l.user_id]) userMap[l.user_id] = { actions: 0, last: l.created_at, log: [] };
-      userMap[l.user_id].actions++;
-      userMap[l.user_id].log.push(l);
-    });
-    const users = Object.entries(userMap).sort((a,b) => b[1].actions - a[1].actions);
-    const avgActions = users.length ? Math.round(users.reduce((s,[,u]) => s+u.actions, 0) / users.length) : 0;
-
-    document.getElementById('users-table').innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-        <div style="background:var(--cream);border-radius:12px;padding:14px 16px">
-          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600">${users.length}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Utilisateurs distincts</div>
-        </div>
-        <div style="background:var(--cream);border-radius:12px;padding:14px 16px">
-          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600">${avgActions}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Actions moy. / utilisateur</div>
-        </div>
-        <div style="background:var(--cream);border-radius:12px;padding:14px 16px">
-          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600">${users.filter(([,u]) => u.actions >= 5).length}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Utilisateurs actifs (5+)</div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--muted);border-top:1px solid var(--cream2);padding-top:12px">
-        <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;font-weight:500;margin-bottom:6px;color:var(--charcoal)">
-          <span>Utilisateur</span><span>Device</span><span>Actions</span><span>Dernière visite</span><span></span>
-        </div>
-        ${users.slice(0,15).map(([uid, u]) => {
-          const dev = (window._devicesById || {})[uid];
-          const devModel = dev ? [dev.manufacturer, dev.model].filter(Boolean).join(' ') : '';
-          const devLabel = dev
-            ? `${platformLabel(dev.platform)}${devModel ? ' · ' + devModel : ''}`
-            : '—';
-          return `
-          <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream2);align-items:center">
-            <span style="font-family:monospace;font-size:10px;color:var(--muted)">${uid.slice(0,20)}…</span>
-            <span style="font-size:10px;color:var(--charcoal);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${devLabel}">${devLabel}</span>
-            <span style="font-weight:500;color:var(--forest)">${u.actions}</span>
-            <span style="font-size:10px">${new Date(u.last).toLocaleDateString('fr-FR')}</span>
-            <button onclick='showUserJourney(${JSON.stringify(uid)})' 
-              style="font-size:10px;padding:2px 8px;border:1px solid var(--sand);border-radius:6px;background:var(--cream);cursor:pointer;color:var(--forest);font-family:inherit">
-              Parcours
-            </button>
-          </div>`;
-        }).join('')}
-      </div>`;
-
-  } catch(e) {
-    console.error('Erreur stats:', e);
-    document.getElementById('kpi-opens').textContent = '!';
-  }
+      const [lieuxSansCat, lieuxSansDesc, evtSansCat, evtSansDesc, evtSansImage, evtSansLien] = await Promise.all([supa('lieux?select=id,nom&or=(categorie.is.null,categorie.eq.{})&valide=eq.true&limit=50'),supa('lieux?select=id,nom&description=is.null&valide=eq.true&limit=50'),supa('evenements?select=id,nom&categorie=is.null&valide=eq.true&limit=50'),supa('evenements?select=id,nom&description=is.null&valide=eq.true&limit=50'),supa('evenements?select=id,nom&image_url=is.null&valide=eq.true&limit=50'),supa('evenements?select=id,nom&lien_reservation=is.null&lien_evenement=is.null&valide=eq.true&limit=50')]);
+      function alertSection(icon, label, color, tc, items, type) { if (!items.length) return ''; const list = items.map(item => `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid ${color}"><span style="font-size:12px;color:var(--charcoal)">${item.nom}</span><button onclick="${type==='lieu' ? `selectPlace('${item.id}');switchTab('lieux')` : `selectEvent('${item.id}');switchTab('events')`}" style="font-size:10px;padding:2px 8px;border:1px solid ${tc};border-radius:6px;background:transparent;color:${tc};cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:8px">Corriger →</button></div>`).join(''); return `<div style="background:${color};border-radius:12px;padding:12px 14px;margin-bottom:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;font-weight:500;color:var(--charcoal)">${icon} ${label}</span><span style="font-weight:600;color:${tc};font-size:13px">${items.length}</span></div><div>${list}</div></div>`; }
+      const html = alertSection('🏷️','Lieux sans catégorie','#FBE9E7','var(--terracotta)',lieuxSansCat,'lieu')+alertSection('📝','Lieux sans description','#FBE9E7','var(--terracotta)',lieuxSansDesc,'lieu')+alertSection('🏷️','Évènements sans catégorie','#FDF3E7','#854F0B',evtSansCat,'event')+alertSection('📝','Évènements sans description','#FDF3E7','#854F0B',evtSansDesc,'event')+alertSection('🖼️','Évènements sans image','#FEF9E7','#7A5F00',evtSansImage,'event')+alertSection('🔗','Évènements sans lien','#FEF9E7','#7A5F00',evtSansLien,'event');
+      document.getElementById('alerts-list').innerHTML = html || '<div style="color:var(--ok);font-size:12px">✅ Tout est en ordre !</div>';
+    } catch(e) { document.getElementById('alerts-list').innerHTML = '<div style="color:var(--muted);font-size:12px">Impossible de charger les alertes</div>'; }
+    const placeViews = {}; logs.filter(l => l.action === 'view_place').forEach(l => { if (l.item_name) placeViews[l.item_name] = (placeViews[l.item_name] || 0) + 1; }); const topPlaces = Object.entries(placeViews).sort((a,b) => b[1]-a[1]).slice(0,8); const RANK_CLASS = ['gold','silver','bronze']; document.getElementById('top-places').innerHTML = topPlaces.length ? topPlaces.map(([name, count], i) => `<div class="top-item"><div class="top-rank ${RANK_CLASS[i]||''}">${i+1}</div><div class="top-info"><div class="top-name">${name}</div></div><div class="top-count">${count} vue${count>1?'s':''}</div></div>`).join('') : '<div style="color:var(--muted);font-size:12px;padding:8px 0">Aucune donnée</div>';
+    const eventViews = {}; logs.filter(l => l.action === 'view_event').forEach(l => { if (l.item_name) eventViews[l.item_name] = (eventViews[l.item_name] || 0) + 1; }); const topEvents = Object.entries(eventViews).sort((a,b) => b[1]-a[1]).slice(0,8); document.getElementById('top-events-stat').innerHTML = topEvents.length ? topEvents.map(([name, count], i) => `<div class="top-item"><div class="top-rank ${RANK_CLASS[i]||''}">${i+1}</div><div class="top-info"><div class="top-name">${name.slice(0,35)}${name.length>35?'…':''}</div></div><div class="top-count">${count} vue${count>1?'s':''}</div></div>`).join('') : '<div style="color:var(--muted);font-size:12px;padding:8px 0">Aucune donnée</div>';
+    const actionLabels = {'app_open':'Ouverture app','view_place':'Fiche lieu','view_event':'Fiche évènement','add_favorite_place':'Favori lieu','add_favorite_event':'Favori évènement','submit_review':'Avis déposé','geolocate':'Géolocalisation','propose_place':'Lieu proposé','propose_event':'Évènement proposé','filter_cat':'Filtre catégorie','view_events_page':'Page évènements'};
+    const actionCounts = {}; logs.forEach(l => { actionCounts[l.action] = (actionCounts[l.action] || 0) + 1; }); const maxAction = Math.max(...Object.values(actionCounts), 1); document.getElementById('actions-chart').innerHTML = Object.entries(actionCounts).sort((a,b) => b[1]-a[1]).map(([action, cnt]) => `<div class="bar-row"><div class="bar-label">${actionLabels[action] || action}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxAction*100)}%"></div></div><div class="bar-count">${cnt}</div></div>`).join('');
+    const filterCounts = {}; const FCATS = { jeux_ext:'🌳 Jeux ext.', jeux_int:'🎲 Jeux int.', culture:'🎭 Culture', apero:'🍷 Apéro', resto:'🍕 Resto', eau:'🌊 Eau' }; logs.filter(l => l.action === 'filter_cat' && l.item_name).forEach(l => { const label = FCATS[l.item_name] || l.item_name; filterCounts[label] = (filterCounts[label] || 0) + 1; }); const maxFilter = Math.max(...Object.values(filterCounts), 1); document.getElementById('filters-chart').innerHTML = Object.keys(filterCounts).length ? Object.entries(filterCounts).sort((a,b) => b[1]-a[1]).map(([label, cnt]) => `<div class="bar-row"><div class="bar-label">${label}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxFilter*100)}%"></div></div><div class="bar-count">${cnt}</div></div>`).join('') : '<div style="color:var(--muted);font-size:12px">Aucun filtre utilisé</div>';
+    const dailyUsers = {}, dailyViews = {}; logs.forEach(l => { const day = l.created_at?.split('T')[0]; if (!day) return; if (!dailyUsers[day]) dailyUsers[day] = new Set(); dailyUsers[day].add(l.user_id); if (l.action === 'view_place' || l.action === 'view_event') { dailyViews[day] = (dailyViews[day] || 0) + 1; } }); const days = [...new Set([...Object.keys(dailyUsers), ...Object.keys(dailyViews)])].sort(); const maxDailyUsers = Math.max(...days.map(d => dailyUsers[d]?.size || 0), 1); const maxDailyViews = Math.max(...days.map(d => dailyViews[d] || 0), 1);
+    document.getElementById('daily-chart').innerHTML = days.length ? `<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:16px;font-size:10px;color:var(--muted);margin-bottom:4px"><span style="display:flex;align-items:center;gap:4px"><span style="background:var(--forest);width:10px;height:10px;border-radius:2px;display:inline-block"></span>Utilisateurs</span><span style="display:flex;align-items:center;gap:4px"><span style="background:var(--gold);width:10px;height:10px;border-radius:2px;display:inline-block"></span>Vues</span></div>${days.map(day => { const u = dailyUsers[day]?.size || 0; const v = dailyViews[day] || 0; const label = new Date(day+'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'short' }); return `<div style="display:flex;align-items:center;gap:8px"><div style="font-size:10px;color:var(--muted);width:52px;text-align:right;flex-shrink:0">${label}</div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="background:var(--cream2);border-radius:3px;height:6px;overflow:hidden"><div style="background:var(--forest);height:100%;width:${Math.round(u/maxDailyUsers*100)}%;border-radius:3px"></div></div><div style="background:var(--cream2);border-radius:3px;height:6px;overflow:hidden"><div style="background:var(--gold);height:100%;width:${Math.round(v/maxDailyViews*100)}%;border-radius:3px"></div></div></div><div style="font-size:10px;color:var(--muted);width:36px;flex-shrink:0">${u}u·${v}v</div></div>`; }).join('')}</div>` : '<div style="color:var(--muted);font-size:12px">Aucune donnée</div>';
+    const userMap = {}; logs.forEach(l => { if (!userMap[l.user_id]) userMap[l.user_id] = { actions: 0, last: l.created_at, log: [] }; userMap[l.user_id].actions++; userMap[l.user_id].log.push(l); }); const users = Object.entries(userMap).sort((a,b) => b[1].actions - a[1].actions); const avgActions = users.length ? Math.round(users.reduce((s,[,u]) => s+u.actions, 0) / users.length) : 0;
+    document.getElementById('users-table').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"><div style="background:var(--cream);border-radius:12px;padding:14px 16px"><div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600">${users.length}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Utilisateurs distincts</div></div><div style="background:var(--cream);border-radius:12px;padding:14px 16px"><div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600">${avgActions}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Actions moy. / utilisateur</div></div><div style="background:var(--cream);border-radius:12px;padding:14px 16px"><div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600">${users.filter(([,u]) => u.actions >= 5).length}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Utilisateurs actifs (5+)</div></div></div><div style="font-size:11px;color:var(--muted);border-top:1px solid var(--cream2);padding-top:12px"><div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;font-weight:500;margin-bottom:6px;color:var(--charcoal)"><span>Utilisateur</span><span>Device</span><span>Actions</span><span>Dernière visite</span><span></span></div>${users.slice(0,15).map(([uid, u]) => { const dev = (window._devicesById || {})[uid]; const devModel = dev ? [dev.manufacturer, dev.model].filter(Boolean).join(' ') : ''; const devLabel = dev ? `${platformLabel(dev.platform)}${devModel ? ' · ' + devModel : ''}` : '—'; return `<div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream2);align-items:center"><span style="font-family:monospace;font-size:10px;color:var(--muted)">${uid.slice(0,20)}…</span><span style="font-size:10px;color:var(--charcoal);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${devLabel}">${devLabel}</span><span style="font-weight:500;color:var(--forest)">${u.actions}</span><span style="font-size:10px">${new Date(u.last).toLocaleDateString('fr-FR')}</span><button onclick='showUserJourney(${JSON.stringify(uid)})' style="font-size:10px;padding:2px 8px;border:1px solid var(--sand);border-radius:6px;background:var(--cream);cursor:pointer;color:var(--forest);font-family:inherit">Parcours</button></div>`; }).join('')}</div>`;
+  } catch(e) { console.error('Erreur stats:', e); document.getElementById('kpi-opens').textContent = '!'; }
 }
-let allEvents = [], filteredEvents = [];
-let currentEvId = null, currentEvValid = false, currentEvCrush = false;
-let evStatusFilter = 'all';
 
-// ── SÉLECTION MULTIPLE ──
+let allEvents = [], filteredEvents = [], currentEvId = null, currentEvValid = false, currentEvCrush = false, evStatusFilter = 'all';
 let selectedEventIds = new Set();
 
-function handleEventRowClick(e, id) {
-  // Si clic sur la ligne (pas sur la checkbox), ouvrir l'éditeur
-  if (e.target.type !== 'checkbox') selectEvent(id);
-}
-
-function toggleEventSelection(id, checked) {
-  if (checked) selectedEventIds.add(id);
-  else selectedEventIds.delete(id);
-  updateBulkBar();
-  renderEventList();
-}
-
-function toggleSelectAll(checked) {
-  if (checked) filteredEvents.forEach(e => selectedEventIds.add(e.id));
-  else selectedEventIds.clear();
-  updateBulkBar();
-  renderEventList();
-}
-
-function clearSelection() {
-  selectedEventIds.clear();
-  document.getElementById('select-all-events').checked = false;
-  updateBulkBar();
-  renderEventList();
-}
-
-function updateBulkBar() {
-  const bar = document.getElementById('bulk-bar');
-  const count = selectedEventIds.size;
-  if (count > 0) {
-    bar.classList.add('visible');
-    document.getElementById('bulk-count').textContent = `${count} sélectionné(s)`;
-  } else {
-    bar.classList.remove('visible');
-  }
-}
+function handleEventRowClick(e, id) { if (e.target.type !== 'checkbox') selectEvent(id); }
+function toggleEventSelection(id, checked) { if (checked) selectedEventIds.add(id); else selectedEventIds.delete(id); updateBulkBar(); renderEventList(); }
+function toggleSelectAll(checked) { if (checked) filteredEvents.forEach(e => selectedEventIds.add(e.id)); else selectedEventIds.clear(); updateBulkBar(); renderEventList(); }
+function clearSelection() { selectedEventIds.clear(); document.getElementById('select-all-events').checked = false; updateBulkBar(); renderEventList(); }
+function updateBulkBar() { const bar = document.getElementById('bulk-bar'); const count = selectedEventIds.size; if (count > 0) { bar.classList.add('visible'); document.getElementById('bulk-count').textContent = `${count} sélectionné(s)`; } else { bar.classList.remove('visible'); } }
 
 async function bulkAction(action) {
-  if (selectedEventIds.size === 0) return;
-  const ids = [...selectedEventIds];
-
-  if (action === 'delete') {
-    if (!confirm(`Supprimer ${ids.length} événement(s) définitivement ?`)) return;
-  }
-
+  if (selectedEventIds.size === 0) return; const ids = [...selectedEventIds];
+  if (action === 'delete') { if (!confirm(`Supprimer ${ids.length} événement(s) définitivement ?`)) return; }
   showToast(`⏳ ${action === 'delete' ? 'Suppression' : 'Mise à jour'} de ${ids.length} événement(s)…`);
-
   let done = 0, errors = 0;
-
-  for (const id of ids) {
-    try {
-      if (action === 'delete') {
-        await supa(`evenements?id=eq.${id}`, { method: 'DELETE' });
-        allEvents = allEvents.filter(e => e.id !== id);
-      } else if (action === 'reject') {
-        await supa(`evenements?id=eq.${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ rejete: true, valide: false }),
-          headers: { 'Prefer': 'return=minimal' },
-        });
-        const idx = allEvents.findIndex(e => e.id === id);
-        if (idx >= 0) { allEvents[idx].rejete = true; allEvents[idx].valide = false; }
-      } else {
-        const valide = action === 'publish';
-        await supa(`evenements?id=eq.${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ valide }),
-          headers: { 'Prefer': 'return=minimal' },
-        });
-        const idx = allEvents.findIndex(e => e.id === id);
-        if (idx >= 0) allEvents[idx].valide = valide;
-      }
-      done++;
-    } catch(e) {
-      errors++;
-      console.error(e);
-    }
-  }
-
-  selectedEventIds.clear();
-  document.getElementById('select-all-events').checked = false;
-  applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
-  updateEventStats();
-  updateBulkBar();
-
-  if (currentEvId && action === 'delete') {
-    currentEvId = null;
-    document.getElementById('ev-empty').style.display = 'flex';
-    document.getElementById('ev-editor').style.display = 'none';
-    document.getElementById('ev-action-bar').style.display = 'none';
-  }
-
+  for (const id of ids) { try { if (action === 'delete') { await supa(`evenements?id=eq.${id}`, { method: 'DELETE' }); allEvents = allEvents.filter(e => e.id !== id); } else if (action === 'reject') { await supa(`evenements?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ rejete: true, valide: false }), headers: { 'Prefer': 'return=minimal' } }); const idx = allEvents.findIndex(e => e.id === id); if (idx >= 0) { allEvents[idx].rejete = true; allEvents[idx].valide = false; } } else { const valide = action === 'publish'; await supa(`evenements?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ valide }), headers: { 'Prefer': 'return=minimal' } }); const idx = allEvents.findIndex(e => e.id === id); if (idx >= 0) allEvents[idx].valide = valide; } done++; } catch(e) { errors++; } }
+  selectedEventIds.clear(); document.getElementById('select-all-events').checked = false; applyEventFilters(document.getElementById('search-events').value, evStatusFilter); updateEventStats(); updateBulkBar();
+  if (currentEvId && action === 'delete') { currentEvId = null; document.getElementById('ev-empty').style.display = 'flex'; document.getElementById('ev-editor').style.display = 'none'; document.getElementById('ev-action-bar').style.display = 'none'; }
   showToast(`✅ ${done} événement(s) traité(s)${errors ? ` · ${errors} erreur(s)` : ''}`);
 }
-function deviceSummary(uid) {
-  const d = (window._devicesById || {})[uid];
-  if (!d) return '';
-  const parts = [];
-  parts.push(platformLabel(d.platform));
-  const modele = [d.manufacturer, d.model].filter(Boolean).join(' ');
-  if (modele) parts.push(modele);
-  if (d.os_version) parts.push('OS ' + d.os_version);
-  if (d.app_version != null) parts.push('app v' + d.app_version);
-  return parts.join(' · ');
-}
+
+function deviceSummary(uid) { const d = (window._devicesById || {})[uid]; if (!d) return ''; const parts = [platformLabel(d.platform)]; const modele = [d.manufacturer, d.model].filter(Boolean).join(' '); if (modele) parts.push(modele); if (d.os_version) parts.push('OS ' + d.os_version); if (d.app_version != null) parts.push('app v' + d.app_version); return parts.join(' · '); }
 
 function showUserJourney(uid) {
-  const logs = window._lastLogs || [];
-  const userLogs = logs.filter(l => l.user_id === uid).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-  const ACTION_LABELS = {
-    'app_open':'🚀 Ouverture app','view_place':'📍 Fiche lieu','view_event':'🎭 Fiche évènement',
-    'add_favorite_place':'❤️ Favori lieu','add_favorite_event':'❤️ Favori évènement',
-    'remove_favorite_place':'🤍 Retrait favori','remove_favorite_event':'🤍 Retrait favori',
-    'submit_review':'⭐ Avis déposé','geolocate':'📍 Géolocalisation',
-    'propose_place':'➕ Lieu proposé','propose_event':'➕ Évènement proposé',
-    'filter_cat':'🏷️ Filtre catégorie','view_events_page':'📅 Page évènements',
-  };
-  let prevDay = null;
-  const rows = userLogs.map(l => {
-    const d = new Date(l.created_at);
-    const day = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-    const time = d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    const dayHeader = day !== prevDay
-      ? `<div style="font-weight:600;font-size:11px;color:var(--forest);padding:8px 0 4px;border-top:1px solid var(--cream2);margin-top:4px;text-transform:capitalize">${day}</div>` : '';
-    prevDay = day;
-    return `${dayHeader}
-      <div style="display:flex;align-items:baseline;gap:8px;padding:3px 0">
-        <span style="font-size:10px;color:var(--muted);width:36px;flex-shrink:0">${time}</span>
-        <span style="font-size:12px">${ACTION_LABELS[l.action]||l.action}</span>
-        ${l.item_name?`<span style="font-size:11px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">· ${l.item_name}</span>`:''}
-      </div>`;
-  }).join('');
-  let modal = document.getElementById('journey-modal');
-  if (modal) modal.remove();
-  modal = document.createElement('div');
-  modal.id = 'journey-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center';
-  modal.onclick = e => { if (e.target===modal) modal.remove(); };
-  modal.innerHTML = `
-    <div style="background:var(--white);border-radius:20px 20px 0 0;width:100%;max-width:700px;max-height:85vh;overflow-y:auto;padding:20px 24px 32px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div>
-          <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:600">Parcours utilisateur</div>
-          ${deviceSummary(uid) ? `<div style="font-size:12px;color:var(--forest);font-weight:500;margin-top:3px">${deviceSummary(uid)}</div>` : ''}
-          <div style="font-size:10px;font-family:monospace;color:var(--muted);margin-top:2px">${uid}</div>
-        </div>
-        <button onclick="document.getElementById('journey-modal').remove()"
-          style="background:var(--cream2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px">✕</button>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${userLogs.length} actions</div>
-      ${rows||'<div style="color:var(--muted);font-size:12px">Aucune action</div>'}
-    </div>`;
+  const logs = window._lastLogs || []; const userLogs = logs.filter(l => l.user_id === uid).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  const ACTION_LABELS = {'app_open':'🚀 Ouverture app','view_place':'📍 Fiche lieu','view_event':'🎭 Fiche évènement','add_favorite_place':'❤️ Favori lieu','add_favorite_event':'❤️ Favori évènement','remove_favorite_place':'🤍 Retrait favori','remove_favorite_event':'🤍 Retrait favori','submit_review':'⭐ Avis déposé','geolocate':'📍 Géolocalisation','propose_place':'➕ Lieu proposé','propose_event':'➕ Évènement proposé','filter_cat':'🏷️ Filtre catégorie','view_events_page':'📅 Page évènements'};
+  let prevDay = null; const rows = userLogs.map(l => { const d = new Date(l.created_at); const day = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); const time = d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); const dayHeader = day !== prevDay ? `<div style="font-weight:600;font-size:11px;color:var(--forest);padding:8px 0 4px;border-top:1px solid var(--cream2);margin-top:4px;text-transform:capitalize">${day}</div>` : ''; prevDay = day; return `${dayHeader}<div style="display:flex;align-items:baseline;gap:8px;padding:3px 0"><span style="font-size:10px;color:var(--muted);width:36px;flex-shrink:0">${time}</span><span style="font-size:12px">${ACTION_LABELS[l.action]||l.action}</span>${l.item_name?`<span style="font-size:11px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">· ${l.item_name}</span>`:''}</div>`; }).join('');
+  let modal = document.getElementById('journey-modal'); if (modal) modal.remove();
+  modal = document.createElement('div'); modal.id = 'journey-modal'; modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center'; modal.onclick = e => { if (e.target===modal) modal.remove(); };
+  modal.innerHTML = `<div style="background:var(--white);border-radius:20px 20px 0 0;width:100%;max-width:700px;max-height:85vh;overflow-y:auto;padding:20px 24px 32px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div><div style="font-family:'Fraunces',serif;font-size:16px;font-weight:600">Parcours utilisateur</div>${deviceSummary(uid) ? `<div style="font-size:12px;color:var(--forest);font-weight:500;margin-top:3px">${deviceSummary(uid)}</div>` : ''}<div style="font-size:10px;font-family:monospace;color:var(--muted);margin-top:2px">${uid}</div></div><button onclick="document.getElementById('journey-modal').remove()" style="background:var(--cream2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px">✕</button></div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">${userLogs.length} actions</div>${rows||'<div style="color:var(--muted);font-size:12px">Aucune action</div>'}</div>`;
   document.body.appendChild(modal);
 }
 
-async function loadEvents() {
-  document.getElementById('prog').textContent = 'Chargement évènements…';
-  allEvents = await supa('evenements?select=*&order=date_debut.asc.nullslast&limit=1000');
-  filteredEvents = [...allEvents];
-  renderEventList();
-  updateEventStats();
-  document.getElementById('prog').textContent = `${allEvents.length} évènements`;
-}
+async function loadEvents() { document.getElementById('prog').textContent = 'Chargement évènements…'; allEvents = await supa('evenements?select=*&order=date_debut.asc.nullslast&limit=1000'); filteredEvents = [...allEvents]; renderEventList(); updateEventStats(); document.getElementById('prog').textContent = `${allEvents.length} évènements`; }
 
-// ── FILTER EVENTS ──
 const MOIS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
 const today = new Date(); today.setHours(0,0,0,0);
-
-function isPast(evt) {
-  const fin = evt.date_fin || evt.date_debut;
-  if (!fin) return false;
-  return new Date(fin+'T23:59:59') < today;
-}
-
-function filterEvents(q) {
-  applyEventFilters(q, evStatusFilter);
-}
-
-let evSortOrder = 'asc'; // plus proches en premier par défaut
-
-function setSortOrder(order) {
-  evSortOrder = order;
-  document.getElementById('sort-asc').classList.toggle('active', order==='asc');
-  document.getElementById('sort-desc').classList.toggle('active', order==='desc');
-  applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
-}
-
-function filterEvStatus(btn, f) {
-  document.querySelectorAll('.ef-filter').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  evStatusFilter = f;
-  applyEventFilters(document.getElementById('search-events').value, f);
-}
-
+function isPast(evt) { const fin = evt.date_fin || evt.date_debut; if (!fin) return false; return new Date(fin+'T23:59:59') < today; }
+function filterEvents(q) { applyEventFilters(q, evStatusFilter); }
+let evSortOrder = 'asc';
+function setSortOrder(order) { evSortOrder = order; document.getElementById('sort-asc').classList.toggle('active', order==='asc'); document.getElementById('sort-desc').classList.toggle('active', order==='desc'); applyEventFilters(document.getElementById('search-events').value, evStatusFilter); }
+function filterEvStatus(btn, f) { document.querySelectorAll('.ef-filter').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); evStatusFilter = f; applyEventFilters(document.getElementById('search-events').value, f); }
 function applyEventFilters(q, status) {
   const ql = (q||'').toLowerCase();
-  filteredEvents = allEvents.filter(e => {
-    const matchQ = !ql || e.nom?.toLowerCase().includes(ql) || e.adresse?.toLowerCase().includes(ql);
-    const past = isPast(e);
-    const rejete = e.rejete === true;
-    const matchS = status==='all'    ? !rejete
-      : status==='past'   ? (past && !rejete)
-      : status==='true'   ? (e.valide && !past && !rejete)
-      : status==='rejete' ? rejete
-      : status==='crush'  ? (e.coup_de_coeur && !rejete)
-      : (!e.valide && !past && !rejete); // 'false' = en attente
-    return matchQ && matchS;
-  });
-
-  // Tri par date
-  filteredEvents.sort((a, b) => {
-    const da = a.date_debut || '9999';
-    const db = b.date_debut || '9999';
-    return evSortOrder === 'asc' ? da.localeCompare(db) : db.localeCompare(da);
-  });
-
+  filteredEvents = allEvents.filter(e => { const matchQ = !ql || e.nom?.toLowerCase().includes(ql) || e.adresse?.toLowerCase().includes(ql); const past = isPast(e); const rejete = e.rejete === true; const matchS = status==='all' ? !rejete : status==='past' ? (past && !rejete) : status==='true' ? (e.valide && !past && !rejete) : status==='rejete' ? rejete : status==='crush' ? (e.coup_de_coeur && !rejete) : (!e.valide && !past && !rejete); return matchQ && matchS; });
+  filteredEvents.sort((a, b) => { const da = a.date_debut || '9999'; const db = b.date_debut || '9999'; return evSortOrder === 'asc' ? da.localeCompare(db) : db.localeCompare(da); });
   renderEventList();
 }
 
-// ── RENDER EVENT LIST ──
 function renderEventList() {
-  const CATS = { jeux_ext:'🌳', jeux_int:'🎲', culture:'🎭', apero:'🍷', resto:'🍕', eau:'🌊' };
-  document.getElementById('event-list').innerHTML = filteredEvents.map(e => {
-    const d = e.date_debut ? new Date(e.date_debut+'T12:00:00') : null;
-    const dateStr = d ? `${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}` : '—';
-    const past = isPast(e);
-    const rejete = e.rejete === true;
-    const dotColor = rejete ? '#999' : past ? 'var(--muted)' : e.valide ? 'var(--ok)' : 'var(--terracotta)';
-    const statusLabel = rejete ? '🚫 Rejeté' : past ? '📦 Passé' : e.valide ? '✅ Publié' : '⏳ En attente';
-    const statusCls = rejete ? '' : past ? '' : e.valide ? 'valid' : 'invalid';
-    const isSelected = selectedEventIds.has(e.id);
-    return `<div class="place-row ${e.id===currentEvId?'active':''} ${isSelected?'selected':''}"
-      style="${isSelected?'background:var(--cream2);border-left:3px solid var(--gold)':''}"
-      onclick="handleEventRowClick(event,'${e.id}')">
-      <input type="checkbox" class="pr-check" data-id="${e.id}"
-        ${isSelected?'checked':''} onclick="event.stopPropagation();toggleEventSelection('${e.id}',this.checked)">
-      <div class="pr-dot" style="background:${dotColor}"></div>
-      <div class="pr-info">
-        <div class="pr-nom">${CATS[e.categorie]||'📅'} ${e.nom}</div>
-        <div class="pr-addr">📅 ${dateStr}${e.adresse?' · '+e.adresse.split(',')[0]:''}</div>
-        <div class="pr-tags">
-          <span class="pr-tag ${statusCls}">${statusLabel}</span>
-          ${!e.description?'<span class="pr-tag">Sans description</span>':''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  const ECATS = { jeux_ext:'🌳', jeux_int:'🎲', culture:'🎭', apero:'🍷', resto:'🍕', eau:'🌊' };
+  document.getElementById('event-list').innerHTML = filteredEvents.map(e => { const d = e.date_debut ? new Date(e.date_debut+'T12:00:00') : null; const dateStr = d ? `${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}` : '—'; const past = isPast(e); const rejete = e.rejete === true; const dotColor = rejete ? '#999' : past ? 'var(--muted)' : e.valide ? 'var(--ok)' : 'var(--terracotta)'; const statusLabel = rejete ? '🚫 Rejeté' : past ? '📦 Passé' : e.valide ? '✅ Publié' : '⏳ En attente'; const statusCls = rejete ? '' : past ? '' : e.valide ? 'valid' : 'invalid'; const isSelected = selectedEventIds.has(e.id); return `<div class="place-row ${e.id===currentEvId?'active':''} ${isSelected?'selected':''}" style="${isSelected?'background:var(--cream2);border-left:3px solid var(--gold)':''}" onclick="handleEventRowClick(event,'${e.id}')"><input type="checkbox" class="pr-check" data-id="${e.id}" ${isSelected?'checked':''} onclick="event.stopPropagation();toggleEventSelection('${e.id}',this.checked)"><div class="pr-dot" style="background:${dotColor}"></div><div class="pr-info"><div class="pr-nom">${ECATS[e.categorie]||'📅'} ${e.nom}</div><div class="pr-addr">📅 ${dateStr}${e.adresse?' · '+e.adresse.split(',')[0]:''}</div><div class="pr-tags"><span class="pr-tag ${statusCls}">${statusLabel}</span>${!e.description?'<span class="pr-tag">Sans description</span>':''}</div></div></div>`; }).join('');
 }
 
-function updateEventStats() {
-  const past    = allEvents.filter(e=>isPast(e)).length;
-  const rejete  = allEvents.filter(e=>e.rejete).length;
-  const valid   = allEvents.filter(e=>e.valide && !isPast(e) && !e.rejete).length;
-  const pending = allEvents.filter(e=>!e.valide && !isPast(e) && !e.rejete).length;
-  document.getElementById('es-valid').textContent   = valid+' publiés';
-  document.getElementById('es-pending').textContent = pending+' en attente';
-  document.getElementById('es-past').textContent    = past+' passés';
-  document.getElementById('es-total').textContent   = allEvents.length+' total · '+rejete+' rejetés';
-}
+function updateEventStats() { const past = allEvents.filter(e=>isPast(e)).length; const rejete = allEvents.filter(e=>e.rejete).length; const valid = allEvents.filter(e=>e.valide && !isPast(e) && !e.rejete).length; const pending = allEvents.filter(e=>!e.valide && !isPast(e) && !e.rejete).length; document.getElementById('es-valid').textContent = valid+' publiés'; document.getElementById('es-pending').textContent = pending+' en attente'; document.getElementById('es-past').textContent = past+' passés'; document.getElementById('es-total').textContent = allEvents.length+' total · '+rejete+' rejetés'; }
 
-// ── SELECT EVENT ──
 function selectEvent(id) {
-  currentEvId = id;
-  const e = allEvents.find(x=>x.id===id);
-  if (!e) return;
-
-  document.getElementById('ev-empty').style.display = 'none';
-  document.getElementById('ev-editor').style.display = 'flex';
-  document.getElementById('ev-action-bar').style.display = 'flex';
-
-  document.getElementById('ef-nom').value = e.nom||'';
-  document.getElementById('ef-date-debut').value = e.date_debut||'';
-  document.getElementById('ef-date-fin').value = e.date_fin||'';
-  document.getElementById('ef-heure').value = e.heure||'';
-  document.getElementById('ef-adresse').value = e.adresse||'';
-  document.getElementById('ef-lat').value = e.latitude||'';
-  document.getElementById('ef-lng').value = e.longitude||'';
-  document.getElementById('ef-cat').value = e.categorie||'culture';
-  document.getElementById('ef-age-min').value = e.age_min??'';
-  document.getElementById('ef-age-max').value = e.age_max??'';
-  document.getElementById('ef-tarif').value = e.tarif||'';
-  document.getElementById('ef-desc').value = e.description||'';
-  document.getElementById('ef-lien').value = e.lien_reservation||e.lien_evenement||'';
-  const imgUrl = e.image_url||'';
-  document.getElementById('ef-image').value = imgUrl;
-  if (imgUrl) {
-    document.getElementById('ef-img-tag').src = imgUrl;
-    document.getElementById('ef-image-preview').style.display = 'block';
-  } else {
-    document.getElementById('ef-image-preview').style.display = 'none';
-  }
-  // Preview on input
-  document.getElementById('ef-image').oninput = function() {
-    const v = this.value.trim();
-    if (v) { document.getElementById('ef-img-tag').src = v; document.getElementById('ef-image-preview').style.display = 'block'; }
-    else { document.getElementById('ef-image-preview').style.display = 'none'; }
-  };
-
-  currentEvValid = e.valide;
-  const rejete = e.rejete === true;
-  document.getElementById('evbtn-true').className = 'vtbtn'+(e.valide?' sel-valid':'');
-  document.getElementById('evbtn-false').className = 'vtbtn'+(!e.valide?' sel-invalid':'');
-  document.getElementById('evbtn-rejeter').style.display = rejete ? 'none' : 'block';
-  document.getElementById('ev-rejete-badge').style.display = rejete ? 'block' : 'none';
-
-  currentEvCrush = e.coup_de_coeur || false;
-  document.getElementById('evbtn-crush-true').className = 'vtbtn'+(currentEvCrush?' sel-valid':'');
-  document.getElementById('evbtn-crush-false').className = 'vtbtn'+(!currentEvCrush?' sel-invalid':'');
-
+  currentEvId = id; const e = allEvents.find(x=>x.id===id); if (!e) return;
+  document.getElementById('ev-empty').style.display = 'none'; document.getElementById('ev-editor').style.display = 'flex'; document.getElementById('ev-action-bar').style.display = 'flex';
+  document.getElementById('ef-nom').value = e.nom||''; document.getElementById('ef-date-debut').value = e.date_debut||''; document.getElementById('ef-date-fin').value = e.date_fin||''; document.getElementById('ef-heure').value = e.heure||''; document.getElementById('ef-adresse').value = e.adresse||''; document.getElementById('ef-lat').value = e.latitude||''; document.getElementById('ef-lng').value = e.longitude||''; document.getElementById('ef-cat').value = e.categorie||'culture'; document.getElementById('ef-age-min').value = e.age_min??''; document.getElementById('ef-age-max').value = e.age_max??''; document.getElementById('ef-tarif').value = e.tarif||''; document.getElementById('ef-desc').value = e.description||''; document.getElementById('ef-lien').value = e.lien_reservation||e.lien_evenement||'';
+  const imgUrl = e.image_url||''; document.getElementById('ef-image').value = imgUrl; if (imgUrl) { document.getElementById('ef-img-tag').src = imgUrl; document.getElementById('ef-image-preview').style.display = 'block'; } else { document.getElementById('ef-image-preview').style.display = 'none'; }
+  document.getElementById('ef-image').oninput = function() { const v = this.value.trim(); if (v) { document.getElementById('ef-img-tag').src = v; document.getElementById('ef-image-preview').style.display = 'block'; } else { document.getElementById('ef-image-preview').style.display = 'none'; } };
+  currentEvValid = e.valide; const rejete = e.rejete === true; document.getElementById('evbtn-true').className = 'vtbtn'+(e.valide?' sel-valid':''); document.getElementById('evbtn-false').className = 'vtbtn'+(!e.valide?' sel-invalid':''); document.getElementById('evbtn-rejeter').style.display = rejete ? 'none' : 'block'; document.getElementById('ev-rejete-badge').style.display = rejete ? 'block' : 'none';
+  currentEvCrush = e.coup_de_coeur || false; document.getElementById('evbtn-crush-true').className = 'vtbtn'+(currentEvCrush?' sel-valid':''); document.getElementById('evbtn-crush-false').className = 'vtbtn'+(!currentEvCrush?' sel-invalid':'');
   renderEventList();
 }
 
-function setEvValid(v) {
-  currentEvValid = v;
-  document.getElementById('evbtn-true').className = 'vtbtn'+(v?' sel-valid':'');
-  document.getElementById('evbtn-false').className = 'vtbtn'+(!v?' sel-invalid':'');
-  // Auto-save immédiatement
-  autoSaveEvValid(v);
-}
-function setEvCrush(v) {
-  currentEvCrush = v;
-  document.getElementById('evbtn-crush-true').className = 'vtbtn'+(v?' sel-valid':'');
-  document.getElementById('evbtn-crush-false').className = 'vtbtn'+(!v?' sel-invalid':'');
-  if (!currentEvId) return;
-  supa(`evenements?id=eq.${currentEvId}`, {
-    method:'PATCH', body:JSON.stringify({ coup_de_coeur: v }),
-    headers:{'Prefer':'return=minimal'}
-  }).then(() => {
-    const idx = allEvents.findIndex(x=>x.id===currentEvId);
-    if (idx>=0) allEvents[idx].coup_de_coeur = v;
-    showToast(v ? '💛 Mis en avant sur l\'accueil' : '○ Coup de cœur retiré');
-  }).catch(e => showToast('❌ Erreur : '+e.message));
-}
+function setEvValid(v) { currentEvValid = v; document.getElementById('evbtn-true').className = 'vtbtn'+(v?' sel-valid':''); document.getElementById('evbtn-false').className = 'vtbtn'+(!v?' sel-invalid':''); autoSaveEvValid(v); }
+function setEvCrush(v) { currentEvCrush = v; document.getElementById('evbtn-crush-true').className = 'vtbtn'+(v?' sel-valid':''); document.getElementById('evbtn-crush-false').className = 'vtbtn'+(!v?' sel-invalid':''); if (!currentEvId) return; supa(`evenements?id=eq.${currentEvId}`, { method:'PATCH', body:JSON.stringify({ coup_de_coeur: v }), headers:{'Prefer':'return=minimal'} }).then(() => { const idx = allEvents.findIndex(x=>x.id===currentEvId); if (idx>=0) allEvents[idx].coup_de_coeur = v; showToast(v ? '💛 Mis en avant sur l\'accueil' : '○ Coup de cœur retiré'); }).catch(e => showToast('❌ Erreur : '+e.message)); }
 
 async function autoSaveEvValid(v) {
   if (!currentEvId) return;
-  try {
-    // Si on publie un évènement rejeté, on retire le rejet
-    const patch = { valide: v };
-    const evt = allEvents.find(x=>x.id===currentEvId);
-    if (v && evt?.rejete) patch.rejete = false;
-
-    await supa(`evenements?id=eq.${currentEvId}`, {
-      method:'PATCH', body:JSON.stringify(patch),
-      headers:{'Prefer':'return=minimal'}
-    });
-    const idx = allEvents.findIndex(x=>x.id===currentEvId);
-    if (idx>=0) {
-      allEvents[idx].valide = v;
-      if (patch.rejete === false) allEvents[idx].rejete = false;
-    }
-    // Mettre à jour l'UI rejet
-    document.getElementById('evbtn-rejeter').style.display = 'block';
-    document.getElementById('ev-rejete-badge').style.display = 'none';
-
-    applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
-    updateEventStats();
-    showToast(v ? '✅ Évènement publié' : '⏳ Évènement masqué');
-  } catch(e) { showToast('❌ Erreur : '+e.message); }
+  try { const patch = { valide: v }; const evt = allEvents.find(x=>x.id===currentEvId); if (v && evt?.rejete) patch.rejete = false; await supa(`evenements?id=eq.${currentEvId}`, { method:'PATCH', body:JSON.stringify(patch), headers:{'Prefer':'return=minimal'} }); const idx = allEvents.findIndex(x=>x.id===currentEvId); if (idx>=0) { allEvents[idx].valide = v; if (patch.rejete === false) allEvents[idx].rejete = false; } document.getElementById('evbtn-rejeter').style.display = 'block'; document.getElementById('ev-rejete-badge').style.display = 'none'; applyEventFilters(document.getElementById('search-events').value, evStatusFilter); updateEventStats(); showToast(v ? '✅ Évènement publié' : '⏳ Évènement masqué'); } catch(e) { showToast('❌ Erreur : '+e.message); }
 }
 
-// ── SAVE EVENT ──
 async function saveEvent() {
   if (!currentEvId) return;
-  const patch = {
-    nom:             document.getElementById('ef-nom').value.trim()||undefined,
-    date_debut:      document.getElementById('ef-date-debut').value||null,
-    date_fin:        document.getElementById('ef-date-fin').value||null,
-    heure:           document.getElementById('ef-heure').value.trim()||null,
-    adresse:         document.getElementById('ef-adresse').value.trim()||null,
-    latitude:        parseFloat(document.getElementById('ef-lat').value)||null,
-    longitude:       parseFloat(document.getElementById('ef-lng').value)||null,
-    categorie:       document.getElementById('ef-cat').value||null,
-    age_min:         parseInt(document.getElementById('ef-age-min').value)||null,
-    age_max:         parseInt(document.getElementById('ef-age-max').value)||null,
-    tarif:           document.getElementById('ef-tarif').value.trim()||null,
-    description:     document.getElementById('ef-desc').value.trim()||null,
-    image_url:       document.getElementById('ef-image').value.trim()||null,
-    lien_reservation:document.getElementById('ef-lien').value.trim()||null,
-    valide:          currentEvValid,
-    coup_de_coeur:   currentEvCrush,
-  };
+  const patch = { nom: document.getElementById('ef-nom').value.trim()||undefined, date_debut: document.getElementById('ef-date-debut').value||null, date_fin: document.getElementById('ef-date-fin').value||null, heure: document.getElementById('ef-heure').value.trim()||null, adresse: document.getElementById('ef-adresse').value.trim()||null, latitude: parseFloat(document.getElementById('ef-lat').value)||null, longitude: parseFloat(document.getElementById('ef-lng').value)||null, categorie: document.getElementById('ef-cat').value||null, age_min: parseInt(document.getElementById('ef-age-min').value)||null, age_max: parseInt(document.getElementById('ef-age-max').value)||null, tarif: document.getElementById('ef-tarif').value.trim()||null, description: document.getElementById('ef-desc').value.trim()||null, image_url: document.getElementById('ef-image').value.trim()||null, lien_reservation: document.getElementById('ef-lien').value.trim()||null, valide: currentEvValid, coup_de_coeur: currentEvCrush };
   Object.keys(patch).forEach(k=>patch[k]===undefined && delete patch[k]);
-  try {
-    await supa(`evenements?id=eq.${currentEvId}`, {
-      method:'PATCH', body:JSON.stringify(patch),
-      headers:{'Prefer':'return=minimal'}
-    });
-    const idx = allEvents.findIndex(x=>x.id===currentEvId);
-    if (idx>=0) allEvents[idx] = {...allEvents[idx], ...patch};
-    applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
-    updateEventStats();
-    showToast('✅ Évènement enregistré !');
-  } catch(e) { showToast('❌ Erreur : '+e.message); }
+  try { await supa(`evenements?id=eq.${currentEvId}`, { method:'PATCH', body:JSON.stringify(patch), headers:{'Prefer':'return=minimal'} }); const idx = allEvents.findIndex(x=>x.id===currentEvId); if (idx>=0) allEvents[idx] = {...allEvents[idx], ...patch}; applyEventFilters(document.getElementById('search-events').value, evStatusFilter); updateEventStats(); showToast('✅ Évènement enregistré !'); } catch(e) { showToast('❌ Erreur : '+e.message); }
 }
 
-// ── DELETE EVENT ──
-async function deleteEvent() {
-  if (!currentEvId) return;
-  const e = allEvents.find(x=>x.id===currentEvId);
-  if (!confirm(`Supprimer "${e?.nom}" définitivement ?`)) return;
-  try {
-    await supa(`evenements?id=eq.${currentEvId}`, { method:'DELETE' });
-    allEvents = allEvents.filter(x=>x.id!==currentEvId);
-    filteredEvents = filteredEvents.filter(x=>x.id!==currentEvId);
-    currentEvId = null;
-    document.getElementById('ev-empty').style.display = 'flex';
-    document.getElementById('ev-editor').style.display = 'none';
-    document.getElementById('ev-action-bar').style.display = 'none';
-    renderEventList(); updateEventStats();
-    showToast('🗑️ Évènement supprimé');
-  } catch(e) { showToast('❌ Erreur : '+e.message); }
-}
+async function deleteEvent() { if (!currentEvId) return; const e = allEvents.find(x=>x.id===currentEvId); if (!confirm(`Supprimer "${e?.nom}" définitivement ?`)) return; try { await supa(`evenements?id=eq.${currentEvId}`, { method:'DELETE' }); allEvents = allEvents.filter(x=>x.id!==currentEvId); filteredEvents = filteredEvents.filter(x=>x.id!==currentEvId); currentEvId = null; document.getElementById('ev-empty').style.display = 'flex'; document.getElementById('ev-editor').style.display = 'none'; document.getElementById('ev-action-bar').style.display = 'none'; renderEventList(); updateEventStats(); showToast('🗑️ Évènement supprimé'); } catch(e) { showToast('❌ Erreur : '+e.message); } }
 
-// ── NEXT EVENT ──
-async function duplicateEvent() {
-  if (!currentEvId) return;
-  const orig = allEvents.find(e => e.id === currentEvId);
-  if (!orig) return;
-  const copy = { ...orig };
-  delete copy.id;
-  copy.nom = copy.nom + ' (copie)';
-  copy.valide = false;
-  try {
-    await supa('evenements', { method:'POST', body:JSON.stringify(copy), headers:{'Prefer':'return=representation'} });
-    showToast('✅ Évènement dupliqué — en attente de validation');
-    await loadEvents();
-  } catch(e) { showToast('❌ Erreur lors de la duplication'); }
-}
-
-function prevEvent() {
-  const idx = filteredEvents.findIndex(x=>x.id===currentEvId);
-  if (idx > 0) selectEvent(filteredEvents[idx-1].id);
-  else showToast('Premier évènement de la liste !');
-}
-
-function nextEvent() {
-  const idx = filteredEvents.findIndex(x=>x.id===currentEvId);
-  const next = filteredEvents[idx+1];
-  if (next) selectEvent(next.id);
-  else showToast('Dernier évènement de la liste !');
-}
+async function duplicateEvent() { if (!currentEvId) return; const orig = allEvents.find(e => e.id === currentEvId); if (!orig) return; const copy = { ...orig }; delete copy.id; copy.nom = copy.nom + ' (copie)'; copy.valide = false; try { await supa('evenements', { method:'POST', body:JSON.stringify(copy), headers:{'Prefer':'return=representation'} }); showToast('✅ Évènement dupliqué — en attente de validation'); await loadEvents(); } catch(e) { showToast('❌ Erreur lors de la duplication'); } }
+function prevEvent() { const idx = filteredEvents.findIndex(x=>x.id===currentEvId); if (idx > 0) selectEvent(filteredEvents[idx-1].id); else showToast('Premier évènement de la liste !'); }
+function nextEvent() { const idx = filteredEvents.findIndex(x=>x.id===currentEvId); const next = filteredEvents[idx+1]; if (next) selectEvent(next.id); else showToast('Dernier évènement de la liste !'); }
 
 async function rejectEvent() {
-  if (!currentEvId) return;
-  const e = allEvents.find(x => x.id === currentEvId);
-  if (!confirm('Rejeter « ' + (e?.nom||'') + ' » ?\nL\'évènement sera masqué et marqué comme rejeté.')) return;
+  if (!currentEvId) return; const e = allEvents.find(x => x.id === currentEvId); if (!confirm('Rejeter « ' + (e?.nom||'') + ' » ?\nL\'évènement sera masqué et marqué comme rejeté.')) return;
+  try { await supa(`evenements?id=eq.${currentEvId}`, { method: 'PATCH', body: JSON.stringify({ rejete: true, valide: false }), headers: { 'Prefer': 'return=minimal' } }); const idx = allEvents.findIndex(x => x.id === currentEvId); if (idx >= 0) { allEvents[idx].rejete = true; allEvents[idx].valide = false; } currentEvValid = false; document.getElementById('evbtn-true').className = 'vtbtn'; document.getElementById('evbtn-false').className = 'vtbtn sel-invalid'; document.getElementById('evbtn-rejeter').style.display = 'none'; document.getElementById('ev-rejete-badge').style.display = 'block'; applyEventFilters(document.getElementById('search-events').value, evStatusFilter); updateEventStats(); showToast('🚫 Évènement rejeté'); } catch(err) { showToast('❌ Erreur : ' + err.message); }
+}
+
+let _savePlaceTimer = null, _saveEventTimer = null;
+function debounceSavePlace() { if (!currentId) return; clearTimeout(_savePlaceTimer); showSaveIndicator('lieu', 'typing'); _savePlaceTimer = setTimeout(async () => { await savePlace(); showSaveIndicator('lieu', 'saved'); }, 900); }
+function debounceSaveEvent() { if (!currentEvId) return; clearTimeout(_saveEventTimer); showSaveIndicator('event', 'typing'); _saveEventTimer = setTimeout(async () => { await saveEvent(); showSaveIndicator('event', 'saved'); }, 900); }
+function showSaveIndicator(type, state) { const id = type === 'lieu' ? 'save-indicator-lieu' : 'save-indicator-event'; let el = document.getElementById(id); if (!el) return; if (state === 'typing') { el.textContent = '⏳ Enregistrement…'; el.style.color = 'var(--muted)'; } else { el.textContent = '✅ Enregistré'; el.style.color = 'var(--ok)'; setTimeout(() => { el.textContent = ''; }, 2000); } }
+
+function isMobile() { return window.innerWidth < 768; }
+function openMobileEditor() { if (!isMobile()) return; document.querySelectorAll('.main').forEach(m => m.classList.add('editor-open')); document.getElementById('mobile-back').style.display = 'flex'; }
+function closeMobileEditor() { document.querySelectorAll('.main').forEach(m => m.classList.remove('editor-open')); document.getElementById('mobile-back').style.display = 'none'; if (typeof map !== 'undefined' && map) setTimeout(() => map.invalidateSize(), 300); }
+const _origSelectPlace = selectPlace; selectPlace = function(id) { _origSelectPlace(id); openMobileEditor(); };
+const _origSelectEvent = selectEvent; selectEvent = function(id) { _origSelectEvent(id); openMobileEditor(); };
+const _origSwitchTab = switchTab; switchTab = function(tab) { _origSwitchTab(tab); closeMobileEditor(); };
+
+// ── NOTIFICATIONS PUSH ─────────────────────────────────────
+const MY_DEVICE_ID = 'dev_mq49putd_9bluacw'; // Pixel 10a
+let notifTarget = null;
+
+function setNotifTarget(target) {
+  notifTarget = target;
+  document.getElementById('notif-target-me').className = 'vtbtn' + (target==='me' ? ' sel-valid' : '');
+  document.getElementById('notif-target-all').className = 'vtbtn' + (target==='all' ? ' sel-invalid' : '');
+  const hint = document.getElementById('notif-target-hint');
+  if (target === 'me') hint.textContent = '✅ Envoi uniquement à ton téléphone.';
+  else if (target === 'all') hint.innerHTML = '⚠️ <strong>Envoi à TOUS les utilisateurs Vadrou</strong>. Vérifie deux fois avant d\'envoyer.';
+  updateNotifSendBtn();
+}
+
+function updateNotifSendBtn() {
+  const title = document.getElementById('notif-title').value.trim();
+  const body = document.getElementById('notif-body').value.trim();
+  const ready = title && body && notifTarget;
+  const btn = document.getElementById('notif-send-btn');
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '1' : '.5';
+  btn.style.cursor = ready ? 'pointer' : 'not-allowed';
+}
+
+document.getElementById('notif-title').addEventListener('input', function() {
+  document.getElementById('notif-title-count').textContent = this.value.length + ' / 65';
+  updateNotifSendBtn();
+});
+document.getElementById('notif-body').addEventListener('input', function() {
+  document.getElementById('notif-body-count').textContent = this.value.length + ' / 240';
+  updateNotifSendBtn();
+});
+
+async function loadNotifReach() {
   try {
-    await supa(`evenements?id=eq.${currentEvId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ rejete: true, valide: false }),
-      headers: { 'Prefer': 'return=minimal' }
-    });
-    const idx = allEvents.findIndex(x => x.id === currentEvId);
-    if (idx >= 0) { allEvents[idx].rejete = true; allEvents[idx].valide = false; }
-    // UI
-    currentEvValid = false;
-    document.getElementById('evbtn-true').className = 'vtbtn';
-    document.getElementById('evbtn-false').className = 'vtbtn sel-invalid';
-    document.getElementById('evbtn-rejeter').style.display = 'none';
-    document.getElementById('ev-rejete-badge').style.display = 'block';
-    applyEventFilters(document.getElementById('search-events').value, evStatusFilter);
-    updateEventStats();
-    showToast('🚫 Évènement rejeté');
-  } catch(err) { showToast('❌ Erreur : ' + err.message); }
-}
-
-// ── AUTO-SAVE ──
-let _savePlaceTimer = null;
-let _saveEventTimer = null;
-
-function debounceSavePlace() {
-  if (!currentId) return;
-  clearTimeout(_savePlaceTimer);
-  showSaveIndicator('lieu', 'typing');
-  _savePlaceTimer = setTimeout(async () => {
-    await savePlace();
-    showSaveIndicator('lieu', 'saved');
-  }, 900);
-}
-
-function debounceSaveEvent() {
-  if (!currentEvId) return;
-  clearTimeout(_saveEventTimer);
-  showSaveIndicator('event', 'typing');
-  _saveEventTimer = setTimeout(async () => {
-    await saveEvent();
-    showSaveIndicator('event', 'saved');
-  }, 900);
-}
-
-function showSaveIndicator(type, state) {
-  const id = type === 'lieu' ? 'save-indicator-lieu' : 'save-indicator-event';
-  let el = document.getElementById(id);
-  if (!el) return;
-  if (state === 'typing') {
-    el.textContent = '⏳ Enregistrement…';
-    el.style.color = 'var(--muted)';
-  } else {
-    el.textContent = '✅ Enregistré';
-    el.style.color = 'var(--ok)';
-    setTimeout(() => { el.textContent = ''; }, 2000);
+    const tokens = await supa('push_tokens?select=device_id,platform');
+    const byDevice = {};
+    tokens.forEach(t => { byDevice[t.device_id] = t.platform; });
+    const platforms = Object.values(byDevice);
+    const total = platforms.length;
+    const ios = platforms.filter(p => p === 'ios').length;
+    const android = platforms.filter(p => p === 'android').length;
+    document.getElementById('notif-reach').innerHTML =
+      '<div><strong style="font-size:20px;font-family:\'Fraunces\',serif">' + total + '</strong> appareil' + (total>1?'s':'') + ' joignable' + (total>1?'s':'') + '</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:4px">🤖 ' + android + ' Android · 🍎 ' + ios + ' iOS</div>';
+  } catch(e) {
+    document.getElementById('notif-reach').innerHTML = '<span style="color:var(--terracotta)">Erreur : ' + e.message + '</span>';
   }
 }
 
-// ── MOBILE NAVIGATION ──
-function isMobile() { return window.innerWidth < 768; }
-
-function openMobileEditor() {
-  if (!isMobile()) return;
-  document.querySelectorAll('.main').forEach(m => m.classList.add('editor-open'));
-  document.getElementById('mobile-back').style.display = 'flex';
+async function sendNotification() {
+  const title = document.getElementById('notif-title').value.trim();
+  const body = document.getElementById('notif-body').value.trim();
+  if (!title || !body || !notifTarget) return;
+  if (notifTarget === 'all') {
+    if (!confirm('Envoyer cette notification à TOUS les utilisateurs Vadrou ?\n\nTitre : ' + title + '\nMessage : ' + body)) return;
+  }
+  const btn = document.getElementById('notif-send-btn');
+  const result = document.getElementById('notif-result');
+  btn.disabled = true; btn.style.opacity = '.5';
+  btn.textContent = '⏳ Envoi en cours…';
+  result.style.display = 'none';
+  try {
+    const target = notifTarget === 'me' ? MY_DEVICE_ID : 'all';
+    const r = await fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, target, adminPassword: ADMIN_PASSWORD }),
+    });
+    const data = await r.json();
+    if (r.ok) {
+      result.style.background = 'var(--ok-bg)'; result.style.color = 'var(--ok)';
+      result.innerHTML = '✅ Notification envoyée !<br><strong>' + data.sent + '</strong> succès · <strong>' + data.failed + '</strong> échec(s) · ' + data.total + ' appareil(s) ciblé(s)';
+      result.style.display = 'block';
+      if (notifTarget === 'all') {
+        document.getElementById('notif-title').value = '';
+        document.getElementById('notif-body').value = '';
+        document.getElementById('notif-title-count').textContent = '0 / 65';
+        document.getElementById('notif-body-count').textContent = '0 / 240';
+      }
+    } else {
+      result.style.background = '#FBE9E7'; result.style.color = 'var(--terracotta)';
+      result.textContent = '❌ Erreur : ' + (data.error || 'Envoi échoué');
+      result.style.display = 'block';
+    }
+  } catch(e) {
+    result.style.background = '#FBE9E7'; result.style.color = 'var(--terracotta)';
+    result.textContent = '❌ Erreur réseau : ' + e.message;
+    result.style.display = 'block';
+  }
+  btn.disabled = false; btn.style.opacity = '1';
+  btn.textContent = '🚀 Envoyer la notification';
+  setTimeout(updateNotifSendBtn, 100);
 }
-
-function closeMobileEditor() {
-  document.querySelectorAll('.main').forEach(m => m.classList.remove('editor-open'));
-  document.getElementById('mobile-back').style.display = 'none';
-  // Invalider la taille de la carte Leaflet
-  if (typeof map !== 'undefined' && map) setTimeout(() => map.invalidateSize(), 300);
-}
-
-// Wrapper selectPlace pour mobile
-const _origSelectPlace = selectPlace;
-selectPlace = function(id) {
-  _origSelectPlace(id);
-  openMobileEditor();
-};
-
-// Wrapper selectEvent pour mobile
-const _origSelectEvent = selectEvent;
-selectEvent = function(id) {
-  _origSelectEvent(id);
-  openMobileEditor();
-};
-
-// Adapter switchTab pour mobile : toujours revenir à la liste
-const _origSwitchTab = switchTab;
-switchTab = function(tab) {
-  _origSwitchTab(tab);
-  closeMobileEditor();
-};
 
 load();
 </script>
