@@ -41,13 +41,18 @@ workflows:
       - name: Set bundle identifier
         script: |
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" ios/App/App/Info.plist
-          # Autorisation de localisation
+          # Autorisation de localisation (sinon iOS refuse l'acces a la position)
           GEO_MSG="Vadrou utilise ta position pour afficher les lieux les plus proches de toi."
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string $GEO_MSG" ios/App/App/Info.plist \
             || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription $GEO_MSG" ios/App/App/Info.plist
-          # S'assurer que l'entitlement aps-environment est bien dans App.entitlements
+          # Activer Push Notifications (capability APNs)
           /usr/libexec/PlistBuddy -c "Add :aps-environment string production" ios/App/App/App.entitlements 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :aps-environment string production" ios/App/App/App.entitlements
+          # Lier le fichier entitlements au projet Xcode
+          sed -i '' 's|CODE_SIGN_ENTITLEMENTS = .*|CODE_SIGN_ENTITLEMENTS = App/App.entitlements;|g' "$XCODE_PROJECT/project.pbxproj"
+          # Si la clé CODE_SIGN_ENTITLEMENTS n'existe pas encore, l'injecter
+          grep -q "CODE_SIGN_ENTITLEMENTS" "$XCODE_PROJECT/project.pbxproj" || \
+            sed -i '' 's|CODE_SIGN_IDENTITY = "Apple Distribution";|CODE_SIGN_IDENTITY = "Apple Distribution";\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/App.entitlements;|g' "$XCODE_PROJECT/project.pbxproj"
       - name: Set versions (marketing deliberee + build auto-incremente)
         script: |
           # 1) Version VISIBLE : valeur de la variable MARKETING_VERSION (decision produit)
@@ -71,6 +76,13 @@ workflows:
           grep -E "MARKETING_VERSION|CURRENT_PROJECT_VERSION" "$XCODE_PROJECT/project.pbxproj"
       - name: Build iOS
         script: |
+          # Récupère (et RECRÉE si besoin) les profils à jour depuis App Store Connect.
+          # --create force la régénération : indispensable après avoir ajouté Push à l'App ID.
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          # Ajoute le certificat au trousseau et applique les profils au projet
+          keychain add-certificates
           xcode-project use-profiles
           xcodebuild \
             -project "$XCODE_PROJECT" \
@@ -81,8 +93,7 @@ workflows:
             archive \
             OTHER_CODE_SIGN_FLAGS="--keychain login" \
             CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM=$CM_TEAM_ID \
-            CODE_SIGN_ENTITLEMENTS=App/App.entitlements
+            DEVELOPMENT_TEAM=$CM_TEAM_ID
       - name: Export IPA
         script: |
           xcode-project build-ipa \
