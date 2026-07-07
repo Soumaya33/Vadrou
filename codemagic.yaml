@@ -76,13 +76,6 @@ workflows:
           grep -E "MARKETING_VERSION|CURRENT_PROJECT_VERSION" "$XCODE_PROJECT/project.pbxproj"
       - name: Build iOS
         script: |
-          # Récupère (et RECRÉE si besoin) les profils à jour depuis App Store Connect.
-          # --create force la régénération : indispensable après avoir ajouté Push à l'App ID.
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-          # Ajoute le certificat au trousseau et applique les profils au projet
-          keychain add-certificates
           xcode-project use-profiles
           xcodebuild \
             -project "$XCODE_PROJECT" \
@@ -99,6 +92,36 @@ workflows:
           xcode-project build-ipa \
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
+      - name: DIAGNOSTIC — entitlements embarqués dans l'IPA
+        script: |
+          echo "======================================================"
+          echo "  DIAGNOSTIC PUSH : entitlements réellement signés"
+          echo "======================================================"
+          IPA=$(ls build/ios/ipa/*.ipa | head -1)
+          echo "IPA : $IPA"
+          WORK=$(mktemp -d)
+          unzip -q "$IPA" -d "$WORK"
+          APP=$(ls -d "$WORK"/Payload/*.app | head -1)
+          echo "App : $APP"
+          echo ""
+          echo "--- 1) aps-environment dans le binaire signé ---"
+          codesign -d --entitlements :- "$APP" 2>/dev/null | grep -A1 "aps-environment" || echo ">>> AUCUN aps-environment dans la signature <<<"
+          echo ""
+          echo "--- 2) Entitlements complets du binaire ---"
+          codesign -d --entitlements :- "$APP" 2>/dev/null || echo ">>> Impossible de lire les entitlements <<<"
+          echo ""
+          echo "--- 3) Profil embarqué (embedded.mobileprovision) ---"
+          PROFILE="$APP/embedded.mobileprovision"
+          if [ -f "$PROFILE" ]; then
+            security cms -D -i "$PROFILE" 2>/dev/null > "$WORK/profile.plist"
+            echo "Nom du profil :"
+            /usr/libexec/PlistBuddy -c "Print :Name" "$WORK/profile.plist" 2>/dev/null
+            echo "aps-environment dans le profil :"
+            /usr/libexec/PlistBuddy -c "Print :Entitlements:aps-environment" "$WORK/profile.plist" 2>/dev/null || echo ">>> ABSENT du profil <<<"
+          else
+            echo ">>> Pas de embedded.mobileprovision <<<"
+          fi
+          echo "======================================================"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
