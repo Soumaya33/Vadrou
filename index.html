@@ -2003,13 +2003,15 @@ function renderEventsPage(filtered) {
 // Silencieux en cas d'erreur ou si l'utilisateur refuse.
 async function registerPushToken() {
   if (isTestTraffic()) return;
-  if (!IS_NATIVE) return; // Push uniquement sur app native
+  if (!IS_NATIVE) { showGeoToast('push: pas natif'); return; }
   const Push = window.Capacitor?.Plugins?.PushNotifications;
-  if (!Push) return; // Plugin absent (build sans le plugin)
+  if (!Push) { showGeoToast('push: plugin ABSENT'); return; }
 
+  showGeoToast('push: début (plugin OK)');
   try {
     // Demande la permission (iOS affiche une popup, Android 13+ aussi)
     const permResult = await Push.requestPermissions();
+    showGeoToast('push: perm=' + (permResult && permResult.receive));
     if (permResult.receive !== 'granted') return; // Utilisateur a refusé
 
     // Détection plateforme fiable via Capacitor (navigator.userAgent peu fiable en WebView native)
@@ -2018,14 +2020,14 @@ async function registerPushToken() {
     // Écouter le token quand il arrive
     await Push.addListener('registration', async (data) => {
       const token = data.value;
-      if (!token || !ANALYTICS_USER_ID) return;
+      showGeoToast('push: TOKEN reçu (' + (token ? token.slice(0,8) : 'vide') + '…)');
+      if (!token || !ANALYTICS_USER_ID) { showGeoToast('push: token/user manquant'); return; }
 
       const payload = { device_id: ANALYTICS_USER_ID, token, platform, updated_at: new Date().toISOString() };
       const cap = _capacitorHttp();
       try {
         if (cap) {
-          // HTTP natif : contourne le CORS de la WebView (même pattern que notify)
-          await cap.post({
+          const res = await cap.post({
             url: SUPABASE_URL + '/rest/v1/push_tokens',
             headers: {
               'apikey': SUPABASE_KEY,
@@ -2035,8 +2037,9 @@ async function registerPushToken() {
             },
             data: payload,
           });
+          showGeoToast('push: enregistré status=' + (res && res.status));
         } else {
-          await fetch(SUPABASE_URL + '/rest/v1/push_tokens', {
+          const res = await fetch(SUPABASE_URL + '/rest/v1/push_tokens', {
             method: 'POST',
             headers: {
               'apikey': SUPABASE_KEY,
@@ -2046,19 +2049,21 @@ async function registerPushToken() {
             },
             body: JSON.stringify(payload),
           });
+          showGeoToast('push: enregistré status=' + res.status);
         }
-      } catch(e) { console.warn('[Push] Erreur enregistrement token:', e); }
+      } catch(e) { showGeoToast('push: ERREUR envoi ' + (e && e.message ? e.message : e)); }
     });
 
     // Écouter les erreurs d'enregistrement FCM/APNs
     await Push.addListener('registrationError', (err) => {
-      console.warn('[Push] Erreur registration:', err);
+      showGeoToast('push: ERREUR APNs ' + JSON.stringify(err));
     });
 
     // Déclencher l'enregistrement
     await Push.register();
+    showGeoToast('push: register() appelé');
 
-  } catch(e) { console.warn('[Push] Erreur registerPushToken:', e); }
+  } catch(e) { showGeoToast('push: EXCEPTION ' + (e && e.message ? e.message : e)); }
 }
 // Construit la liste des quartiers réellement présents dans les événements.
 function buildQuartierList() {
