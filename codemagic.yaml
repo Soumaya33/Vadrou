@@ -82,7 +82,7 @@ workflows:
             OTHER_CODE_SIGN_FLAGS="--keychain login" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=$CM_TEAM_ID \
-            CODE_SIGN_ENTITLEMENTS=App/App/App.entitlements
+            CODE_SIGN_ENTITLEMENTS=App/App.entitlements
       - name: Export IPA
         script: |
           xcode-project build-ipa \
