@@ -17,7 +17,7 @@ workflows:
         # Version VISIBLE par l'utilisateur (CFBundleShortVersionString).
         # A incrementer DELIBEREMENT a chaque release publiee (1.2 -> 1.3 -> 2.0 ...).
         # Doit toujours etre superieure a la derniere version approuvee sur l'App Store.
-        MARKETING_VERSION: "1.7"
+        MARKETING_VERSION: "1.8"
       node: 18
     scripts:
       - name: Install dependencies
@@ -41,18 +41,13 @@ workflows:
       - name: Set bundle identifier
         script: |
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" ios/App/App/Info.plist
-          # Autorisation de localisation (sinon iOS refuse l'acces a la position)
+          # Autorisation de localisation
           GEO_MSG="Vadrou utilise ta position pour afficher les lieux les plus proches de toi."
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string $GEO_MSG" ios/App/App/Info.plist \
             || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription $GEO_MSG" ios/App/App/Info.plist
-          # Activer Push Notifications (capability APNs)
+          # S'assurer que l'entitlement aps-environment est bien dans App.entitlements
           /usr/libexec/PlistBuddy -c "Add :aps-environment string production" ios/App/App/App.entitlements 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :aps-environment string production" ios/App/App/App.entitlements
-          # Lier le fichier entitlements au projet Xcode
-          sed -i '' 's|CODE_SIGN_ENTITLEMENTS = .*|CODE_SIGN_ENTITLEMENTS = App/App.entitlements;|g' "$XCODE_PROJECT/project.pbxproj"
-          # Si la clé CODE_SIGN_ENTITLEMENTS n'existe pas encore, l'injecter
-          grep -q "CODE_SIGN_ENTITLEMENTS" "$XCODE_PROJECT/project.pbxproj" || \
-            sed -i '' 's|CODE_SIGN_IDENTITY = "Apple Distribution";|CODE_SIGN_IDENTITY = "Apple Distribution";\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/App.entitlements;|g' "$XCODE_PROJECT/project.pbxproj"
       - name: Set versions (marketing deliberee + build auto-incremente)
         script: |
           # 1) Version VISIBLE : valeur de la variable MARKETING_VERSION (decision produit)
@@ -86,7 +81,8 @@ workflows:
             archive \
             OTHER_CODE_SIGN_FLAGS="--keychain login" \
             CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM=$CM_TEAM_ID
+            DEVELOPMENT_TEAM=$CM_TEAM_ID \
+            CODE_SIGN_ENTITLEMENTS=App/App/App.entitlements
       - name: Export IPA
         script: |
           xcode-project build-ipa \
