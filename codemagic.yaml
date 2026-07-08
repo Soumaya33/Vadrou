@@ -121,26 +121,27 @@ workflows:
               || /usr/libexec/PlistBuddy -c "Set :aps-environment string production" /tmp/ent.plist
             cat /tmp/ent.plist
 
-            # Trouver le certificat
             CERT=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk '{print $2}')
             echo "Certificat: $CERT"
 
-            # Re-signer l'app dans l'IPA dézippé
             codesign --force --sign "$CERT" \
               --entitlements /tmp/ent.plist \
               --timestamp \
               "$APP"
             echo "Re-signature OK"
 
-            # Rezipper l'IPA
-            rm "$IPA"
-            (cd "$WORK" && zip -qr "$IPA" Payload/)
-            echo "IPA repackagé: $IPA"
+            # Rezipper l'IPA (chemin ABSOLU car on fait cd dans $WORK)
+            IPA_ABS="$(cd "$(dirname "$IPA")" && pwd)/$(basename "$IPA")"
+            rm "$IPA_ABS"
+            (cd "$WORK" && zip -qr "$IPA_ABS" Payload/)
+            echo "IPA repackagé: $IPA_ABS"
+            ls -la "$IPA_ABS"
           else
             echo "aps-environment déjà présent, pas de patch nécessaire"
           fi
 
           echo "=== Entitlements finaux ==="
+          IPA=$(ls build/ios/ipa/*.ipa | head -1)
           WORK2=$(mktemp -d)
           unzip -q "$IPA" -d "$WORK2"
           APP2=$(ls -d "$WORK2"/Payload/*.app | head -1)
