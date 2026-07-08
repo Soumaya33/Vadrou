@@ -65,13 +65,16 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS
         script: |
+          ENTITLEMENTS="$(pwd)/ios/App/App/App.entitlements"
+          echo "Entitlements path: $ENTITLEMENTS"
+          cat "$ENTITLEMENTS"
           xcodebuild \
             -project "$XCODE_PROJECT" \
             -scheme "$XCODE_SCHEME" \
             -sdk iphoneos \
             -configuration Release \
             -archivePath build/App.xcarchive \
-            CODE_SIGN_ENTITLEMENTS="App/App/App.entitlements" \
+            "CODE_SIGN_ENTITLEMENTS=$ENTITLEMENTS" \
             archive \
             OTHER_CODE_SIGN_FLAGS="--keychain login" \
             CODE_SIGN_STYLE=Manual \
