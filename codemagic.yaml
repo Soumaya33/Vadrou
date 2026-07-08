@@ -3,6 +3,8 @@ workflows:
     name: Vadrou iOS — App Store
     max_build_duration: 60
     instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Codemagic
     environment:
       groups:
         - app_store
@@ -57,7 +59,13 @@ workflows:
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9][0-9]*;/CURRENT_PROJECT_VERSION = $NEXT;/g" "$XCODE_PROJECT/project.pbxproj"
       - name: Fetch signing files (avec Push Notifications)
         script: |
-          # Recrée le profil pour qu'il inclue Push Notifications (--create force la regénération)
+          # --create force la création d'un nouveau profil incluant Push Notifications
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create \
+            --certificate-key @env:APP_STORE_CONNECT_PRIVATE_KEY \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" 2>/dev/null || \
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
