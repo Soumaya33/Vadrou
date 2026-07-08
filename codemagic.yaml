@@ -73,29 +73,21 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS
         script: |
-          # Vérifier que App.entitlements existe
           echo "=== App.entitlements ==="
           cat ios/App/App/App.entitlements
 
-          # Injecter CODE_SIGN_ENTITLEMENTS dans project.pbxproj pour la config Release
-          # On cherche la section Release du target App et on y ajoute l'entitlement
+          # Injecter CODE_SIGN_ENTITLEMENTS dans project.pbxproj
           PBXPROJ="$XCODE_PROJECT/project.pbxproj"
-
-          # Vérifier si déjà présent
           if grep -q "CODE_SIGN_ENTITLEMENTS" "$PBXPROJ"; then
-            echo "CODE_SIGN_ENTITLEMENTS déjà présent — mise à jour"
             sed -i '' 's|CODE_SIGN_ENTITLEMENTS = .*|CODE_SIGN_ENTITLEMENTS = App/App.entitlements;|g' "$PBXPROJ"
           else
-            echo "CODE_SIGN_ENTITLEMENTS absent — injection"
-            # Injecter après chaque occurrence de CODE_SIGN_IDENTITY = "Apple Distribution";
             sed -i '' '/CODE_SIGN_IDENTITY = "Apple Distribution";/{
               a\\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/App.entitlements;
             }' "$PBXPROJ"
           fi
-
-          echo "=== Vérification dans project.pbxproj ==="
           grep "CODE_SIGN_ENTITLEMENTS" "$PBXPROJ" || echo "TOUJOURS ABSENT"
 
+          # Build sans signer (on signe manuellement après avoir patché les entitlements)
           xcodebuild \
             -project "$XCODE_PROJECT" \
             -scheme "$XCODE_SCHEME" \
@@ -106,6 +98,41 @@ workflows:
             OTHER_CODE_SIGN_FLAGS="--keychain login" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=$CM_TEAM_ID
+
+          echo "=== Patch aps-environment dans le .xcarchive ==="
+          # Trouver le binaire signé dans l'archive
+          APP_PATH=$(find build/App.xcarchive -name "*.app" -maxdepth 5 | head -1)
+          echo "App path: $APP_PATH"
+
+          # Lire les entitlements actuels du binaire
+          codesign -d --entitlements :- "$APP_PATH" 2>/dev/null > /tmp/current_entitlements.plist
+          echo "Entitlements actuels:"
+          cat /tmp/current_entitlements.plist
+
+          # Ajouter aps-environment si absent
+          if ! grep -q "aps-environment" /tmp/current_entitlements.plist; then
+            echo "Injection aps-environment..."
+            /usr/libexec/PlistBuddy -c "Add :aps-environment string production" /tmp/current_entitlements.plist 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Set :aps-environment string production" /tmp/current_entitlements.plist
+            echo "Entitlements après patch:"
+            cat /tmp/current_entitlements.plist
+
+            # Trouver le certificat de signature
+            CERT=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk '{print $2}')
+            echo "Certificat: $CERT"
+
+            # Re-signer le binaire avec les entitlements patchés
+            codesign --force --sign "$CERT" \
+              --entitlements /tmp/current_entitlements.plist \
+              --timestamp \
+              "$APP_PATH"
+            echo "Re-signature terminée"
+          else
+            echo "aps-environment déjà présent"
+          fi
+
+          echo "=== Entitlements finaux ==="
+          codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -A1 "aps-environment" || echo "ABSENT"
       - name: Export IPA
         script: |
           xcode-project build-ipa \
