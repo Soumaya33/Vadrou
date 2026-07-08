@@ -109,11 +109,29 @@ async function sendApns(jwt, token, title, body) {
 // Handler
 // ---------------------------------------------------------------------------
 module.exports = async (req, res) => {
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { password, title, body, target, device_id } = req.body || {};
+  // Parser le body JSON manuellement (Vercel ne le fait pas automatiquement)
+  let parsed = req.body;
+  if (!parsed || typeof parsed === 'string') {
+    try {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      parsed = JSON.parse(Buffer.concat(chunks).toString());
+    } catch (e) {
+      return res.status(400).json({ error: 'Body JSON invalide' });
+    }
+  }
+
+  const { password, title, body, target, device_id } = parsed || {};
 
   if (password !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Mot de passe incorrect' });
