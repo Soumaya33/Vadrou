@@ -73,16 +73,35 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS
         script: |
-          ENTITLEMENTS="$(pwd)/ios/App/App/App.entitlements"
-          echo "Entitlements path: $ENTITLEMENTS"
-          cat "$ENTITLEMENTS"
+          # Vérifier que App.entitlements existe
+          echo "=== App.entitlements ==="
+          cat ios/App/App/App.entitlements
+
+          # Injecter CODE_SIGN_ENTITLEMENTS dans project.pbxproj pour la config Release
+          # On cherche la section Release du target App et on y ajoute l'entitlement
+          PBXPROJ="$XCODE_PROJECT/project.pbxproj"
+
+          # Vérifier si déjà présent
+          if grep -q "CODE_SIGN_ENTITLEMENTS" "$PBXPROJ"; then
+            echo "CODE_SIGN_ENTITLEMENTS déjà présent — mise à jour"
+            sed -i '' 's|CODE_SIGN_ENTITLEMENTS = .*|CODE_SIGN_ENTITLEMENTS = App/App.entitlements;|g' "$PBXPROJ"
+          else
+            echo "CODE_SIGN_ENTITLEMENTS absent — injection"
+            # Injecter après chaque occurrence de CODE_SIGN_IDENTITY = "Apple Distribution";
+            sed -i '' '/CODE_SIGN_IDENTITY = "Apple Distribution";/{
+              a\\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+            }' "$PBXPROJ"
+          fi
+
+          echo "=== Vérification dans project.pbxproj ==="
+          grep "CODE_SIGN_ENTITLEMENTS" "$PBXPROJ" || echo "TOUJOURS ABSENT"
+
           xcodebuild \
             -project "$XCODE_PROJECT" \
             -scheme "$XCODE_SCHEME" \
             -sdk iphoneos \
             -configuration Release \
             -archivePath build/App.xcarchive \
-            "CODE_SIGN_ENTITLEMENTS=$ENTITLEMENTS" \
             archive \
             OTHER_CODE_SIGN_FLAGS="--keychain login" \
             CODE_SIGN_STYLE=Manual \
