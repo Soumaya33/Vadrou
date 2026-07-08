@@ -1,36 +1,38 @@
 // api/send-push.js
-// Envoie une notification push via Firebase Cloud Messaging (HTTP v1).
+// Envoi de notifications push :
+//   - Android  -> Firebase Cloud Messaging (FCM)
+//   - iOS      -> APNs directement (le plugin Capacitor renvoie un token APNs, pas FCM)
 //
-// POST body :
-//   {
-//     "title":  "Titre visible",
-//     "body":   "Message visible",
-//     "target": "all" | "device_id"     // "all" = tous les tokens, sinon un device_id précis
-//     "adminPassword": "..."            // protection basique
-//   }
-//
-// Variables d'environnement Vercel requises :
-//   - SUPABASE_URL
-//   - SUPABASE_SERVICE_ROLE_KEY (bypass RLS pour lire push_tokens)
-//   - FIREBASE_SERVICE_ACCOUNT  (JSON complet du compte de service Firebase, en string)
-//   - ADMIN_PASSWORD            (même mot de passe que celui de l'admin — protection basique)
+// Variables d'environnement (Vercel) :
+//   ADMIN_PASSWORD
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+//   FIREBASE_SERVICE_ACCOUNT        (JSON complet du compte de service Firebase)
+//   APNS_KEY_P8                     (contenu du fichier .p8, avec les lignes BEGIN/END)
+//   APNS_KEY_ID                     (ex: 7Y9X8CHLLQ)
+//   APNS_TEAM_ID                    (ex: SMUNNGQ6R8)
+//   APNS_BUNDLE_ID                  (com.vadrou.app)
 
 const crypto = require('crypto');
 
-// ── Auth Google : générer un access token depuis le compte de service ─────────
-async function getAccessToken(serviceAccount) {
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+// ---------------------------------------------------------------------------
+// FCM (Android) — access token via le compte de service
+// ---------------------------------------------------------------------------
+async function getFcmAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1000);
-  const jwtHeader = { alg: 'RS256', typ: 'JWT' };
-  const jwtClaim = {
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const claims = {
     iss: serviceAccount.client_email,
     scope: 'https://www.googleapis.com/auth/firebase.messaging',
     aud: 'https://oauth2.googleapis.com/token',
-    exp: now + 3600,
     iat: now,
+    exp: now + 3600,
   };
-  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
-  const unsigned = `${b64(jwtHeader)}.${b64(jwtClaim)}`;
-
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const unsigned = `${b64(header)}.${b64(claims)}`;
   const signer = crypto.createSign('RSA-SHA256');
   signer.update(unsigned);
   const signature = signer.sign(serviceAccount.private_key, 'base64url');
@@ -39,104 +41,141 @@ async function getAccessToken(serviceAccount) {
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt,
+    }),
   });
   const data = await res.json();
-  if (!data.access_token) throw new Error('Google auth failed: ' + JSON.stringify(data));
+  if (!data.access_token) throw new Error('FCM token error: ' + JSON.stringify(data));
   return data.access_token;
 }
 
-// ── Envoi d'une notif à un token précis via l'API FCM HTTP v1 ────────────────
-async function sendToToken({ accessToken, projectId, token, title, body }) {
-  const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
-  const payload = {
-    message: {
-      token,
-      notification: { title, body },
-      android: { priority: 'HIGH' },
-      apns: {
-        payload: { aps: { sound: 'default' } },
-      },
-    },
-  };
-  const res = await fetch(url, {
+async function sendFcm(accessToken, projectId, token, title, body) {
+  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      'Authorization': 'Bearer ' + accessToken,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      message: {
+        token: token,
+        notification: { title, body },
+      },
+    }),
   });
-  return { ok: res.ok, status: res.status };
+  return res.ok;
 }
 
-// ── Handler principal ────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// APNs (iOS) — envoi direct via HTTP/2, JWT ES256 (clé .p8)
+// ---------------------------------------------------------------------------
+function getApnsJwt() {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'ES256', kid: process.env.APNS_KEY_ID };
+  const claims = { iss: process.env.APNS_TEAM_ID, iat: now };
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const unsigned = `${b64(header)}.${b64(claims)}`;
+
+  const key = process.env.APNS_KEY_P8.replace(/\\n/g, '\n');
+  const signer = crypto.createSign('SHA256');
+  signer.update(unsigned);
+  const signature = signer.sign({ key, dsaEncoding: 'ieee-p1363' }, 'base64url');
+  return `${unsigned}.${signature}`;
+}
+
+async function sendApns(jwt, token, title, body) {
+  const res = await fetch(`https://api.push.apple.com/3/device/${token}`, {
+    method: 'POST',
+    headers: {
+      'authorization': 'bearer ' + jwt,
+      'apns-topic': process.env.APNS_BUNDLE_ID,
+      'apns-push-type': 'alert',
+      'apns-priority': '10',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      aps: {
+        alert: { title, body },
+        sound: 'default',
+      },
+    }),
+  });
+  return res.status === 200;
+}
+
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
 module.exports = async (req, res) => {
-  // CORS pour l'admin
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST')    return res.status(405).json({ error: 'POST only' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Méthode non autorisée' });
+  }
+
+  const { password, title, body, target, device_id } = req.body || {};
+
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Mot de passe incorrect' });
+  }
+  if (!title || !body) {
+    return res.status(400).json({ error: 'Titre et message requis' });
+  }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { title, body: messageBody, target, adminPassword } = body || {};
-
-    // Protection basique
-    if (!process.env.ADMIN_PASSWORD || adminPassword !== process.env.ADMIN_PASSWORD) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    let url = `${SUPABASE_URL}/rest/v1/push_tokens?select=device_id,token,platform`;
+    if (target === 'me' && device_id) {
+      url += `&device_id=eq.${encodeURIComponent(device_id)}`;
     }
-    if (!title || !messageBody) {
-      return res.status(400).json({ error: 'title et body requis' });
-    }
-
-    // Charger le compte de service Firebase
-    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-    // Récupérer les tokens depuis Supabase
-    // Note : on garde 1 token par device_id (le plus récent) pour éviter les doublons.
-    const supaUrl = `${process.env.SUPABASE_URL}/rest/v1/push_tokens?select=device_id,token,updated_at&order=updated_at.desc`
-      + (target && target !== 'all' ? `&device_id=eq.${encodeURIComponent(target)}` : '');
-    const supaRes = await fetch(supaUrl, {
-      headers: {
-        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-      },
+    const tokensRes = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
     });
-    if (!supaRes.ok) {
-      return res.status(500).json({ error: 'Supabase read failed', detail: await supaRes.text() });
-    }
-    const rows = await supaRes.json();
+    const rows = await tokensRes.json();
 
-    // Dédupliquer : garder le token le plus récent par device_id
+    // Dédupliquer par device_id
     const seen = new Set();
-    const uniqueTokens = [];
-    for (const row of rows) {
-      if (!row.token || seen.has(row.device_id)) continue;
-      seen.add(row.device_id);
-      uniqueTokens.push(row.token);
+    const tokens = [];
+    for (const r of rows) {
+      if (r.device_id && seen.has(r.device_id)) continue;
+      if (r.device_id) seen.add(r.device_id);
+      tokens.push(r);
     }
 
-    if (!uniqueTokens.length) {
-      return res.status(200).json({ sent: 0, failed: 0, message: 'Aucun token à notifier' });
+    const androidTokens = tokens.filter(t => t.platform === 'android');
+    const iosTokens = tokens.filter(t => t.platform === 'ios');
+
+    let success = 0, failure = 0;
+
+    // Android via FCM
+    if (androidTokens.length > 0) {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      const accessToken = await getFcmAccessToken(serviceAccount);
+      for (const t of androidTokens) {
+        try {
+          const ok = await sendFcm(accessToken, serviceAccount.project_id, t.token, title, body);
+          ok ? success++ : failure++;
+        } catch (e) { failure++; }
+      }
     }
 
-    // Obtenir un access token Google
-    const accessToken = await getAccessToken(sa);
-
-    // Envoyer à chaque token (parallélisé par lot de 10 pour éviter de saturer)
-    let sent = 0, failed = 0;
-    const batchSize = 10;
-    for (let i = 0; i < uniqueTokens.length; i += batchSize) {
-      const batch = uniqueTokens.slice(i, i + batchSize);
-      const results = await Promise.all(batch.map(token =>
-        sendToToken({ accessToken, projectId: sa.project_id, token, title, body: messageBody })
-      ));
-      results.forEach(r => r.ok ? sent++ : failed++);
+    // iOS via APNs
+    if (iosTokens.length > 0) {
+      const jwt = getApnsJwt();
+      for (const t of iosTokens) {
+        try {
+          const ok = await sendApns(jwt, t.token, title, body);
+          ok ? success++ : failure++;
+        } catch (e) { failure++; }
+      }
     }
 
-    return res.status(200).json({ sent, failed, total: uniqueTokens.length });
+    return res.status(200).json({
+      success,
+      failure,
+      total: tokens.length,
+      android: androidTokens.length,
+      ios: iosTokens.length,
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
