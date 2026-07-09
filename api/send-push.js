@@ -11,6 +11,7 @@
 //   APNS_KEY_ID                     (ex: 7Y9X8CHLLQ)
 //   APNS_TEAM_ID                    (ex: SMUNNGQ6R8)
 //   APNS_BUNDLE_ID                  (com.vadrou.app)
+//   APNS_ENV                        (sandbox pour TestFlight, production sinon)
 
 const crypto = require('crypto');
 
@@ -87,9 +88,9 @@ function getApnsJwt() {
 
 async function sendApns(jwt, token, title, body) {
   const apnsHost = process.env.APNS_ENV === 'sandbox'
-  ? 'api.development.push.apple.com'
-  : 'api.push.apple.com';
-const res = await fetch(`https://${apnsHost}/3/device/${token}`, {
+    ? 'api.development.push.apple.com'
+    : 'api.push.apple.com';
+  const res = await fetch(`https://${apnsHost}/3/device/${token}`, {
     method: 'POST',
     headers: {
       'authorization': 'bearer ' + jwt,
@@ -106,8 +107,8 @@ const res = await fetch(`https://${apnsHost}/3/device/${token}`, {
     }),
   });
   const responseBody = await res.text();
-  console.log('APNs status:', res.status, 'body:', responseBody);
-  return res.status === 200;
+  console.log('APNs host:', apnsHost, '| status:', res.status, '| body:', responseBody);
+  return { ok: res.status === 200, status: res.status, body: responseBody };
 }
 
 // ---------------------------------------------------------------------------
@@ -168,6 +169,7 @@ module.exports = async (req, res) => {
     const iosTokens = tokens.filter(t => t.platform === 'ios');
 
     let success = 0, failure = 0;
+    const iosDebug = [];
 
     // Android via FCM
     if (androidTokens.length > 0) {
@@ -186,9 +188,13 @@ module.exports = async (req, res) => {
       const jwt = getApnsJwt();
       for (const t of iosTokens) {
         try {
-          const ok = await sendApns(jwt, t.token, title, body);
-          ok ? success++ : failure++;
-        } catch (e) { failure++; }
+          const result = await sendApns(jwt, t.token, title, body);
+          result.ok ? success++ : failure++;
+          iosDebug.push({ status: result.status, body: result.body });
+        } catch (e) {
+          failure++;
+          iosDebug.push({ error: e.message });
+        }
       }
     }
 
@@ -198,6 +204,11 @@ module.exports = async (req, res) => {
       total: tokens.length,
       android: androidTokens.length,
       ios: iosTokens.length,
+      debug: {
+        apns_env: process.env.APNS_ENV || 'non défini',
+        bundle: process.env.APNS_BUNDLE_ID || 'non défini',
+        ios_results: iosDebug,
+      },
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
