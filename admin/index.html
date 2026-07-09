@@ -880,7 +880,7 @@ async function sendNotification() {
     const data = await r.json();
     if (r.ok) {
       result.style.background = 'var(--ok-bg)'; result.style.color = 'var(--ok)';
-      result.innerHTML = '✅ Notification envoyée !<br><strong>' + data.sent + '</strong> succès · <strong>' + data.failed + '</strong> échec(s) · ' + data.total + ' appareil(s) ciblé(s)';
+      result.innerHTML = '✅ Notification envoyée !<br><strong>' + data.success + '</strong> succès · <strong>' + data.failure + '</strong> échec(s) · ' + data.total + ' appareil(s) ciblé(s)';
       result.style.display = 'block';
       if (notifTarget === 'all') {
         document.getElementById('notif-title').value = '';
