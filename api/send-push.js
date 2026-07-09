@@ -102,6 +102,8 @@ async function sendApns(jwt, token, title, body) {
       },
     }),
   });
+  const responseBody = await res.text();
+  console.log('APNs status:', res.status, 'body:', responseBody);
   return res.status === 200;
 }
 
