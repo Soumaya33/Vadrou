@@ -86,7 +86,10 @@ function getApnsJwt() {
 }
 
 async function sendApns(jwt, token, title, body) {
-  const res = await fetch(`https://api.push.apple.com/3/device/${token}`, {
+  const apnsHost = process.env.APNS_ENV === 'sandbox'
+  ? 'api.development.push.apple.com'
+  : 'api.push.apple.com';
+const res = await fetch(`https://${apnsHost}/3/device/${token}`, {
     method: 'POST',
     headers: {
       'authorization': 'bearer ' + jwt,
