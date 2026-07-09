@@ -875,7 +875,7 @@ async function sendNotification() {
     const r = await fetch('/api/send-push', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, body, target, adminPassword: ADMIN_PASSWORD }),
+      body: JSON.stringify({ title, body, target, password: ADMIN_PASSWORD }),
     });
     const data = await r.json();
     if (r.ok) {
