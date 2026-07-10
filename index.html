@@ -1998,67 +1998,61 @@ function renderEventsPage(filtered) {
   }).join('');
 }
 
-// ── Notifications push (OneSignal) ──────────────────────────────────────
-// Initialise OneSignal, demande la permission, et stocke le token dans push_tokens.
+// ── Notifications push ──────────────────────────────────────
+// Demande la permission, récupère le token FCM, et le stocke dans push_tokens.
 // Silencieux en cas d'erreur ou si l'utilisateur refuse.
 async function registerPushToken() {
   if (isTestTraffic()) return;
-  if (!IS_NATIVE) return;
+  if (!IS_NATIVE) { showGeoToast('push: pas natif'); return; }
+  const Push = window.Capacitor?.Plugins?.PushNotifications;
+  if (!Push) { showGeoToast('push: plugin ABSENT'); return; }
 
-  const OneSignal = window.Capacitor?.Plugins?.OneSignal;
-  if (!OneSignal) { console.warn('push: plugin OneSignal ABSENT'); return; }
-
+  showGeoToast('push: début (plugin OK)');
   try {
-    // Initialiser OneSignal avec l'App ID
-    await OneSignal.setAppId('e0c5b8b4-beec-4e44-b251-aa2f34c2c3a4');
+    // Demande la permission (iOS affiche une popup, Android 13+ aussi)
+    const permResult = await Push.requestPermissions();
+    showGeoToast('push: perm=' + (permResult && permResult.receive));
+    if (permResult.receive !== 'granted') return; // Utilisateur a refusé
 
-    // Demander la permission (iOS affiche une popup, Android 13+ aussi)
-    const { value: accepted } = await OneSignal.requestPermission(true);
-    if (!accepted) return;
-
-    // Récupérer le token OneSignal (Player ID)
-    const deviceState = await OneSignal.getDeviceState();
-    const token = deviceState?.userId; // Player ID OneSignal
+    // Détection plateforme fiable via Capacitor (navigator.userAgent peu fiable en WebView native)
     const platform = (window.Capacitor?.getPlatform?.() || 'android').toLowerCase();
 
-    if (!token || !ANALYTICS_USER_ID) return;
+    // Écouter le token quand il arrive
+    await Push.addListener('registration', async (data) => {
+      const token = data.value;
+      showGeoToast('push: TOKEN reçu (' + (token ? token.slice(0,8) : 'vide') + '…)');
+      if (!token || !ANALYTICS_USER_ID) { showGeoToast('push: token/user manquant'); return; }
 
-    // Stocker dans Supabase (même table push_tokens, même logique)
-    const payload = {
-      device_id: ANALYTICS_USER_ID,
-      token,
-      platform,
-      updated_at: new Date().toISOString(),
-    };
-
-    const cap = _capacitorHttp();
-    if (cap) {
-      await cap.post({
-        url: SUPABASE_URL + '/rest/v1/push_tokens',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates,return=minimal',
-        },
-        data: payload,
-      });
-    } else {
-      await fetch(SUPABASE_URL + '/rest/v1/push_tokens', {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates,return=minimal',
-        },
-        body: JSON.stringify(payload),
-      });
-    }
-  } catch(e) {
-    console.warn('push: ERREUR', e?.message || e);
-  }
-}
+      const payload = { device_id: ANALYTICS_USER_ID, token, platform, updated_at: new Date().toISOString() };
+      const cap = _capacitorHttp();
+      try {
+        if (cap) {
+          const res = await cap.post({
+            url: SUPABASE_URL + '/rest/v1/push_tokens',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=minimal',
+            },
+            data: payload,
+          });
+          showGeoToast('push: enregistré status=' + (res && res.status));
+        } else {
+          const res = await fetch(SUPABASE_URL + '/rest/v1/push_tokens', {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=minimal',
+            },
+            body: JSON.stringify(payload),
+          });
+          showGeoToast('push: enregistré status=' + res.status);
+        }
+      } catch(e) { showGeoToast('push: ERREUR envoi ' + (e && e.message ? e.message : e)); }
+    });
 
     // Écouter les erreurs d'enregistrement FCM/APNs
     await Push.addListener('registrationError', (err) => {
