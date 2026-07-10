@@ -1,7 +1,5 @@
 // api/send-push.js
-// Envoi de notifications push :
-//   - Android  -> OneSignal REST API (via include_android_reg_ids)
-//   - iOS      -> OneSignal REST API (via include_ios_tokens) — OneSignal gère le HTTP/2 vers APNs
+// Envoi de notifications push via OneSignal REST API
 //
 // Variables d'environnement (Vercel) :
 //   ADMIN_PASSWORD
@@ -14,6 +12,9 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
 const ONESIGNAL_API_KEY = process.env.ONESIGNAL_API_KEY;
+
+// Subscription ID OneSignal de l'appareil de test (Android Soumaya)
+const MY_ONESIGNAL_ID = '7127c0ea-0929-496e-b7e6-3921f32f7189';
 
 module.exports = async (req, res) => {
   // CORS
@@ -38,7 +39,7 @@ module.exports = async (req, res) => {
     }
   }
 
-  const { password, title, body, target, device_id } = parsed || {};
+  const { password, title, body, target } = parsed || {};
 
   if (password !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Mot de passe incorrect' });
@@ -48,17 +49,11 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Récupérer les tokens depuis Supabase
-    let url = `${SUPABASE_URL}/rest/v1/push_tokens?select=device_id,token,platform`;
-    if (target !== 'all' && device_id) {
-      url += `&device_id=eq.${encodeURIComponent(device_id)}`;
-    }
-    const tokensRes = await fetch(url, {
+    // Récupérer le nombre total d'appareils pour l'affichage
+    const tokensRes = await fetch(`${SUPABASE_URL}/rest/v1/push_tokens?select=device_id,platform`, {
       headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
     });
     const rows = await tokensRes.json();
-
-    // Dédupliquer par device_id
     const seen = new Set();
     const tokens = [];
     for (const r of rows) {
@@ -66,61 +61,52 @@ module.exports = async (req, res) => {
       if (r.device_id) seen.add(r.device_id);
       tokens.push(r);
     }
+    const androidCount = tokens.filter(t => t.platform === 'android').length;
+    const iosCount = tokens.filter(t => t.platform === 'ios').length;
 
-    if (!tokens.length) {
-      return res.status(200).json({ success: 0, failure: 0, total: 0, android: 0, ios: 0 });
-    }
-
-    const androidTokens = tokens.filter(t => t.platform === 'android').map(t => t.token).filter(Boolean);
-    const iosTokens = tokens.filter(t => t.platform === 'ios').map(t => t.token).filter(Boolean);
-
-    let totalSuccess = 0, totalFailure = 0;
-
-    // Envoyer via OneSignal — séparé Android / iOS car les paramètres diffèrent
-    const sendViaOneSignal = async (payload) => {
-      const osRes = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + ONESIGNAL_API_KEY,
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await osRes.json();
-      console.log('OneSignal response:', JSON.stringify(data));
-      return data;
+    // Construire le payload OneSignal
+    const payload = {
+      app_id: ONESIGNAL_APP_ID,
+      headings: { en: title, fr: title },
+      contents: { en: body, fr: body },
     };
 
-    // Android
-    if (androidTokens.length > 0) {
-      const data = await sendViaOneSignal({
-        app_id: ONESIGNAL_APP_ID,
-        headings: { en: title, fr: title },
-        contents: { en: body, fr: body },
-        include_android_reg_ids: androidTokens,
-      });
-      totalSuccess += data.recipients || 0;
-      totalFailure += (data.errors?.invalid_player_ids?.length || 0);
+    if (target === 'all') {
+      payload.included_segments = ['All'];
+    } else {
+      // Moi uniquement — Subscription ID OneSignal
+      payload.include_subscription_ids = [MY_ONESIGNAL_ID];
     }
 
-    // iOS
-    if (iosTokens.length > 0) {
-      const data = await sendViaOneSignal({
-        app_id: ONESIGNAL_APP_ID,
-        headings: { en: title, fr: title },
-        contents: { en: body, fr: body },
-        include_ios_tokens: iosTokens,
+    const osRes = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + ONESIGNAL_API_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await osRes.json();
+    console.log('OneSignal response:', JSON.stringify(data));
+
+    if (!osRes.ok || data.errors) {
+      return res.status(200).json({
+        success: 0,
+        failure: tokens.length,
+        total: tokens.length,
+        android: androidCount,
+        ios: iosCount,
+        debug: { onesignal_error: data.errors || data },
       });
-      totalSuccess += data.recipients || 0;
-      totalFailure += (data.errors?.invalid_player_ids?.length || 0);
     }
 
     return res.status(200).json({
-      success: totalSuccess,
-      failure: totalFailure,
+      success: data.recipients || 0,
+      failure: 0,
       total: tokens.length,
-      android: androidTokens.length,
-      ios: iosTokens.length,
+      android: androidCount,
+      ios: iosCount,
     });
 
   } catch (err) {
