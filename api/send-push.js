@@ -18,8 +18,12 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
 const ONESIGNAL_API_KEY = process.env.ONESIGNAL_API_KEY;
 
+// Appareils de test fixes
+const TEST_ANDROID_DEVICE_ID = 'dev_mq49putd_9bluacw';
+const TEST_IOS_ONESIGNAL_ID = '8411b4fd-f2d6-4b5b-adb4-ce1271a2090b';
+
 // ---------------------------------------------------------------------------
-// FCM (Android) — access token via le compte de service
+// FCM (Android)
 // ---------------------------------------------------------------------------
 async function getFcmAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1000);
@@ -59,40 +63,27 @@ async function sendFcm(accessToken, projectId, token, title, body) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      message: {
-        token,
-        notification: { title, body },
-      },
+      message: { token, notification: { title, body } },
     }),
   });
-  if (!res.ok) {
-    const err = await res.text();
-    console.log('FCM error:', err);
-  }
+  if (!res.ok) console.log('FCM error:', await res.text());
   return res.ok;
 }
 
 // ---------------------------------------------------------------------------
-// OneSignal (iOS) — REST API, gère le HTTP/2 vers APNs
+// OneSignal (iOS)
 // ---------------------------------------------------------------------------
-async function sendOneSignalIos(iosSubscriptionIds, title, body) {
-  const payload = {
-    app_id: ONESIGNAL_APP_ID,
-    headings: { en: title, fr: title },
-    contents: { en: body, fr: body },
-    include_subscription_ids: iosSubscriptionIds,
-  };
-
+async function sendOneSignal(payload) {
   const res = await fetch('https://onesignal.com/api/v1/notifications', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Basic ' + ONESIGNAL_API_KEY,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ app_id: ONESIGNAL_APP_ID, ...payload }),
   });
   const data = await res.json();
-  console.log('OneSignal iOS response:', JSON.stringify(data));
+  console.log('OneSignal response:', JSON.stringify(data));
   return data;
 }
 
@@ -100,17 +91,12 @@ async function sendOneSignalIos(iosSubscriptionIds, title, body) {
 // Handler
 // ---------------------------------------------------------------------------
 module.exports = async (req, res) => {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Méthode non autorisée' });
-  }
-
-  // Parser le body JSON manuellement
   let parsed = req.body;
   if (!parsed || typeof parsed === 'string') {
     try {
@@ -122,101 +108,96 @@ module.exports = async (req, res) => {
     }
   }
 
-  const { password, title, body, target, device_id } = parsed || {};
+  const { password, title, body, target } = parsed || {};
 
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: 'Mot de passe incorrect' });
-  }
-  if (!title || !body) {
-    return res.status(400).json({ error: 'Titre et message requis' });
-  }
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Mot de passe incorrect' });
+  if (!title || !body) return res.status(400).json({ error: 'Titre et message requis' });
+
+  let success = 0, failure = 0;
 
   try {
-    // Récupérer les tokens depuis Supabase
-    let url = `${SUPABASE_URL}/rest/v1/push_tokens?select=device_id,token,platform`;
-    if (target !== 'all' && device_id) {
-      url += `&device_id=eq.${encodeURIComponent(device_id)}`;
-    }
-    const tokensRes = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
-    });
-    const rows = await tokensRes.json();
+    if (target === 'test_android') {
+      // ── Test Android uniquement ──
+      const tokensRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/push_tokens?select=token,platform&device_id=eq.${TEST_ANDROID_DEVICE_ID}`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } }
+      );
+      const rows = await tokensRes.json();
+      const androidToken = rows.find(r => r.platform === 'android')?.token;
+      if (androidToken) {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        const accessToken = await getFcmAccessToken(serviceAccount);
+        const ok = await sendFcm(accessToken, serviceAccount.project_id, androidToken, title, body);
+        ok ? success++ : failure++;
+      }
+      return res.status(200).json({ success, failure, total: 1, android: 1, ios: 0 });
 
-    // Dédupliquer par device_id
-    const seen = new Set();
-    const tokens = [];
-    for (const r of rows) {
-      if (r.device_id && seen.has(r.device_id)) continue;
-      if (r.device_id) seen.add(r.device_id);
-      tokens.push(r);
-    }
+    } else if (target === 'test_ios') {
+      // ── Test iOS uniquement ──
+      const data = await sendOneSignal({
+        headings: { en: title, fr: title },
+        contents: { en: body, fr: body },
+        include_subscription_ids: [TEST_IOS_ONESIGNAL_ID],
+      });
+      success = data.errors ? 0 : 1;
+      failure = data.errors ? 1 : 0;
+      return res.status(200).json({ success, failure, total: 1, android: 0, ios: 1 });
 
-    const androidTokens = tokens.filter(t => t.platform === 'android');
-    const iosTokens = tokens.filter(t => t.platform === 'ios');
+    } else {
+      // ── Tous les utilisateurs ──
+      const tokensRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/push_tokens?select=device_id,token,platform`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } }
+      );
+      const rows = await tokensRes.json();
 
-    let success = 0, failure = 0;
+      // Dédupliquer par device_id
+      const seen = new Set();
+      const tokens = [];
+      for (const r of rows) {
+        if (r.device_id && seen.has(r.device_id)) continue;
+        if (r.device_id) seen.add(r.device_id);
+        tokens.push(r);
+      }
 
-    // Android via FCM direct
-    if (androidTokens.length > 0) {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      const accessToken = await getFcmAccessToken(serviceAccount);
-      for (const t of androidTokens) {
+      const androidTokens = tokens.filter(t => t.platform === 'android');
+      const iosTokens = tokens.filter(t => t.platform === 'ios');
+
+      // Android via FCM
+      if (androidTokens.length > 0) {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        const accessToken = await getFcmAccessToken(serviceAccount);
+        for (const t of androidTokens) {
+          try {
+            const ok = await sendFcm(accessToken, serviceAccount.project_id, t.token, title, body);
+            ok ? success++ : failure++;
+          } catch (e) { failure++; }
+        }
+      }
+
+      // iOS via OneSignal — segment All avec filtre iOS
+      if (iosTokens.length > 0) {
         try {
-          const ok = await sendFcm(accessToken, serviceAccount.project_id, t.token, title, body);
-          ok ? success++ : failure++;
-        } catch (e) {
-          console.log('FCM exception:', e.message);
-          failure++;
-        }
-      }
-    }
-
-    // iOS via OneSignal
-    if (iosTokens.length > 0) {
-      // Pour iOS on utilise les Subscription IDs OneSignal
-      // Si target = 'all', on envoie à tous les abonnés iOS via segment
-      // Si target = 'me', on envoie au subscription ID stocké dans le token field
-      try {
-        let osData;
-        if (target === 'all') {
-          // Envoyer à tous les abonnés iOS via OneSignal
-          const res2 = await fetch('https://onesignal.com/api/v1/notifications', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Basic ' + ONESIGNAL_API_KEY,
-            },
-            body: JSON.stringify({
-              app_id: ONESIGNAL_APP_ID,
-              headings: { en: title, fr: title },
-              contents: { en: body, fr: body },
-              included_segments: ['All'],
-              isIos: true,
-              isAndroid: false,
-            }),
+          const data = await sendOneSignal({
+            headings: { en: title, fr: title },
+            contents: { en: body, fr: body },
+            included_segments: ['All'],
+            isIos: true,
+            isAndroid: false,
           });
-          osData = await res2.json();
-        } else {
-          // Moi uniquement — le token stocké est le Subscription ID OneSignal pour iOS
-          const iosSubIds = iosTokens.map(t => t.token).filter(Boolean);
-          osData = await sendOneSignalIos(iosSubIds, title, body);
-        }
-        console.log('OneSignal response:', JSON.stringify(osData));
-        if (!osData.errors) success += iosTokens.length;
-        else failure += iosTokens.length;
-      } catch (e) {
-        console.log('OneSignal exception:', e.message);
-        failure += iosTokens.length;
+          if (!data.errors) success += iosTokens.length;
+          else failure += iosTokens.length;
+        } catch (e) { failure += iosTokens.length; }
       }
-    }
 
-    return res.status(200).json({
-      success,
-      failure,
-      total: tokens.length,
-      android: androidTokens.length,
-      ios: iosTokens.length,
-    });
+      return res.status(200).json({
+        success,
+        failure,
+        total: tokens.length,
+        android: androidTokens.length,
+        ios: iosTokens.length,
+      });
+    }
 
   } catch (err) {
     return res.status(500).json({ error: err.message });
