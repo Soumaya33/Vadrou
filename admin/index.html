@@ -477,8 +477,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
     <div class="stats-section">
       <div class="stats-section-title">📨 Envoyer une notification push</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">
-        La notification sera envoyée à tous les appareils qui ont accepté les notifications.<br>
-        <strong>Astuce :</strong> commence toujours par un test à toi seule avant d'envoyer à tous.
+        La notification sera envoyée aux appareils sélectionnés.<br>
+        <strong>Astuce :</strong> commence toujours par un test avant d'envoyer à tous.
       </div>
       <div class="field">
         <label>Titre (visible sur l'écran verrouillé)</label>
@@ -492,8 +492,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charco
       </div>
       <div class="field">
         <label>Destinataire</label>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button class="vtbtn" id="notif-target-me" onclick="setNotifTarget('me')">🧪 Moi uniquement (test)</button>
+        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+          <button class="vtbtn" id="notif-target-android" onclick="setNotifTarget('test_android')">🤖 Test Android</button>
+          <button class="vtbtn" id="notif-target-ios" onclick="setNotifTarget('test_ios')">🍎 Test iOS</button>
           <button class="vtbtn" id="notif-target-all" onclick="setNotifTarget('all')">📣 Tous les utilisateurs</button>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px" id="notif-target-hint">Sélectionne un destinataire pour continuer.</div>
@@ -809,27 +810,32 @@ const _origSelectEvent = selectEvent; selectEvent = function(id) { _origSelectEv
 const _origSwitchTab = switchTab; switchTab = function(tab) { _origSwitchTab(tab); closeMobileEditor(); };
 
 // ── NOTIFICATIONS PUSH ─────────────────────────────────────
-const MY_DEVICE_ID = 'dev_mq49putd_9bluacw'; // Pixel 10a
+// Appareils de test fixes
+const TEST_ANDROID_DEVICE_ID = 'dev_mq49putd_9bluacw'; // Pixel Soumaya
+const TEST_IOS_ONESIGNAL_ID  = '8411b4fd-f2d6-4b5b-adb4-ce1271a2090b'; // iPhone mari
+
 let notifTarget = null;
 
 function setNotifTarget(target) {
   notifTarget = target;
-  document.getElementById('notif-target-me').className = 'vtbtn' + (target==='me' ? ' sel-valid' : '');
-  document.getElementById('notif-target-all').className = 'vtbtn' + (target==='all' ? ' sel-invalid' : '');
+  document.getElementById('notif-target-android').className = 'vtbtn' + (target === 'test_android' ? ' sel-valid' : '');
+  document.getElementById('notif-target-ios').className    = 'vtbtn' + (target === 'test_ios'     ? ' sel-valid' : '');
+  document.getElementById('notif-target-all').className    = 'vtbtn' + (target === 'all'           ? ' sel-invalid' : '');
   const hint = document.getElementById('notif-target-hint');
-  if (target === 'me') hint.textContent = '✅ Envoi uniquement à ton téléphone.';
+  if (target === 'test_android') hint.textContent = '✅ Envoi uniquement à ton Android (Soumaya).';
+  else if (target === 'test_ios') hint.textContent = '✅ Envoi uniquement à l\'iPhone (mari).';
   else if (target === 'all') hint.innerHTML = '⚠️ <strong>Envoi à TOUS les utilisateurs Vadrou</strong>. Vérifie deux fois avant d\'envoyer.';
   updateNotifSendBtn();
 }
 
 function updateNotifSendBtn() {
   const title = document.getElementById('notif-title').value.trim();
-  const body = document.getElementById('notif-body').value.trim();
+  const body  = document.getElementById('notif-body').value.trim();
   const ready = title && body && notifTarget;
-  const btn = document.getElementById('notif-send-btn');
-  btn.disabled = !ready;
+  const btn   = document.getElementById('notif-send-btn');
+  btn.disabled    = !ready;
   btn.style.opacity = ready ? '1' : '.5';
-  btn.style.cursor = ready ? 'pointer' : 'not-allowed';
+  btn.style.cursor  = ready ? 'pointer' : 'not-allowed';
 }
 
 document.getElementById('notif-title').addEventListener('input', function() {
@@ -847,11 +853,11 @@ async function loadNotifReach() {
     const byDevice = {};
     tokens.forEach(t => { byDevice[t.device_id] = t.platform; });
     const platforms = Object.values(byDevice);
-    const total = platforms.length;
-    const ios = platforms.filter(p => p === 'ios').length;
+    const total   = platforms.length;
+    const ios     = platforms.filter(p => p === 'ios').length;
     const android = platforms.filter(p => p === 'android').length;
     document.getElementById('notif-reach').innerHTML =
-      '<div><strong style="font-size:20px;font-family:\'Fraunces\',serif">' + total + '</strong> appareil' + (total>1?'s':'') + ' joignable' + (total>1?'s':'') + '</div>' +
+      '<div><strong style="font-size:20px;font-family:\'Fraunces\',serif">' + total + '</strong> appareil' + (total > 1 ? 's' : '') + ' joignable' + (total > 1 ? 's' : '') + '</div>' +
       '<div style="font-size:12px;color:var(--muted);margin-top:4px">🤖 ' + android + ' Android · 🍎 ' + ios + ' iOS</div>';
   } catch(e) {
     document.getElementById('notif-reach').innerHTML = '<span style="color:var(--terracotta)">Erreur : ' + e.message + '</span>';
@@ -860,23 +866,22 @@ async function loadNotifReach() {
 
 async function sendNotification() {
   const title = document.getElementById('notif-title').value.trim();
-  const body = document.getElementById('notif-body').value.trim();
+  const body  = document.getElementById('notif-body').value.trim();
   if (!title || !body || !notifTarget) return;
+
   if (notifTarget === 'all') {
     if (!confirm('Envoyer cette notification à TOUS les utilisateurs Vadrou ?\n\nTitre : ' + title + '\nMessage : ' + body)) return;
   }
-  const btn = document.getElementById('notif-send-btn');
+
+  const btn    = document.getElementById('notif-send-btn');
   const result = document.getElementById('notif-result');
   btn.disabled = true; btn.style.opacity = '.5';
   btn.textContent = '⏳ Envoi en cours…';
   result.style.display = 'none';
+
   try {
-    const target = notifTarget === 'me' ? MY_DEVICE_ID : 'all';
-    const r = await fetch('/api/send-push', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, body, target, password: ADMIN_PASSWORD }),
-    });
+    const payload = { title, body, target: notifTarget, password: ADMIN_PASSWORD };
+    const r    = await fetch('/api/send-push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const data = await r.json();
     if (r.ok) {
       result.style.background = 'var(--ok-bg)'; result.style.color = 'var(--ok)';
@@ -884,9 +889,9 @@ async function sendNotification() {
       result.style.display = 'block';
       if (notifTarget === 'all') {
         document.getElementById('notif-title').value = '';
-        document.getElementById('notif-body').value = '';
+        document.getElementById('notif-body').value  = '';
         document.getElementById('notif-title-count').textContent = '0 / 65';
-        document.getElementById('notif-body-count').textContent = '0 / 240';
+        document.getElementById('notif-body-count').textContent  = '0 / 240';
       }
     } else {
       result.style.background = '#FBE9E7'; result.style.color = 'var(--terracotta)';
@@ -898,6 +903,7 @@ async function sendNotification() {
     result.textContent = '❌ Erreur réseau : ' + e.message;
     result.style.display = 'block';
   }
+
   btn.disabled = false; btn.style.opacity = '1';
   btn.textContent = '🚀 Envoyer la notification';
   setTimeout(updateNotifSendBtn, 100);
