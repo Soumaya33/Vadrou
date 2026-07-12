@@ -962,7 +962,7 @@ body {
   </div>
 
   <!-- EVENTS -->
-  <div class="sec-hd" style="margin-top:28px">
+  <div class="sec-hd" id="events-home-hd" style="margin-top:28px">
     <div class="sec-title">🌟 Évènements à ne pas rater</div>
     <button class="sec-link" onclick="setNav('events');scrollToEvents()">Voir tout →</button>
   </div>
@@ -1055,7 +1055,7 @@ body {
   </div>
 
   <!-- CONTACT -->
-  <div style="text-align:center;padding:12px 16px 4px;font-size:11px;font-weight:300;color:var(--muted);line-height:1.7">
+  <div style="text-align:center;padding:12px 16px 80px;font-size:11px;font-weight:300;color:var(--muted);line-height:1.7">
     Vous avez une suggestion, un avis, ou vous êtes un professionnel et vous souhaitez nous contacter ? On est à <a href="mailto:contact@vadrou.com" style="color:var(--terracotta);text-decoration:none;font-weight:500">contact@vadrou.com</a>
   </div>
 
@@ -1892,10 +1892,12 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','
 function renderHomeEvents(events) {
   const container = document.getElementById('events-list');
   if (!container) return;
-  if (!events.length) {
-    container.innerHTML = `<div class="loading-card"><div style="font-size:28px">📅</div><div class="loading-text">Aucun évènement à venir</div></div>`;
-    return;
-  }
+    if (!events.length) {
+      container.style.display = 'none';
+      const hd = document.getElementById('events-home-hd');
+      if (hd) hd.style.display = 'none';
+      return;
+    }
   container.innerHTML = events.map(evt => {
     const d = evt.date_debut ? new Date(evt.date_debut + 'T12:00:00') : null;
     const day = d ? d.getDate() : '?';
