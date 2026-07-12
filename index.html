@@ -2055,17 +2055,7 @@ function renderEventsPage(filtered) {
   
     } catch(e) { console.warn('push: exception', e); }
   }
-    // Écouter les erreurs d'enregistrement FCM/APNs
-    await Push.addListener('registrationError', (err) => {
-      showGeoToast('push: ERREUR APNs ' + JSON.stringify(err));
-    });
 
-    // Déclencher l'enregistrement
-    await Push.register();
-    showGeoToast('push: register() appelé');
-
-  } catch(e) { showGeoToast('push: EXCEPTION ' + (e && e.message ? e.message : e)); }
-}
 // Construit la liste des quartiers réellement présents dans les événements.
 function buildQuartierList() {
   const counts = {};
