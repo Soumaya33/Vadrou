@@ -30,7 +30,11 @@ const path = require('path');
 // Configuration
 // ---------------------------------------------------------------------------
 
-const BATCH_SIZE = 100;
+// Taille de lot réduite à 60 : limite le risque que la réponse JSON de Claude
+// dépasse max_tokens et soit tronquée. Le reste sera traité au run suivant.
+const BATCH_SIZE = 60;
+const MAX_TOKENS = 16000;
+const DESCRIPTION_MAX_CHARS = 600; // on tronque les descriptions envoyées à Claude
 const PROMPT_PATH = path.join(__dirname, 'prompt_systeme_moderation.md');
 const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 const RECIPIENT_EMAIL = 'bahrisoumaya@gmail.com';
@@ -72,13 +76,58 @@ function loadSystemPrompt() {
   return fs.readFileSync(PROMPT_PATH, 'utf-8');
 }
 
+// Allège chaque événement avant envoi : les descriptions très longues gonflent
+// le prompt sans changer la décision. On les tronque pour économiser des tokens.
+function slimEvent(e) {
+  const slim = { ...e };
+  if (typeof slim.description === 'string' && slim.description.length > DESCRIPTION_MAX_CHARS) {
+    slim.description = slim.description.slice(0, DESCRIPTION_MAX_CHARS) + '…';
+  }
+  return slim;
+}
+
+// Tente de récupérer les décisions valides d'un JSON potentiellement tronqué.
+// Si Claude a été coupé en plein milieu, on garde tous les objets complets
+// déjà présents dans le tableau "decisions" et on ignore le dernier, incomplet.
+function salvageDecisions(rawText) {
+  const cleaned = rawText.replace(/```json|```/g, '').trim();
+
+  // 1) tentative de parse direct
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed.decisions)) return { decisions: parsed.decisions, truncated: false };
+  } catch (_) { /* on passe à la récupération */ }
+
+  // 2) récupération : on extrait chaque objet complet du tableau decisions.
+  // Un objet complet contient un champ "id" et se termine proprement par "}".
+  const objectRegex = /\{[^{}]*"id"\s*:\s*"[^"]+"[^{}]*\}/g;
+  const matches = cleaned.match(objectRegex) || [];
+  const decisions = [];
+  for (const m of matches) {
+    try {
+      decisions.push(JSON.parse(m));
+    } catch (_) { /* objet illisible, on l'ignore */ }
+  }
+
+  if (decisions.length > 0) {
+    return { decisions, truncated: true };
+  }
+
+  // 3) échec total
+  throw new Error(
+    `Réponse Claude non parsable et non récupérable.\n\nDébut du contenu reçu:\n${cleaned.slice(0, 500)}`
+  );
+}
+
 async function callClaudeForModeration(events, systemPrompt) {
+  const slimmed = events.map(slimEvent);
   const userMessage = [
     'Voici le batch d\'événements à modérer (JSON ci-dessous).',
     'Applique strictement les règles du prompt système, y compris le journal des corrections.',
     'Réponds uniquement avec le JSON de sortie demandé, sans aucun texte autour.',
+    'Garde le champ "raison" TRÈS court (maximum 12 mots) pour éviter toute troncature.',
     '',
-    JSON.stringify(events, null, 2),
+    JSON.stringify(slimmed, null, 2),
   ].join('\n');
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -90,7 +139,7 @@ async function callClaudeForModeration(events, systemPrompt) {
     },
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
-      max_tokens: 8000,
+      max_tokens: MAX_TOKENS,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     }),
@@ -105,20 +154,19 @@ async function callClaudeForModeration(events, systemPrompt) {
   const textBlock = data.content.find((b) => b.type === 'text');
   if (!textBlock) throw new Error('Aucune réponse texte reçue de Claude.');
 
-  const cleaned = textBlock.text.replace(/```json|```/g, '').trim();
-
-  let parsed;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch (e) {
-    throw new Error(`Réponse Claude non parsable en JSON: ${e.message}\n\nContenu reçu:\n${cleaned}`);
+  // Si Claude a été coupé par la limite de tokens, on le signale.
+  const stoppedForLength = data.stop_reason === 'max_tokens';
+  if (stoppedForLength) {
+    console.warn('⚠️ Réponse Claude coupée (max_tokens atteint). Récupération des décisions complètes...');
   }
 
-  if (!Array.isArray(parsed.decisions)) {
-    throw new Error('Le JSON reçu ne contient pas de tableau "decisions".');
+  const { decisions, truncated } = salvageDecisions(textBlock.text);
+
+  if (truncated || stoppedForLength) {
+    console.warn(`⚠️ ${decisions.length}/${events.length} décisions récupérées. Les autres repasseront au prochain run.`);
   }
 
-  return parsed.decisions;
+  return decisions;
 }
 
 // ---------------------------------------------------------------------------
@@ -285,9 +333,17 @@ function buildRecapHtml(results, eventsById, totalCount, geocoding) {
       <span style="color:#666;font-size:0.9em;">${item.raison || ''}</span></li>`;
   };
 
+  // Avertissement si toutes les décisions n'ont pas été récupérées (troncature)
+  const traite = results.valides.length + results.rejetes.length + results.attente.length;
+  const manquants = totalCount - traite;
+  const avertissement = manquants > 0
+    ? `<p style="color:#b36b00;"><strong>⚠️ ${manquants} événement(s) non traité(s) ce run</strong> (réponse Claude tronquée). Ils repasseront automatiquement au prochain run.</p>`
+    : '';
+
   return `
     <h2>Modération automatique Vadrou — récapitulatif</h2>
     <p>Batch traité : ${totalCount} événements.</p>
+    ${avertissement}
 
     <h3>✅ Validés (${results.valides.length})</h3>
     <ul>${results.valides.map(row).join('') || '<li>Aucun</li>'}</ul>
