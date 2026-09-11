@@ -1,0 +1,10 @@
+# https://vadrou.com/robots.txt
+User-agent: *
+Allow: /
+
+# Espaces privés ou sans intérêt pour l'indexation
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/
+
+Sitemap: https://vadrou.com/sitemap.xml
