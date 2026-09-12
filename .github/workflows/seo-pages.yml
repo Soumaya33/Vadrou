@@ -1,0 +1,40 @@
+name: Pages SEO
+
+on:
+  workflow_dispatch:        # bouton « Run workflow » dans l'onglet Actions
+  schedule:
+    - cron: '0 4 * * *'     # tous les jours à 4h UTC (6h à Bordeaux en été)
+
+# Nécessaire pour que l'Action puisse commiter les pages générées
+permissions:
+  contents: write
+
+jobs:
+  generer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Générer les pages et le sitemap
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: node generate-pages.mjs
+
+      - name: Commiter s'il y a des changements
+        run: |
+          git config user.name  "vadrou-bot"
+          git config user.email "action@github.com"
+          git add lieu sitemap.xml data/slugs.json
+          if git diff --staged --quiet; then
+            echo "Aucun changement — rien à commiter."
+          else
+            git commit -m "Pages SEO régénérées ($(date -u +%Y-%m-%d))"
+            git push
+          fi
