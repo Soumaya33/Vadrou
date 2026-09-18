@@ -1940,7 +1940,8 @@ async function loadEventsFromSupabase() {
 
       allEvents = actifs;
       buildQuartierList();
-      renderHomeEvents(actifs.filter(e => e.coup_de_coeur).slice(0, 5));
+      const coups = actifs.filter(e => e.coup_de_coeur);
+      renderHomeEvents((coups.length ? coups : actifs).slice(0, 5));
       renderEventsPage();
     }
   } catch(e) {
@@ -1954,12 +1955,14 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','
 function renderHomeEvents(events) {
   const container = document.getElementById('events-list');
   if (!container) return;
-    if (!events.length) {
-      container.style.display = 'none';
-      const hd = document.getElementById('events-home-hd');
-      if (hd) hd.style.display = 'none';
-      return;
-    }
+  const hd = document.getElementById('events-home-hd');
+  if (!events.length) {
+    container.style.display = 'none';
+    if (hd) hd.style.display = 'none';
+    return;
+  }
+  container.style.display = '';
+  if (hd) hd.style.display = '';
   container.innerHTML = events.map(evt => {
     const d = evt.date_debut ? new Date(evt.date_debut + 'T12:00:00') : null;
     const day = d ? d.getDate() : '?';
