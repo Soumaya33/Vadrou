@@ -36,6 +36,49 @@ const LIMIT = args.includes('--limit')
 const MOCK = args.includes('--mock');
 const OUT_ROOT = args.includes('--out') ? args[args.indexOf('--out') + 1] : '.';
 
+// ───────────────────────── Libellés ─────────────────────────
+// Les valeurs stockées en base sont des codes techniques ; on les traduit
+// avec les mêmes libellés que l'app, pour que le site et l'app concordent.
+
+const LABELS_CATEGORIE = {
+  jeux_ext: 'Jeux en extérieur',
+  jeux_int: 'Jeux en intérieur',
+  culture:  'Culture et bibliothèque',
+  apero:    'Apéro parents',
+  resto:    'Restaurant family-friendly',
+  eau:      "Au bord de l'eau",
+  musique:  'Musique et concerts',
+  theatre:  'Théâtre et spectacle',
+  sport:    'Sport et plein air',
+  expos:    'Expositions et musées',
+  sciences: 'Sciences et découverte',
+  ateliers: 'Ateliers créatifs',
+  nature:   'Nature et balades',
+  jeux:     'Jeux',
+  parents:  'Pour les parents',
+};
+
+const LABELS_AGE = {
+  '0-2':  '0–2 ans',
+  '3-5':  '3–5 ans',
+  '6-10': '6–10 ans',
+  '10+':  '10 ans et plus',
+  'tout': 'tout âge',
+};
+
+const LABELS_MOMENT = {
+  weekend: 'le week-end',
+  semaine: 'en semaine',
+  matin:   'le matin',
+  midi:    'le midi',
+  soir:    'en soirée',
+};
+
+/** Traduit un tableau de codes ; conserve la valeur brute si elle est inconnue. */
+function traduire(codes, table) {
+  return (codes || []).filter(Boolean).map(c => table[c] || c);
+}
+
 // ───────────────────────── Utilitaires ─────────────────────────
 
 /** Transforme un nom en slug d'URL stable et lisible. */
@@ -97,9 +140,9 @@ const MOCK_DATA = [
     adresse: 'Rue du Bocage, 33200 Bordeaux',
     latitude: 44.8483, longitude: -0.6094,
     google_place_id: 'ChIJmockmockmock',
-    categorie: ['Parc', 'Aire de jeux'],
-    ages: ['0-3 ans', '3-6 ans', '6-10 ans'],
-    moments: ['Matin', 'Après-midi'],
+    categorie: ['jeux_ext'],
+    ages: ['0-2', '3-5', '6-10'],
+    moments: ['weekend', 'matin'],
     tarif: 'Gratuit',
     label_redac: 'Le grand classique des familles bordelaises',
     description: "Vingt-huit hectares de pelouses, d'allées ombragées et de jeux au cœur de Caudéran. Le Parc Bordelais reste le point de repère des familles du quartier : plusieurs aires de jeux réparties selon les âges, un petit train l'après-midi, une mare aux canards et assez d'espace pour que les vélos et les trottinettes ne gênent personne. Les arbres centenaires rendent l'endroit praticable même en plein été, ce qui est rare à Bordeaux.",
@@ -113,9 +156,9 @@ const MOCK_DATA = [
     adresse: 'Réserve naturelle, 33121 Carcans',
     latitude: 44.9331, longitude: -1.1408,
     google_place_id: null,
-    categorie: ['Nature', 'Randonnée'],
-    ages: ['6-10 ans', '10 ans et +'],
-    moments: ['Journée'],
+    categorie: ['nature', 'jeux_int'],
+    ages: ['6-10', '10+'],
+    moments: ['weekend'],
     tarif: 'Gratuit',
     label_redac: null,
     description: "Une réserve naturelle entre Lacanau et Carcans, accessible seulement à pied ou à vélo, ce qui explique le calme qu'on y trouve même en août. Le sentier depuis le parking du Marmande fait environ cinq kilomètres aller-retour, plat et sableux, faisable avec des enfants habitués à marcher. On y croise des vaches marines en liberté, des libellules par centaines et, avec un peu de patience, des cistudes sur les troncs. Prévoir de l'eau : il n'y a aucun point de ravitaillement.",
@@ -281,9 +324,11 @@ function renderLieu(lieu, slug) {
       : esc(lieu.adresse)]);
   }
   if (lieu.tarif) lignes.push(['Tarif', esc(lieu.tarif)]);
-  if (lieu.ages?.length) lignes.push(['Âges', esc(listeFr(lieu.ages))]);
-  if (lieu.moments?.length) lignes.push(['Quand y aller', esc(listeFr(lieu.moments))]);
-  if (lieu.categorie?.length) lignes.push(['Type de sortie', esc(listeFr(lieu.categorie))]);
+  // Valeurs d'un tableau d'infos : simple virgule. Un « et » final entrerait
+  // en collision avec les libellés qui en contiennent déjà (« Nature et balades »).
+  if (lieu.ages?.length) lignes.push(['Âges', esc(traduire(lieu.ages, LABELS_AGE).join(', '))]);
+  if (lieu.moments?.length) lignes.push(['Quand y aller', esc(traduire(lieu.moments, LABELS_MOMENT).join(', '))]);
+  if (lieu.categorie?.length) lignes.push(['Type de sortie', esc(traduire(lieu.categorie, LABELS_CATEGORIE).join(', '))]);
 
   const infos = lignes.length
     ? `<section class="infos"><div class="wrap"><dl>
