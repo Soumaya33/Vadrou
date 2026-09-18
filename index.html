@@ -1699,8 +1699,11 @@ function initLeafletMap() {
   mapEl.style.width = '100%';
   mapEl.style.display = 'block';
 
-  leafletMap = L.map('map', { zoomControl: true, attributionControl: false }).setView([44.8378, -0.5792], 13);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(leafletMap);
+  leafletMap = L.map('map', { zoomControl: true }).setView([44.8378, -0.5792], 13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_3pw9_1_b55481b761a0137baccc5380', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(leafletMap);
 
   // Observer qui force le recalcul dès que le conteneur devient visible
   const ro = new ResizeObserver(() => { leafletMap.invalidateSize(); });
@@ -3917,8 +3920,9 @@ function updateFsMarkers() {
 function initFullscreenMap() {
   if (!fullscreenMap) {
     fullscreenMap = L.map('map-fullscreen', { zoomControl: false }).setView([44.8378, -0.5792], 13);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution:'© OpenStreetMap © CartoDB', maxZoom:19
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_3pw9_1_b55481b761a0137baccc5380', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 19
     }).addTo(fullscreenMap);
     // Boutons zoom en bas à droite
     L.control.zoom({ position: 'bottomright' }).addTo(fullscreenMap);
