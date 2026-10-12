@@ -1,0 +1,8 @@
+android
+ios
+scripts
+tests
+Clés
+*.jks
+*.p8
+*.mobileprovision
