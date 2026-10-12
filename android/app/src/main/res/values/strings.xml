@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vadrou</string>
+    <string name="title_activity_main">Vadrou</string>
+    <string name="package_name">com.vadrou.app</string>
+    <string name="custom_url_scheme">com.vadrou.app</string>
+</resources>
