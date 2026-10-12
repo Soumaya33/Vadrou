@@ -177,7 +177,7 @@ workflows:
   android-release:
     name: Vadrou Android — Google Play
     max_build_duration: 45
-    instance_type: linux_x2
+    instance_type: mac_mini_m2   # seul type inclus dans le plan gratuit
     environment:
       groups:
         - android_firebase            # contient GOOGLE_SERVICES_JSON (base64)
@@ -205,7 +205,7 @@ workflows:
           [ -f admin.html ] && cp admin.html www/admin.html || true
           [ -d api ] && cp -r api www/api || true
           # APP_VERSION (popup de mise a jour) doit valoir le versionCode du build
-          sed -i "s/const APP_VERSION *= *[0-9]*/const APP_VERSION = $ANDROID_VERSION_CODE/" www/index.html
+          sed -i '' "s/const APP_VERSION *= *[0-9]*/const APP_VERSION = $ANDROID_VERSION_CODE/" www/index.html
           grep -o "const APP_VERSION = [0-9]*" www/index.html
           # google-services.json (Firebase push Android) injecte depuis Codemagic
           echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
@@ -216,14 +216,14 @@ workflows:
         script: |
           set -e
           GRADLE=android/app/build.gradle
-          sed -i -E "s/versionCode +[0-9]+/versionCode $ANDROID_VERSION_CODE/" $GRADLE
-          sed -i -E "s/versionName +\"[^\"]*\"/versionName \"$ANDROID_VERSION_NAME\"/" $GRADLE
+          sed -i '' -E "s/versionCode +[0-9]+/versionCode $ANDROID_VERSION_CODE/" $GRADLE
+          sed -i '' -E "s/versionName +\"[^\"]*\"/versionName \"$ANDROID_VERSION_NAME\"/" $GRADLE
           grep -E "versionCode|versionName" $GRADLE
       - name: Build AAB + APK
         script: |
           set -e
           cd android
-          sed -i 's/\r$//' gradlew
+          sed -i '' 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew bundleRelease assembleRelease --no-daemon
       - name: Sign AAB (Play Store) + APK (installation directe)
@@ -237,7 +237,9 @@ workflows:
 
           # APK signe (v2) pour l'installer directement sur un telephone
           APK_DIR=android/app/build/outputs/apk/release
-          BT=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -1)
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          BT="$SDK/build-tools/$(ls "$SDK/build-tools" | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)"
+          echo "build-tools : $BT"
           "$BT/zipalign" -f -p 4 "$APK_DIR/app-release-unsigned.apk" "$APK_DIR/app-release-aligned.apk"
           "$BT/apksigner" sign --ks "$CM_KEYSTORE_PATH" --ks-pass env:CM_KEYSTORE_PASSWORD \
             --ks-key-alias "$CM_KEY_ALIAS" --key-pass env:CM_KEY_PASSWORD \
