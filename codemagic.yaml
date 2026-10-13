@@ -186,8 +186,8 @@ workflows:
       vars:
         # A incrementer A CHAQUE build envoyé sur le Play Store
         # (doit toujours être supérieur au dernier versionCode publié).
-        ANDROID_VERSION_CODE: "46"
-        ANDROID_VERSION_NAME: "5.0"
+        ANDROID_VERSION_CODE: "47"
+        ANDROID_VERSION_NAME: "5.1"
       node: 18
       java: 17
     scripts:
